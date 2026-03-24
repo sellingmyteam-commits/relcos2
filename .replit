@@ -44,3 +44,6 @@ waitForPort = 5000
 [userenv.shared]
 VITE_ADSENSE_SLOT_LEFT = ""
 VITE_ADSENSE_SLOT_RIGHT = ""
+
+[agent]
+expertMode = true

@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { Link } from "wouter";
-import { Gamepad2, MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Settings, Keyboard, Crown, Gauge, Bomb, Layers, User, Wifi, Mail } from "lucide-react";
+import { Gamepad2, MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -8,8 +8,6 @@ import { useOnlineUsers } from "@/hooks/use-online-users";
 
 export default function Home() {
   const [onlineCount, setOnlineCount] = useState(1);
-  const [panicKey, setPanicKey] = useState(() => localStorage.getItem("panicKey") || "`");
-  const [isListening, setIsListening] = useState(false);
   const username = localStorage.getItem("chatUsername") || "";
   const onlineUsers = useOnlineUsers();
 
@@ -30,21 +28,6 @@ export default function Home() {
 
     return () => ws.close();
   }, []);
-
-  useEffect(() => {
-    if (!isListening) return;
-
-    const handleKeyCapture = (e: KeyboardEvent) => {
-      e.preventDefault();
-      const newKey = e.key;
-      setPanicKey(newKey);
-      localStorage.setItem("panicKey", newKey);
-      setIsListening(false);
-    };
-
-    window.addEventListener("keydown", handleKeyCapture);
-    return () => window.removeEventListener("keydown", handleKeyCapture);
-  }, [isListening]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -109,32 +92,8 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="w-full max-w-2xl mx-auto flex gap-4 items-start"
+            className="w-48 mx-auto"
           >
-            <div className="flex-1 bg-card/50 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <Settings className="w-5 h-5 text-secondary" />
-                <h3 className="text-lg font-bold text-white uppercase tracking-tight">Panic Button</h3>
-              </div>
-              <p className="text-xs text-muted-foreground mb-4">
-                Press this key anywhere to instantly open a school tab. Default is backtick (`).
-              </p>
-              <div className="flex items-center gap-3">
-                <Keyboard className="w-4 h-4 text-muted-foreground" />
-                <button
-                  onClick={() => setIsListening(true)}
-                  data-testid="button-set-panic-key"
-                  className={`flex-1 h-12 rounded-xl border text-center font-mono text-lg transition-all duration-300 ${
-                    isListening
-                      ? "border-secondary bg-secondary/10 text-secondary animate-pulse"
-                      : "border-white/10 bg-white/5 text-white hover:border-white/30"
-                  }`}
-                >
-                  {isListening ? "Press any key..." : `Key: ${panicKey === " " ? "Space" : panicKey === "`" ? "` (backtick)" : panicKey}`}
-                </button>
-              </div>
-            </div>
-
             <div className="w-48 flex-shrink-0 bg-card/60 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
               <div className="px-4 py-3 border-b border-white/10 bg-green-500/5 flex items-center gap-2">
                 <Wifi className="w-3.5 h-3.5 text-green-400" />
