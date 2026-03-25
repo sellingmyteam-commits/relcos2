@@ -10,7 +10,6 @@ import GeometryDash from "@/pages/GeometryDash";
 import MotoX3M from "@/pages/MotoX3M";
 import StickmanMerge from "@/pages/StickmanMerge";
 import Slope from "@/pages/Slope";
-import BuildNowGG from "@/pages/BuildNowGG";
 import FiveNightsAtWinstons from "@/pages/FiveNightsAtWinstons";
 import RocketSoccer from "@/pages/RocketSoccer";
 import RetroBowl from "@/pages/RetroBowl";
@@ -24,6 +23,10 @@ import CarKing from "@/pages/CarKing";
 import DriftBoss from "@/pages/DriftBoss";
 import Quake3 from "@/pages/Quake3";
 import TombOfTheMask from "@/pages/TombOfTheMask";
+import OneLoveLol from "@/pages/OneLoveLol";
+import BikersRepublic from "@/pages/BikersRepublic";
+import CounterStrike from "@/pages/CounterStrike";
+import KartBros from "@/pages/KartBros";
 import Chat from "@/pages/Chat";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
@@ -42,7 +45,10 @@ function Router() {
       <Route path="/motox3m" component={MotoX3M} />
       <Route path="/stickman-merge" component={StickmanMerge} />
       <Route path="/slope" component={Slope} />
-      <Route path="/1v1-lol" component={BuildNowGG} />
+      <Route path="/1v1-lol" component={OneLoveLol} />
+      <Route path="/bikers-republic" component={BikersRepublic} />
+      <Route path="/counter-strike" component={CounterStrike} />
+      <Route path="/kart-bros" component={KartBros} />
       <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
       <Route path="/rocket-soccer" component={RocketSoccer} />
       <Route path="/retro-bowl" component={RetroBowl} />
