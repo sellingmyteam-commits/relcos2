@@ -23,6 +23,8 @@ export const siteUsers = pgTable("site_users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   status: integer("status").notNull().default(1),
+  isAdmin: boolean("is_admin").default(false),
+  isMuted: boolean("is_muted").default(false),
 });
 
 export const dmConversationHidden = pgTable("dm_conversation_hidden", {

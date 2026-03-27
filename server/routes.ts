@@ -54,6 +54,10 @@ export async function registerRoutes(
   app.post(api.messages.create.path, async (req, res) => {
     try {
       const input = api.messages.create.input.parse(req.body);
+      const siteUser = await storage.getSiteUserByUsername(input.username);
+      if (siteUser && siteUser.isMuted) {
+        return res.status(403).json({ message: "You are muted from global chat." });
+      }
       const filtered = filterContent(input.content);
       if (!filtered.trim()) {
         return res.status(400).json({ message: "Message blocked by chat filter" });
@@ -185,6 +189,38 @@ export async function registerRoutes(
       const id = parseInt(req.params.id, 10);
       const { status } = z.object({ status: z.number().int().min(0).max(1) }).parse(req.body);
       const updated = await storage.setSiteUserStatus(id, status);
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.patch("/api/admin/users/:id/mute", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const { muted } = z.object({ muted: z.boolean() }).parse(req.body);
+      const updated = await storage.setSiteUserMuted(id, muted);
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.patch("/api/admin/users/:id/admin", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const { isAdmin } = z.object({ isAdmin: z.boolean() }).parse(req.body);
+      const updated = await storage.setSiteUserAdmin(id, isAdmin);
       if (!updated) return res.status(404).json({ message: "User not found" });
       res.json(updated);
     } catch (err) {

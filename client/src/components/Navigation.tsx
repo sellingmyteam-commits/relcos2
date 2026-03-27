@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
+import { AdminPanel } from "@/components/AdminPanel";
 
 const navItems = [
   { href: "/", label: "Home", icon: Shield },
@@ -34,6 +35,8 @@ export function Navigation() {
   const [onlineCount, setOnlineCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -48,6 +51,23 @@ export function Navigation() {
       socket.off("online_users", handleOnlineUsers);
     };
   }, [location]);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const storedId = localStorage.getItem("siteUserId");
+      if (!storedId) return;
+      try {
+        const res = await fetch(`/api/user/status/id/${storedId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdmin(!!data.isAdmin);
+        }
+      } catch {}
+    };
+    checkAdmin();
+    const interval = setInterval(checkAdmin, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -76,6 +96,7 @@ export function Navigation() {
   const isGamePage = location !== "/" && location !== "/chat";
 
   return (
+    <>
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-white/10 h-16">
       <div className="container h-full mx-auto px-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 shrink-0">
@@ -188,8 +209,23 @@ export function Navigation() {
               {onlineCount} ONLINE
             </span>
           </div>
+
+          {isAdmin && (
+            <button
+              onClick={() => setShowAdminPanel(true)}
+              data-testid="button-admin-panel"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold font-mono tracking-widest uppercase hover:bg-cyan-500/20 hover:border-cyan-500/60 transition-all"
+              title="Open Admin Panel"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">ADMIN</span>
+            </button>
+          )}
         </div>
       </div>
     </nav>
+
+    {showAdminPanel && <AdminPanel onClose={() => setShowAdminPanel(false)} />}
+  </>
   );
 }

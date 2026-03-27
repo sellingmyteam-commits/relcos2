@@ -13,8 +13,11 @@ export interface IStorage {
   registerUser(username: string): Promise<{ user: SiteUser; created: boolean }>;
   getAllSiteUsers(): Promise<SiteUser[]>;
   getSiteUserById(id: number): Promise<SiteUser | null>;
+  getSiteUserByUsername(username: string): Promise<SiteUser | null>;
   updateSiteUsername(id: number, newUsername: string): Promise<SiteUser | null>;
   setSiteUserStatus(id: number, status: number): Promise<SiteUser | null>;
+  setSiteUserMuted(id: number, muted: boolean): Promise<SiteUser | null>;
+  setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null>;
   markConversationRead(currentUser: string, otherUser: string): Promise<void>;
   getUnreadCounts(username: string): Promise<Record<string, number>>;
   hideConversation(username: string, otherUser: string): Promise<void>;
@@ -258,6 +261,33 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db
       .update(siteUsers)
       .set({ status })
+      .where(eq(siteUsers.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async getSiteUserByUsername(username: string): Promise<SiteUser | null> {
+    const [user] = await db
+      .select()
+      .from(siteUsers)
+      .where(eq(siteUsers.username, username))
+      .limit(1);
+    return user || null;
+  }
+
+  async setSiteUserMuted(id: number, muted: boolean): Promise<SiteUser | null> {
+    const [updated] = await db
+      .update(siteUsers)
+      .set({ isMuted: muted })
+      .where(eq(siteUsers.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null> {
+    const [updated] = await db
+      .update(siteUsers)
+      .set({ isAdmin })
       .where(eq(siteUsers.id, id))
       .returning();
     return updated || null;
