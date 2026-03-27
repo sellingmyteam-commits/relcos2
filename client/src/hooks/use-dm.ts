@@ -48,3 +48,54 @@ export function useConversations(username: string) {
     refetchInterval: 3000,
   });
 }
+
+export function useUnreadCounts(username: string) {
+  return useQuery<Record<string, number>>({
+    queryKey: ["/api/dm/unread", username],
+    queryFn: async () => {
+      if (!username) return {};
+      const res = await fetch(`/api/dm/unread/${encodeURIComponent(username)}`);
+      if (!res.ok) throw new Error("Failed to fetch unread counts");
+      return res.json();
+    },
+    enabled: !!username,
+    refetchInterval: 3000,
+  });
+}
+
+export function useMarkConversationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ currentUser, otherUser }: { currentUser: string; otherUser: string }) => {
+      const res = await fetch("/api/dm/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentUser, otherUser }),
+      });
+      if (!res.ok) throw new Error("Failed to mark as read");
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dm/unread", variables.currentUser] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dm", variables.currentUser, variables.otherUser] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dm", variables.otherUser, variables.currentUser] });
+    },
+  });
+}
+
+export function useDeleteConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ username, otherUser }: { username: string; otherUser: string }) => {
+      const res = await fetch(`/api/dm/conversations/${encodeURIComponent(username)}/${encodeURIComponent(otherUser)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete conversation");
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dm/conversations", variables.username] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dm/unread", variables.username] });
+    },
+  });
+}

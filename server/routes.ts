@@ -86,6 +86,35 @@ export async function registerRoutes(
     res.json(latest);
   });
 
+  app.get("/api/dm/unread/:username", async (req, res) => {
+    const { username } = req.params;
+    const counts = await storage.getUnreadCounts(username);
+    res.json(counts);
+  });
+
+  app.post("/api/dm/read", async (req, res) => {
+    try {
+      const { currentUser, otherUser } = z.object({
+        currentUser: z.string().min(1),
+        otherUser: z.string().min(1),
+      }).parse(req.body);
+      await storage.markConversationRead(currentUser, otherUser);
+      res.json({ ok: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.delete("/api/dm/conversations/:username/:otherUser", async (req, res) => {
+    const { username, otherUser } = req.params;
+    await storage.hideConversation(username, otherUser);
+    res.json({ ok: true });
+  });
+
   app.get("/api/dm/:user1/:user2", async (req, res) => {
     const { user1, user2 } = req.params;
     const dms = await storage.getDirectMessages(user1, user2);

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useMessages, useCreateMessage } from "@/hooks/use-messages";
-import { useDirectMessages, useCreateDirectMessage, useConversations } from "@/hooks/use-dm";
+import { useDirectMessages, useCreateDirectMessage, useConversations, useUnreadCounts, useMarkConversationRead, useDeleteConversation } from "@/hooks/use-dm";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useQuery } from "@tanstack/react-query";
-import { Send, User, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Mail, Globe, ArrowLeft, Plus, X, ChevronDown, Wifi } from "lucide-react";
+import { Send, User, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Mail, Globe, ArrowLeft, Plus, X, ChevronDown, Wifi, Trash2, Check, CheckCheck } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
@@ -11,12 +11,13 @@ import { cn } from "@/lib/utils";
 
 type SidebarTab = "global" | "dm" | "online";
 
-function SidebarDMView({ username, initialChat }: { username: string; initialChat?: string | null }) {
+function SidebarDMView({ username, initialChat, onUnreadCountChange }: { username: string; initialChat?: string | null; onUnreadCountChange?: (total: number) => void }) {
   const [activeChat, setActiveChat] = useState<string | null>(initialChat ?? null);
   const [newRecipient, setNewRecipient] = useState("");
   const [showNewDm, setShowNewDm] = useState(false);
   const [dmInput, setDmInput] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dmScrollRef = useRef<HTMLDivElement>(null);
 
@@ -27,8 +28,22 @@ function SidebarDMView({ username, initialChat }: { username: string; initialCha
   const { data: conversations, isLoading: convsLoading } = useConversations(username);
   const { data: dmMessages, isLoading: dmsLoading } = useDirectMessages(username, activeChat || "");
   const { mutate: sendDm, isPending: dmPending } = useCreateDirectMessage();
+  const { data: unreadCounts } = useUnreadCounts(username);
+  const { mutate: markRead } = useMarkConversationRead();
+  const { mutate: deleteConv } = useDeleteConversation();
 
   const { data: allUsers } = useQuery<string[]>({ queryKey: ["/api/users"] });
+
+  const totalUnread = unreadCounts ? Object.values(unreadCounts).reduce((a, b) => a + b, 0) : 0;
+  useEffect(() => {
+    onUnreadCountChange?.(totalUnread);
+  }, [totalUnread, onUnreadCountChange]);
+
+  useEffect(() => {
+    if (activeChat && username) {
+      markRead({ currentUser: username, otherUser: activeChat });
+    }
+  }, [activeChat, username]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -63,7 +78,17 @@ function SidebarDMView({ username, initialChat }: { username: string; initialCha
     setShowNewDm(false);
   };
 
+  const handleDeleteConv = (user: string) => {
+    deleteConv({ username, otherUser: user });
+    setConfirmDelete(null);
+    if (activeChat === user) setActiveChat(null);
+  };
+
   if (activeChat) {
+    const myMessages = dmMessages?.filter(m => m.fromUser === username) ?? [];
+    const lastMyMsg = myMessages.length > 0 ? myMessages[myMessages.length - 1] : null;
+    const lastMsg = dmMessages && dmMessages.length > 0 ? dmMessages[dmMessages.length - 1] : null;
+
     return (
       <>
         <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2 bg-accent/5">
@@ -75,7 +100,34 @@ function SidebarDMView({ username, initialChat }: { username: string; initialCha
           </div>
           <span className="text-[10px] font-display font-bold text-white uppercase tracking-tight">{activeChat}</span>
           <span className="text-[8px] text-accent/60 font-mono ml-auto">PRIVATE</span>
+          <button
+            onClick={() => setConfirmDelete(activeChat)}
+            className="p-1 rounded hover:bg-red-500/10 transition-colors text-muted-foreground/40 hover:text-red-400"
+            data-testid="button-sidebar-dm-delete"
+            title="Delete conversation"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
         </div>
+
+        {confirmDelete === activeChat && (
+          <div className="mx-3 mt-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2">
+            <span className="text-[9px] text-red-400 flex-1">Delete this conversation?</span>
+            <button
+              onClick={() => handleDeleteConv(activeChat)}
+              className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-[9px] font-bold hover:bg-red-500/30 transition-colors"
+              data-testid="button-sidebar-dm-confirm-delete"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => setConfirmDelete(null)}
+              className="px-2 py-0.5 bg-white/5 text-muted-foreground rounded text-[9px] hover:bg-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
         <div ref={dmScrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 scroll-smooth min-h-0">
           {dmsLoading ? (
@@ -83,8 +135,11 @@ function SidebarDMView({ username, initialChat }: { username: string; initialCha
               <Loader2 className="w-4 h-4 animate-spin text-accent" />
             </div>
           ) : dmMessages && dmMessages.length > 0 ? (
-            dmMessages.map((msg) => {
+            dmMessages.map((msg, idx) => {
               const isMe = msg.fromUser === username;
+              const isLastMsg = idx === dmMessages.length - 1;
+              const isLastMyMsg = isMe && lastMyMsg?.id === msg.id;
+
               return (
                 <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                   <div className="flex items-baseline gap-1.5 mb-0.5">
@@ -102,6 +157,23 @@ function SidebarDMView({ username, initialChat }: { username: string; initialCha
                   }`}>
                     {msg.content}
                   </div>
+                  {isLastMyMsg && (
+                    <div className="flex items-center gap-1 mt-0.5" data-testid={`text-read-receipt-${msg.id}`}>
+                      {msg.isRead ? (
+                        <>
+                          <CheckCheck className="w-2.5 h-2.5 text-accent/60" />
+                          <span className="text-[8px] text-accent/60 font-mono">
+                            Read{msg.readAt ? ` at ${format(new Date(msg.readAt), "h:mm a")}` : ""}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-2.5 h-2.5 text-muted-foreground/40" />
+                          <span className="text-[8px] text-muted-foreground/40 font-mono">Delivered</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -154,20 +226,66 @@ function SidebarDMView({ username, initialChat }: { username: string; initialCha
       <div className="flex-1 overflow-y-auto min-h-0">
         {conversations && conversations.length > 0 && !showNewDm ? (
           <div className="p-1.5">
-            {conversations.map((user) => (
-              <button
-                key={user}
-                onClick={() => setActiveChat(user)}
-                data-testid={`button-sidebar-dm-${user}`}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors text-left group"
-              >
-                <div className="w-6 h-6 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:border-accent/40 transition-colors">
-                  <User className="w-3 h-3 text-accent" />
+            {conversations.map((user) => {
+              const unread = unreadCounts?.[user] ?? 0;
+              return (
+                <div key={user} className="relative group flex items-center">
+                  <button
+                    onClick={() => setActiveChat(user)}
+                    data-testid={`button-sidebar-dm-${user}`}
+                    className={cn(
+                      "flex-1 flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors text-left",
+                      unread > 0 && "bg-accent/5"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-6 h-6 rounded-full bg-accent/10 border flex items-center justify-center transition-colors",
+                      unread > 0 ? "border-accent/60" : "border-accent/20 group-hover:border-accent/40"
+                    )}>
+                      <User className="w-3 h-3 text-accent" />
+                    </div>
+                    <span className={cn("text-xs font-medium", unread > 0 ? "text-white font-bold" : "text-white")}>{user}</span>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      {unread > 0 ? (
+                        <span
+                          className="min-w-[16px] h-4 rounded-full bg-accent text-accent-foreground text-[8px] font-bold flex items-center justify-center px-1"
+                          data-testid={`badge-unread-${user}`}
+                        >
+                          {unread}
+                        </span>
+                      ) : (
+                        <Mail className="w-3 h-3 text-muted-foreground/20 group-hover:text-accent/40 transition-colors" />
+                      )}
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(confirmDelete === user ? null : user)}
+                    className="absolute right-1 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/10 transition-all text-muted-foreground/40 hover:text-red-400"
+                    data-testid={`button-sidebar-conv-delete-${user}`}
+                    title="Delete conversation"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                  {confirmDelete === user && (
+                    <div className="absolute right-0 top-full z-10 mt-1 p-2 rounded-lg bg-card/95 border border-red-500/20 shadow-xl flex items-center gap-2 whitespace-nowrap">
+                      <span className="text-[9px] text-red-400">Delete for you?</span>
+                      <button
+                        onClick={() => handleDeleteConv(user)}
+                        className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-[9px] font-bold hover:bg-red-500/30 transition-colors"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="px-2 py-0.5 bg-white/5 text-muted-foreground rounded text-[9px] hover:bg-white/10 transition-colors"
+                      >
+                        No
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <span className="text-xs font-medium text-white">{user}</span>
-                <Mail className="w-3 h-3 text-muted-foreground/20 group-hover:text-accent/40 transition-colors ml-auto" />
-              </button>
-            ))}
+              );
+            })}
           </div>
         ) : !showNewDm ? (
           <div className="flex flex-col items-center justify-center py-10 text-muted-foreground/50 gap-2">
@@ -321,6 +439,7 @@ export function SidebarChat() {
   const [input, setInput] = useState("");
   const [activeTab, setActiveTab] = useState<SidebarTab>("global");
   const [pendingDmUser, setPendingDmUser] = useState<string | null>(null);
+  const [totalUnread, setTotalUnread] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: messages, isLoading } = useMessages();
@@ -392,7 +511,7 @@ export function SidebarChat() {
                 onClick={() => setActiveTab("dm")}
                 data-testid="button-sidebar-tab-dm"
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all duration-200",
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all duration-200 relative",
                   activeTab === "dm"
                     ? "bg-accent/15 text-accent border border-accent/30"
                     : "text-muted-foreground hover:text-white border border-transparent"
@@ -400,6 +519,14 @@ export function SidebarChat() {
               >
                 <Mail className="w-3 h-3" />
                 <span>DMs</span>
+                {totalUnread > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 min-w-[14px] h-3.5 rounded-full bg-accent text-accent-foreground text-[7px] font-bold flex items-center justify-center px-0.5 animate-pulse"
+                    data-testid="badge-dm-tab-unread"
+                  >
+                    {totalUnread}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab("online")}
@@ -496,7 +623,7 @@ export function SidebarChat() {
 
         {activeTab === "dm" && (
           username
-            ? <SidebarDMView username={username} initialChat={pendingDmUser} />
+            ? <SidebarDMView username={username} initialChat={pendingDmUser} onUnreadCountChange={setTotalUnread} />
             : (
               <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/50 gap-2 p-4">
                 <Mail className="w-8 h-8 opacity-20" />

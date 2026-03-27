@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -15,12 +15,21 @@ export const directMessages = pgTable("direct_messages", {
   toUser: text("to_user").notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
 });
 
 export const siteUsers = pgTable("site_users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   status: integer("status").notNull().default(1),
+});
+
+export const dmConversationHidden = pgTable("dm_conversation_hidden", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull(),
+  otherUser: text("other_user").notNull(),
+  hiddenBefore: timestamp("hidden_before").defaultNow(),
 });
 
 export const insertMessageSchema = createInsertSchema(messages).pick({
@@ -44,3 +53,4 @@ export type DirectMessage = typeof directMessages.$inferSelect;
 export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
 export type SiteUser = typeof siteUsers.$inferSelect;
 export type InsertSiteUser = z.infer<typeof insertSiteUserSchema>;
+export type DmConversationHidden = typeof dmConversationHidden.$inferSelect;

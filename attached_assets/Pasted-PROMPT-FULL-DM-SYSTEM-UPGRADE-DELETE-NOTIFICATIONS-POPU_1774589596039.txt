@@ -1,0 +1,96 @@
+PROMPT: FULL DM SYSTEM UPGRADE (DELETE + NOTIFICATIONS + POPUP + READ RECEIPTS)
+Update my existing Direct Messaging (DM) system with the following features:
+
+Conversation Deletion
+Allow users to delete entire DM conversations (threads).
+Do NOT allow deleting individual messages.
+Deleting a conversation should:
+Remove it only from the current user’s view
+NOT delete it for the other user
+
+Unread Message Tracking
+Track unread DM messages per conversation per user.
+Store unread counts in the database (persistent).
+
+Notification Numbers
+Navbar (Comms Button)
+Show a pulsing badge with total unread DM count.
+Example: (5)
+Updates live when messages are read.
+DM List (Per User)
+Show unread count next to each user.
+Example:
+Bob (3)
+Reset to 0 when that conversation is opened.
+
+Offline Message Popup
+Trigger:
+When user loads site or logs in
+ONLY if totalUnreadDMs > 0
+Content:
+One sender:
+"Bob messaged you 5 times while you were offline"
+Multiple senders:
+"You have 8 unread messages from 3 people"
+
+Popup Buttons
+Go To DMs
+Navigates to DM page
+Closes popup
+Dismiss
+Closes popup
+Does NOT mark messages as read
+
+Popup Rules
+Show only once per session/login
+Use localStorage or session flag
+Do NOT reset unread counts
+
+Read Receipts (Like iMessage)
+Message States:
+sent → message created
+delivered → recipient received it (optional)
+read → recipient opened the conversation
+
+Read Behavior
+When a user opens a DM conversation:
+Mark ALL unread messages in that conversation as read
+Update unread counts to 0
+
+UI (Sender Side)
+Show read status under or beside messages:
+For latest message(s):
+If not opened yet:
+Show: "Delivered" (or nothing if simpler)
+When recipient opens chat:
+Show: "Read"
+
+Optional Enhancement
+Show timestamp:
+"Read at 3:42 PM"
+Only show read receipt on the most recent message(s), not every message
+
+UI Requirements
+Popup: centered modal with dark overlay
+Navbar badge: rounded with pulsing animation
+DM list:
+Sorted by latest message
+Highlight users with unread messages
+Read receipts:
+Small subtle text under last message
+
+Backend Logic
+Store:
+Messages (with read status and timestamp)
+Conversations
+Unread counts per user
+When user opens chat:
+Update all messages to read = true
+Update unread counts
+Persist everything in database
+
+Rules
+Do NOT apply to global chat
+Do NOT allow deleting individual messages
+ONLY affect DM system
+
