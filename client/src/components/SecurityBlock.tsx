@@ -5,6 +5,7 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [dismissed, setDismissed] = useState(false);
+  const [accountClicks, setAccountClicks] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -16,15 +17,18 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
   }, [dismissed]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowModal(true), 5000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
     if (showModal) {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [showModal]);
+
+  const handleAccountClick = () => {
+    const next = accountClicks + 1;
+    setAccountClicks(next);
+    if (next >= 5) {
+      setShowModal(true);
+    }
+  };
 
   const handleEnter = () => {
     if (code === "2048") {
@@ -75,7 +79,7 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
           }}>
             Science Daily
           </div>
-          <div style={{ display: "flex", gap: "32px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
             {["Home", "News", "About", "Contact"].map((item) => (
               <a
                 key={item}
@@ -95,6 +99,24 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
                 {item}
               </a>
             ))}
+            <button
+              onClick={handleAccountClick}
+              data-testid="button-account"
+              style={{
+                backgroundColor: "#111",
+                color: "#fff",
+                border: "none",
+                borderRadius: "5px",
+                padding: "7px 16px",
+                fontSize: "14px",
+                fontWeight: "600",
+                fontFamily: "'Arial', sans-serif",
+                cursor: "pointer",
+                letterSpacing: "0.03em",
+              }}
+            >
+              Account
+            </button>
           </div>
         </div>
       </nav>
@@ -431,6 +453,7 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
                 width: "100%",
                 padding: "11px 14px",
                 fontSize: "16px",
+                color: "#111",
                 border: error ? "1.5px solid #e53e3e" : "1.5px solid #ccc",
                 borderRadius: "6px",
                 outline: "none",
@@ -439,6 +462,7 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
                 textAlign: "center",
                 letterSpacing: "0.1em",
                 transition: "border-color 0.2s",
+                background: "#fff",
               }}
             />
 
