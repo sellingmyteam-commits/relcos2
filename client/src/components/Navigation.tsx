@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
-import { useUnreadCounts } from "@/hooks/use-dm";
 
 const navItems = [
   { href: "/", label: "Home", icon: Shield },
@@ -37,10 +36,6 @@ export function Navigation() {
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const username = localStorage.getItem("chatUsername") || "";
-  const { data: unreadCounts } = useUnreadCounts(username);
-  const totalUnread = unreadCounts ? Object.values(unreadCounts).reduce((a, b) => a + b, 0) : 0;
 
   useEffect(() => {
     const socket = getSharedSocket();
@@ -94,21 +89,13 @@ export function Navigation() {
           </Link>
           <Link href="/chat">
             <div className={cn(
-              "relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-300 group",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-300 group",
               location === "/chat"
                 ? "bg-secondary/10 text-secondary"
                 : "text-muted-foreground hover:text-white hover:bg-white/5"
             )} data-testid="link-comms">
               <MessageSquare className="w-4 h-4 group-hover:scale-110 transition-transform" />
               <span className="text-xs font-display font-bold uppercase tracking-tight">COMMS</span>
-              {totalUnread > 0 && (
-                <span
-                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-accent text-accent-foreground text-[9px] font-bold flex items-center justify-center px-1 animate-pulse shadow-lg shadow-accent/40"
-                  data-testid="badge-nav-dm-unread"
-                >
-                  {totalUnread}
-                </span>
-              )}
             </div>
           </Link>
         </div>
