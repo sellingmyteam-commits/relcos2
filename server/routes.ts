@@ -119,6 +119,8 @@ export async function registerRoutes(
     const { user1, user2 } = req.params;
     const dms = await storage.getDirectMessages(user1, user2);
     res.json(dms);
+    // Auto-mark messages from user2 to user1 as read (fire-and-forget, non-blocking)
+    storage.markConversationRead(user1, user2).catch(() => {});
   });
 
   app.post(api.dm.create.path, async (req, res) => {

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useMessages, useCreateMessage } from "@/hooks/use-messages";
-import { useDirectMessages, useCreateDirectMessage, useConversations, useUnreadCounts, useMarkConversationRead, useDeleteConversation } from "@/hooks/use-dm";
+import { useDirectMessages, useCreateDirectMessage, useConversations, useUnreadCounts, useDeleteConversation } from "@/hooks/use-dm";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send, User, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Mail, Globe, ArrowLeft, Plus, X, ChevronDown, Wifi, Trash2, Check, CheckCheck } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,9 +27,9 @@ function SidebarDMView({ username, initialChat, onUnreadCountChange }: { usernam
 
   const { data: conversations, isLoading: convsLoading } = useConversations(username);
   const { data: dmMessages, isLoading: dmsLoading } = useDirectMessages(username, activeChat || "");
+  const queryClient = useQueryClient();
   const { mutate: sendDm, isPending: dmPending } = useCreateDirectMessage();
   const { data: unreadCounts } = useUnreadCounts(username);
-  const { mutate: markRead } = useMarkConversationRead();
   const { mutate: deleteConv } = useDeleteConversation();
 
   const { data: allUsers } = useQuery<string[]>({ queryKey: ["/api/users"] });
@@ -39,15 +39,12 @@ function SidebarDMView({ username, initialChat, onUnreadCountChange }: { usernam
     onUnreadCountChange?.(totalUnread);
   }, [totalUnread, onUnreadCountChange]);
 
+  // Server auto-marks messages as read on GET /api/dm/:user1/:user2,
+  // so we only need to invalidate the unread count cache when opening a conversation.
   useEffect(() => {
-    if (!activeChat || !username || !dmMessages) return;
-    const hasUnread = dmMessages.some(
-      (m) => m.fromUser === activeChat && (m.isRead === false || m.isRead === null)
-    );
-    if (hasUnread) {
-      markRead({ currentUser: username, otherUser: activeChat });
-    }
-  }, [activeChat, username, dmMessages]);
+    if (!activeChat || !username) return;
+    queryClient.invalidateQueries({ queryKey: ["/api/dm/unread", username] });
+  }, [activeChat, username]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
