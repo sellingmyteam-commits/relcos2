@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { Link } from "wouter";
-import { Gamepad2, MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail } from "lucide-react";
+import { Gamepad2, MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail, Snowflake, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,11 @@ export default function Home() {
     { href: "/1v1-lol", label: "1v1.lol", desc: "Build, edit and eliminate your opponents.", icon: Crosshair, color: "purple" },
     { href: "/counter-strike", label: "Counter Strike", desc: "Tactical FPS — eliminate the enemy team.", icon: Target, color: "pink" },
     { href: "/bikers-republic", label: "Bikers Republic", desc: "MX offroad bike racing madness.", icon: Skull, color: "primary" },
-    { href: "/kart-bros", label: "Kart Bros", desc: "Wild kart racing chaos with friends.", icon: Square, color: "purple" },
+    { href: "/10-minutes-till-dawn", label: "10 Min Till Dawn", desc: "Survive waves of monsters until dawn.", icon: Clock, color: "purple" },
+    { href: "/baby-sniper-vietnam", label: "Baby Sniper Vietnam", desc: "Tactical sniper action game.", icon: Sword, color: "pink" },
+    { href: "/chess", label: "Chess Classic", desc: "The timeless game of strategy.", icon: Box, color: "primary" },
+    { href: "/drive-mad", label: "Drive Mad", desc: "Crazy physics-based driving action.", icon: Square, color: "purple" },
+    { href: "/snowball-io", label: "Snowball.io", desc: "Throw snowballs and knock out opponents.", icon: Snowflake, color: "pink" },
     { href: "/quake3", label: "Quake 3", desc: "Classic FPS arena combat.", icon: Bomb, color: "purple" },
     { href: "/super-hot", label: "Super Hot", desc: "Time moves only when you move.", icon: Flame, color: "pink" },
     { href: "/eaglercraft", label: "Eagler Craft X", desc: "Minecraft in your browser.", icon: Cuboid, color: "primary" },

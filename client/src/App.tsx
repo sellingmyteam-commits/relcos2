@@ -26,7 +26,11 @@ import TombOfTheMask from "@/pages/TombOfTheMask";
 import OneLoveLol from "@/pages/OneLoveLol";
 import BikersRepublic from "@/pages/BikersRepublic";
 import CounterStrike from "@/pages/CounterStrike";
-import KartBros from "@/pages/KartBros";
+import TenMinutesTillDawn from "@/pages/TenMinutesTillDawn";
+import BabySniperVietnam from "@/pages/BabySniperVietnam";
+import Chess from "@/pages/Chess";
+import DriveMad from "@/pages/DriveMad";
+import SnowballIO from "@/pages/SnowballIO";
 import Chat from "@/pages/Chat";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
@@ -48,7 +52,11 @@ function Router() {
       <Route path="/1v1-lol" component={OneLoveLol} />
       <Route path="/bikers-republic" component={BikersRepublic} />
       <Route path="/counter-strike" component={CounterStrike} />
-      <Route path="/kart-bros" component={KartBros} />
+      <Route path="/10-minutes-till-dawn" component={TenMinutesTillDawn} />
+      <Route path="/baby-sniper-vietnam" component={BabySniperVietnam} />
+      <Route path="/chess" component={Chess} />
+      <Route path="/drive-mad" component={DriveMad} />
+      <Route path="/snowball-io" component={SnowballIO} />
       <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
       <Route path="/rocket-soccer" component={RocketSoccer} />
       <Route path="/retro-bowl" component={RetroBowl} />

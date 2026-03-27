@@ -104,6 +104,9 @@ function DMView({ username, onlineUsers, initialChat }: { username: string; onli
           ) : dmMessages && dmMessages.length > 0 ? (
             dmMessages.map((msg) => {
               const isMe = msg.fromUser === username;
+              const readReceipt = msg.isRead
+                ? `Read ${msg.readAt ? format(new Date(msg.readAt), "HH:mm") : ""}`
+                : "Delivered";
               return (
                 <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                   <div className="flex items-baseline gap-2 mb-1">
@@ -121,6 +124,9 @@ function DMView({ username, onlineUsers, initialChat }: { username: string; onli
                   }`}>
                     {msg.content}
                   </div>
+                  <span className="text-[9px] text-muted-foreground/60 font-mono mt-1 px-1">
+                    {readReceipt}
+                  </span>
                 </div>
               );
             })
