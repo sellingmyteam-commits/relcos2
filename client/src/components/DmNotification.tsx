@@ -86,8 +86,20 @@ export function DmNotification() {
   }, [toastVisible, dismissToast]);
 
   const dismissOffline = () => setOfflineVisible(false);
-  const goToDMs = () => {
+  const goToDMs = async () => {
     dismissOffline();
+    if (offlineSummary) {
+      const username = localStorage.getItem("chatUsername") || "";
+      for (const sender of offlineSummary.senders) {
+        try {
+          await fetch("/api/dm/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ currentUser: username, otherUser: sender }),
+          });
+        } catch {}
+      }
+    }
     navigate("/chat");
   };
   const openDMFromToast = () => {

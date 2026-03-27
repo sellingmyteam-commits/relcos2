@@ -40,10 +40,14 @@ function SidebarDMView({ username, initialChat, onUnreadCountChange }: { usernam
   }, [totalUnread, onUnreadCountChange]);
 
   useEffect(() => {
-    if (activeChat && username) {
+    if (!activeChat || !username || !dmMessages) return;
+    const hasUnread = dmMessages.some(
+      (m) => m.fromUser === activeChat && (m.isRead === false || m.isRead === null)
+    );
+    if (hasUnread) {
       markRead({ currentUser: username, otherUser: activeChat });
     }
-  }, [activeChat, username]);
+  }, [activeChat, username, dmMessages]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

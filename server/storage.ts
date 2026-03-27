@@ -162,7 +162,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(directMessages.fromUser, otherUser),
           eq(directMessages.toUser, currentUser),
-          eq(directMessages.isRead, false)
+          or(eq(directMessages.isRead, false), isNull(directMessages.isRead))
         )
       );
   }
