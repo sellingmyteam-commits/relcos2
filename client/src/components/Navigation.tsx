@@ -8,9 +8,9 @@ import { AdminPanel } from "@/components/AdminPanel";
 
 const navItems = [
   { href: "/", label: "Home", icon: Shield },
-  { href: "/eaglercraft", label: "Eaglercraft", icon: Box },
-  { href: "/shellshockers", label: "Shellshockers", icon: Egg },
   { href: "/geometry-dash", label: "Geometry Dash", icon: Zap },
+  { href: "/shellshockers", label: "Shellshockers", icon: Egg },
+  { href: "/eaglercraft", label: "Eaglercraft", icon: Box },
   { href: "/motox3m", label: "Moto X3M", icon: Bike },
   { href: "/stickman-merge", label: "Stickman Merge", icon: Users },
   { href: "/slope", label: "Slope", icon: Circle },

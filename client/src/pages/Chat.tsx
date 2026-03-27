@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { useMessages, useCreateMessage } from "@/hooks/use-messages";
-import { useDirectMessages, useCreateDirectMessage, useConversations } from "@/hooks/use-dm";
+import { useDirectMessages, useCreateDirectMessage, useConversations, useDeleteConversation } from "@/hooks/use-dm";
 import { useQuery } from "@tanstack/react-query";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import { Send, User, Loader2, MessageSquare, Mail, ArrowLeft, Plus, X, Globe, Users, Wifi, Ban } from "lucide-react";
+import { Send, User, Loader2, MessageSquare, Mail, ArrowLeft, Plus, X, Globe, Users, Wifi, Ban, Trash2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -31,12 +31,14 @@ function DMView({ username, onlineUsers, initialChat }: { username: string; onli
   const [showNewDm, setShowNewDm] = useState(false);
   const [dmInput, setDmInput] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dmScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations, isLoading: convsLoading } = useConversations(username);
   const { data: dmMessages, isLoading: dmsLoading } = useDirectMessages(username, activeChat || "");
   const { mutate: sendDm, isPending: dmPending } = useCreateDirectMessage();
+  const { mutate: deleteConversation, isPending: deletePending } = useDeleteConversation();
   const { data: allUsers } = useQuery<string[]>({ queryKey: ["/api/users"] });
 
   useEffect(() => {
@@ -253,25 +255,34 @@ function DMView({ username, onlineUsers, initialChat }: { username: string; onli
             {conversations.map((user) => {
               const isOnline = onlineUsers.includes(user);
               return (
-                <button
-                  key={user}
-                  onClick={() => setActiveChat(user)}
-                  data-testid={`button-dm-conversation-${user}`}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl hover:bg-white/5 transition-colors text-left group"
-                >
-                  <div className="w-9 h-9 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center relative group-hover:border-accent/40 transition-colors">
-                    <User className="w-4 h-4 text-accent" />
-                    <span className={cn(
-                      "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card",
-                      isOnline ? "bg-green-400" : "bg-muted-foreground/40"
-                    )} />
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-sm font-medium text-white">{user}</span>
-                    <p className="text-[10px] text-muted-foreground font-mono">Click to open</p>
-                  </div>
-                  <OnlineBadge online={isOnline} />
-                </button>
+                <div key={user} className="flex items-center gap-1 group rounded-xl hover:bg-white/5 transition-colors">
+                  <button
+                    onClick={() => setActiveChat(user)}
+                    data-testid={`button-dm-conversation-${user}`}
+                    className="flex-1 flex items-center gap-3 px-4 py-3.5 text-left"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center relative group-hover:border-accent/40 transition-colors">
+                      <User className="w-4 h-4 text-accent" />
+                      <span className={cn(
+                        "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card",
+                        isOnline ? "bg-green-400" : "bg-muted-foreground/40"
+                      )} />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-white">{user}</span>
+                      <p className="text-[10px] text-muted-foreground font-mono">Click to open</p>
+                    </div>
+                    <OnlineBadge online={isOnline} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteConfirmUser(user); }}
+                    data-testid={`button-delete-dm-${user}`}
+                    className="opacity-0 group-hover:opacity-100 mr-3 p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    title="Delete conversation"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -283,6 +294,50 @@ function DMView({ username, onlineUsers, initialChat }: { username: string; onli
           </div>
         )}
       </div>
+
+      {deleteConfirmUser && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-6 px-8 max-w-sm w-full text-center">
+            <div className="w-16 h-16 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-red-400" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-white font-display font-black text-xl uppercase tracking-widest">
+                Delete Conversation?
+              </p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Do you want to delete your conversation with{" "}
+                <span className="text-white font-semibold">{deleteConfirmUser}</span>?
+              </p>
+              <p className="text-muted-foreground/60 text-xs font-mono">
+                The other user will still keep the messages.
+              </p>
+            </div>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => setDeleteConfirmUser(null)}
+                data-testid="button-cancel-delete-dm"
+                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-bold text-muted-foreground hover:bg-white/10 hover:text-white transition-all"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={() => {
+                  deleteConversation(
+                    { username, otherUser: deleteConfirmUser },
+                    { onSuccess: () => setDeleteConfirmUser(null) }
+                  );
+                }}
+                disabled={deletePending}
+                data-testid="button-confirm-delete-dm"
+                className="flex-1 px-4 py-3 rounded-xl bg-red-500/15 border border-red-500/30 text-sm font-bold text-red-400 hover:bg-red-500/25 hover:border-red-500/50 disabled:opacity-50 transition-all"
+              >
+                {deletePending ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "DELETE"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
