@@ -4,7 +4,7 @@ import { useMessages, useCreateMessage } from "@/hooks/use-messages";
 import { useDirectMessages, useCreateDirectMessage, useConversations } from "@/hooks/use-dm";
 import { useQuery } from "@tanstack/react-query";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import { Send, User, Loader2, MessageSquare, Mail, ArrowLeft, Plus, X, Globe, Users, Wifi } from "lucide-react";
+import { Send, User, Loader2, MessageSquare, Mail, ArrowLeft, Plus, X, Globe, Users, Wifi, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -334,11 +334,29 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const dmParam = new URLSearchParams(window.location.search).get("dm") || undefined;
   const [activeTab, setActiveTab] = useState<Tab>(dmParam ? "dm" : "global");
+  const [isMuted, setIsMuted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const onlineUsers = useOnlineUsers(username);
   const { data: messages, isLoading } = useMessages();
   const { mutate: sendMessage, isPending } = useCreateMessage();
+
+  useEffect(() => {
+    const checkMuted = async () => {
+      const storedId = localStorage.getItem("siteUserId");
+      if (!storedId) return;
+      try {
+        const res = await fetch(`/api/user/status/id/${storedId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsMuted(!!data.isMuted);
+        }
+      } catch {}
+    };
+    checkMuted();
+    const interval = setInterval(checkMuted, 8000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -412,6 +430,23 @@ export default function Chat() {
                   <Globe className="w-4 h-4 text-secondary" />
                   <span className="text-xs font-display font-bold text-secondary uppercase tracking-wider">EVERYONE CAN SEE THESE MESSAGES</span>
                 </div>
+
+                {isMuted && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl overflow-hidden">
+                    <div className="absolute inset-0 backdrop-blur-md bg-black/60" />
+                    <div className="relative z-10 flex flex-col items-center gap-4 px-8 text-center">
+                      <div className="w-16 h-16 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+                        <Ban className="w-8 h-8 text-red-500" />
+                      </div>
+                      <p className="text-red-500 font-display font-black text-xl uppercase tracking-widest">
+                        You have been muted
+                      </p>
+                      <p className="text-red-400/70 text-xs font-mono max-w-xs">
+                        You cannot send messages in global chat. Contact an admin if you think this is a mistake.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth">
                   {isLoading ? (
