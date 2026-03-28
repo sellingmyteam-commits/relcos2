@@ -1,5 +1,5 @@
 const SAVE_VERSION = "2.0";
-const GAME_SAVE_VERSION = "1.0";
+const ALL_GAMES_SAVE_VERSION = "3.0";
 const SETTINGS_KEY = "relcos_settings";
 
 const SESSION_KEYS = new Set([
@@ -402,16 +402,19 @@ export async function resetAllGameData(): Promise<void> {
   await clearAllIndexedDB();
 }
 
-// ── Per-game save API ─────────────────────────────────────────────────────────
+// ── All-games unified save API ────────────────────────────────────────────────
 
-export interface GameSaveFile {
+export interface GameSection {
+  localStorage: Record<string, string>;
+  indexedDB: Record<string, IDBDatabaseDump>;
+}
+
+export interface AllGamesSave {
   version: string;
   exportedAt: string;
   appName: string;
-  gameId: string;
-  gameLabel: string;
-  gameData: Record<string, string>;
-  indexedDB: Record<string, IDBDatabaseDump>;
+  settings: GameSettings;
+  games: Record<string, GameSection>;
 }
 
 function lsKeyMatchesTerms(key: string, terms: string[]): boolean {
@@ -424,50 +427,200 @@ function dbNameMatchesTerms(name: string, terms: string[]): boolean {
   return terms.some((t) => lower.includes(t.toLowerCase()));
 }
 
-export async function exportGameSave(
-  gameId: string,
-  gameLabel: string,
-  lsTerms: string[],
-  idbTerms?: string[]
-): Promise<GameSaveFile> {
-  const gameData: Record<string, string> = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || SESSION_KEYS.has(key) || key === SETTINGS_KEY) continue;
-    if (lsTerms.length === 0 || lsKeyMatchesTerms(key, lsTerms)) {
-      const value = localStorage.getItem(key);
-      if (value !== null) gameData[key] = value;
+export async function exportAllGamesSave(
+  gameList: Array<{ id: string; lsTerms?: string[]; idbTerms?: string[] }>
+): Promise<AllGamesSave> {
+  const settings = getSettings();
+
+  // Collect all IndexedDB databases once
+  let allDbs: IDBDatabaseInfo[] = [];
+  try {
+    if (indexedDB.databases) allDbs = await indexedDB.databases();
+  } catch {}
+
+  // Track which ls keys / db names have been claimed by a game
+  const claimedLsKeys = new Set<string>();
+  const claimedDbNames = new Set<string>();
+
+  const games: Record<string, GameSection> = {};
+
+  for (const game of gameList) {
+    const lsTerms = game.lsTerms ?? [];
+    const idbTerms = game.idbTerms ?? [];
+
+    const lsData: Record<string, string> = {};
+    if (lsTerms.length > 0) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || SESSION_KEYS.has(key) || key === SETTINGS_KEY) continue;
+        if (lsKeyMatchesTerms(key, lsTerms)) {
+          const value = localStorage.getItem(key);
+          if (value !== null) {
+            lsData[key] = value;
+            claimedLsKeys.add(key);
+          }
+        }
+      }
+    }
+
+    const idbData: Record<string, IDBDatabaseDump> = {};
+    if (idbTerms.length > 0) {
+      await Promise.all(
+        allDbs.map(async (info) => {
+          if (!info.name) return;
+          if (!dbNameMatchesTerms(info.name, idbTerms)) return;
+          const dump = await dumpDatabase(info.name);
+          if (dump && Object.keys(dump.stores).length > 0) {
+            idbData[info.name] = dump;
+            claimedDbNames.add(info.name);
+          }
+        })
+      );
+    }
+
+    if (Object.keys(lsData).length > 0 || Object.keys(idbData).length > 0) {
+      games[game.id] = { localStorage: lsData, indexedDB: idbData };
     }
   }
 
-  const idbData: Record<string, IDBDatabaseDump> = {};
-  if (idbTerms && idbTerms.length > 0) {
-    try {
-      if (indexedDB.databases) {
-        const dbs = await indexedDB.databases();
-        await Promise.all(
-          dbs.map(async (info) => {
-            if (!info.name) return;
-            if (!dbNameMatchesTerms(info.name, idbTerms)) return;
-            const dump = await dumpDatabase(info.name);
-            if (dump && Object.keys(dump.stores).length > 0) {
-              idbData[info.name] = dump;
-            }
-          })
-        );
+  // Capture any unclaimed localStorage entries (generic game data)
+  const unclaimedLs: Record<string, string> = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || SESSION_KEYS.has(key) || key === SETTINGS_KEY) continue;
+    if (!claimedLsKeys.has(key)) {
+      const value = localStorage.getItem(key);
+      if (value !== null) unclaimedLs[key] = value;
+    }
+  }
+
+  // Capture any unclaimed IndexedDB databases
+  const unclaimedIdb: Record<string, IDBDatabaseDump> = {};
+  await Promise.all(
+    allDbs.map(async (info) => {
+      if (!info.name || claimedDbNames.has(info.name)) return;
+      const dump = await dumpDatabase(info.name);
+      if (dump && Object.keys(dump.stores).length > 0) {
+        unclaimedIdb[info.name] = dump;
       }
-    } catch {}
+    })
+  );
+
+  if (Object.keys(unclaimedLs).length > 0 || Object.keys(unclaimedIdb).length > 0) {
+    games["_other"] = { localStorage: unclaimedLs, indexedDB: unclaimedIdb };
   }
 
   return {
-    version: GAME_SAVE_VERSION,
+    version: ALL_GAMES_SAVE_VERSION,
     exportedAt: new Date().toISOString(),
     appName: "RELC.OS",
-    gameId,
-    gameLabel,
-    gameData,
-    indexedDB: idbData,
+    settings,
+    games,
   };
+}
+
+function triggerDownload(json: string, filename: string): void {
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadAllGamesSave(
+  gameList: Array<{ id: string; lsTerms?: string[]; idbTerms?: string[] }>
+): Promise<{ gameCount: number }> {
+  const save = await exportAllGamesSave(gameList);
+  const gameCount = Object.keys(save.games).filter((k) => k !== "_other").length;
+  const json = JSON.stringify(save, null, 2);
+  triggerDownload(json, `all-games-save-${new Date().toISOString().slice(0, 10)}.json`);
+  return { gameCount };
+}
+
+function isAllGamesSave(obj: Record<string, unknown>): obj is AllGamesSave {
+  return (
+    obj.appName === "RELC.OS" &&
+    typeof obj.version === "string" &&
+    obj.version.startsWith("3") &&
+    obj.games !== null &&
+    typeof obj.games === "object"
+  );
+}
+
+function isLegacySave(obj: Record<string, unknown>): obj is SaveFile {
+  return (
+    obj.appName === "RELC.OS" &&
+    typeof obj.gameData === "object" &&
+    obj.gameData !== null
+  );
+}
+
+export async function importAllGamesSave(jsonText: string): Promise<ImportResult> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    return { success: false, error: "Invalid JSON — the file could not be parsed." };
+  }
+
+  if (!parsed || typeof parsed !== "object") {
+    return { success: false, error: "This doesn't look like a valid save file." };
+  }
+
+  const obj = parsed as Record<string, unknown>;
+
+  if (obj.appName !== "RELC.OS") {
+    return { success: false, error: "This save file is from a different app." };
+  }
+
+  try {
+    // Handle new v3 all-games format
+    if (isAllGamesSave(obj)) {
+      const save = obj as AllGamesSave;
+      let lsCount = 0;
+      let idbCount = 0;
+
+      for (const section of Object.values(save.games)) {
+        for (const [key, value] of Object.entries(section.localStorage)) {
+          if (SESSION_KEYS.has(key)) continue;
+          localStorage.setItem(key, value);
+          lsCount++;
+        }
+        const idbData = section.indexedDB ?? {};
+        await restoreIndexedDB(idbData);
+        idbCount += Object.keys(idbData).length;
+      }
+
+      if (save.settings) saveSettings(save.settings);
+
+      return { success: true, lsCount, idbCount };
+    }
+
+    // Handle legacy v2 flat format
+    if (isLegacySave(obj)) {
+      const save = obj as SaveFile;
+      for (const [key, value] of Object.entries(save.gameData)) {
+        if (SESSION_KEYS.has(key)) continue;
+        localStorage.setItem(key, value);
+      }
+      if (save.settings) saveSettings(save.settings);
+      const idbData = save.indexedDB ?? {};
+      await restoreIndexedDB(idbData);
+      return {
+        success: true,
+        lsCount: Object.keys(save.gameData).length,
+        idbCount: Object.keys(idbData).length,
+      };
+    }
+
+    return { success: false, error: "Unrecognised save file format." };
+  } catch (e) {
+    return { success: false, error: "Failed to restore data: " + String(e) };
+  }
 }
 
 export async function downloadGameSave(
@@ -476,64 +629,39 @@ export async function downloadGameSave(
   lsTerms: string[],
   idbTerms?: string[]
 ): Promise<void> {
-  const save = await exportGameSave(gameId, gameLabel, lsTerms, idbTerms);
-  const json = JSON.stringify(save, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  const safeName = gameId.replace(/[^a-z0-9-]/gi, "-");
-  a.download = `${safeName}-save-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function validateGameSave(raw: unknown): raw is GameSaveFile {
-  if (!raw || typeof raw !== "object") return false;
-  const obj = raw as Record<string, unknown>;
-  if (typeof obj.version !== "string") return false;
-  if (typeof obj.appName !== "string") return false;
-  if (typeof obj.gameId !== "string") return false;
-  if (!obj.gameData || typeof obj.gameData !== "object") return false;
-  return true;
-}
-
-export async function importGameSave(jsonText: string): Promise<ImportResult> {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(jsonText);
-  } catch {
-    return { success: false, error: "Invalid JSON — the file could not be parsed." };
-  }
-
-  if (!validateGameSave(parsed)) {
-    return { success: false, error: "This doesn't look like a valid game save file." };
-  }
-
-  const save = parsed as GameSaveFile;
-  if (save.appName !== "RELC.OS") {
-    return { success: false, error: "This save file is from a different app." };
-  }
-
-  try {
-    for (const [key, value] of Object.entries(save.gameData)) {
-      if (SESSION_KEYS.has(key)) continue;
-      localStorage.setItem(key, value);
+  const lsData: Record<string, string> = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || SESSION_KEYS.has(key) || key === SETTINGS_KEY) continue;
+    if (lsTerms.length === 0 || lsKeyMatchesTerms(key, lsTerms)) {
+      const value = localStorage.getItem(key);
+      if (value !== null) lsData[key] = value;
     }
-
-    const idbData = save.indexedDB ?? {};
-    await restoreIndexedDB(idbData);
-
-    return {
-      success: true,
-      lsCount: Object.keys(save.gameData).length,
-      idbCount: Object.keys(idbData).length,
-    };
-  } catch (e) {
-    return { success: false, error: "Failed to restore data: " + String(e) };
   }
+  const idbData: Record<string, IDBDatabaseDump> = {};
+  if (idbTerms && idbTerms.length > 0) {
+    try {
+      if (indexedDB.databases) {
+        const dbs = await indexedDB.databases();
+        await Promise.all(
+          dbs.map(async (info) => {
+            if (!info.name || !dbNameMatchesTerms(info.name, idbTerms)) return;
+            const dump = await dumpDatabase(info.name);
+            if (dump && Object.keys(dump.stores).length > 0) idbData[info.name] = dump;
+          })
+        );
+      }
+    } catch {}
+  }
+  const save: AllGamesSave = {
+    version: ALL_GAMES_SAVE_VERSION,
+    exportedAt: new Date().toISOString(),
+    appName: "RELC.OS",
+    settings: getSettings(),
+    games: { [gameId]: { localStorage: lsData, indexedDB: idbData } },
+  };
+  const safeName = gameId.replace(/[^a-z0-9-]/gi, "-");
+  triggerDownload(JSON.stringify(save, null, 2), `${safeName}-save-${new Date().toISOString().slice(0, 10)}.json`);
 }
 
 export async function getSaveInfo(): Promise<{ lsCount: number; idbCount: number }> {

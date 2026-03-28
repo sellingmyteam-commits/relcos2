@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 import {
   getSettings,
   saveSettings,
-  importSave,
   resetAllGameData,
   getSaveInfo,
-  downloadGameSave,
+  downloadAllGamesSave,
+  importAllGamesSave,
   type GameSettings,
 } from "@/lib/saveSystem";
 import { GAME_LIST } from "@/lib/gameConfig";
@@ -67,18 +67,14 @@ export function SettingsPanel({ onClose }: Props) {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const gamesWithData = GAME_LIST.filter((g) => gameHasData(g));
-      if (gamesWithData.length === 0) {
-        showToast("info", "No game saves found to export.");
-        return;
+      const { gameCount } = await downloadAllGamesSave(GAME_LIST);
+      if (gameCount === 0) {
+        showToast("info", "No game save data found yet — play some games first!");
+      } else {
+        showToast("success", `all-games-save.json downloaded — ${gameCount} game${gameCount > 1 ? "s" : ""} included.`);
       }
-      for (const game of gamesWithData) {
-        await downloadGameSave(game.id, game.label, game.lsTerms ?? [], game.idbTerms);
-        await new Promise((r) => setTimeout(r, 200));
-      }
-      showToast("success", `Downloaded ${gamesWithData.length} save file${gamesWithData.length > 1 ? "s" : ""} — one per game.`);
     } catch {
-      showToast("error", "Failed to export save files.");
+      showToast("error", "Failed to export save file.");
     } finally {
       setExporting(false);
     }
@@ -98,7 +94,7 @@ export function SettingsPanel({ onClose }: Props) {
     reader.onload = async (ev) => {
       try {
         const text = ev.target?.result as string;
-        const result = await importSave(text);
+        const result = await importAllGamesSave(text);
         if (result.success) {
           const idbMsg = result.idbCount > 0 ? ` + ${result.idbCount} game database(s)` : "";
           showToast("success", `Imported ${result.lsCount} save entries${idbMsg}. Reload any open games to see your data.`);
@@ -212,8 +208,8 @@ export function SettingsPanel({ onClose }: Props) {
                   : <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
                 }
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold">{exporting ? "Exporting..." : "Export Game Saves"}</p>
-                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads one .json file per game with saved data</p>
+                  <p className="text-sm font-bold">{exporting ? "Exporting..." : "Export All Saves"}</p>
+                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads all-games-save.json with every game's data</p>
                 </div>
               </button>
 
@@ -228,8 +224,8 @@ export function SettingsPanel({ onClose }: Props) {
                   : <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
                 }
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold">{importing ? "Importing..." : "Import Progress"}</p>
-                  <p className="text-[10px] font-normal text-accent/70 font-mono">Restore all game saves from a .json file</p>
+                  <p className="text-sm font-bold">{importing ? "Importing..." : "Import Save"}</p>
+                  <p className="text-[10px] font-normal text-accent/70 font-mono">Restore all game saves from all-games-save.json</p>
                 </div>
               </button>
               <input
@@ -243,7 +239,7 @@ export function SettingsPanel({ onClose }: Props) {
 
               <div className="px-4 py-2.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
                 <p className="text-[10px] text-blue-400/70 font-mono leading-relaxed">
-                  Export downloads one file per game — e.g. geometry-dash-save.json, eaglercraft-save.json. Import works with any individual game save file. Reload the game after importing.
+                  One file contains ALL game saves — Eaglercraft worlds, Drift Hunters progress, Brawl Stars data, and more. Import on any device to restore everything. Reload games after importing.
                 </p>
               </div>
             </div>
