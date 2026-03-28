@@ -1,10 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Users, Maximize2, Search, Box, Egg, Zap, Bike, Circle, Goal, Trophy, Car, Swords, Grid3x3, Heart, Route, Flame, Cctv, MessageSquare, ChevronDown, Crown, Gauge, Bomb, Layers } from "lucide-react";
+import { Shield, Users, Maximize2, Search, Box, Egg, Zap, Bike, Circle, Goal, Trophy, Car, Swords, Grid3x3, Heart, Route, Flame, Cctv, MessageSquare, ChevronDown, Crown, Gauge, Bomb, Layers, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
 import { AdminPanel } from "@/components/AdminPanel";
+import { SettingsPanel } from "@/components/SettingsPanel";
 
 const navItems = [
   { href: "/", label: "Home", icon: Shield },
@@ -37,6 +38,7 @@ export function Navigation() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -210,6 +212,16 @@ export function Navigation() {
             </span>
           </div>
 
+          <button
+            onClick={() => setShowSettingsPanel(true)}
+            data-testid="button-settings-panel"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-muted-foreground text-[10px] font-bold font-mono tracking-widest uppercase hover:bg-white/10 hover:text-white hover:border-white/20 transition-all"
+            title="Open Settings"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">SETTINGS</span>
+          </button>
+
           {isAdmin && (
             <button
               onClick={() => setShowAdminPanel(true)}
@@ -225,6 +237,7 @@ export function Navigation() {
       </div>
     </nav>
 
+    {showSettingsPanel && <SettingsPanel onClose={() => setShowSettingsPanel(false)} />}
     {showAdminPanel && <AdminPanel onClose={() => setShowAdminPanel(false)} />}
   </>
   );
