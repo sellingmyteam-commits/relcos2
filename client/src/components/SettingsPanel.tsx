@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 import {
   getSettings,
   saveSettings,
-  downloadSave,
   importSave,
   resetAllGameData,
   getSaveInfo,
+  downloadGameSave,
   type GameSettings,
 } from "@/lib/saveSystem";
 import { GAME_LIST } from "@/lib/gameConfig";
@@ -67,10 +67,18 @@ export function SettingsPanel({ onClose }: Props) {
   const handleExport = async () => {
     setExporting(true);
     try {
-      await downloadSave();
-      showToast("success", "Save file downloaded! All game data including worlds and progress is in the file.");
+      const gamesWithData = GAME_LIST.filter((g) => gameHasData(g));
+      if (gamesWithData.length === 0) {
+        showToast("info", "No game saves found to export.");
+        return;
+      }
+      for (const game of gamesWithData) {
+        await downloadGameSave(game.id, game.label, game.lsTerms ?? [], game.idbTerms);
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      showToast("success", `Downloaded ${gamesWithData.length} save file${gamesWithData.length > 1 ? "s" : ""} — one per game.`);
     } catch {
-      showToast("error", "Failed to export save file.");
+      showToast("error", "Failed to export save files.");
     } finally {
       setExporting(false);
     }
@@ -204,8 +212,8 @@ export function SettingsPanel({ onClose }: Props) {
                   : <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
                 }
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold">{exporting ? "Exporting..." : "Export Progress"}</p>
-                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads all game saves as a .json file</p>
+                  <p className="text-sm font-bold">{exporting ? "Exporting..." : "Export Game Saves"}</p>
+                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads one .json file per game with saved data</p>
                 </div>
               </button>
 
@@ -235,7 +243,7 @@ export function SettingsPanel({ onClose }: Props) {
 
               <div className="px-4 py-2.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
                 <p className="text-[10px] text-blue-400/70 font-mono leading-relaxed">
-                  Exports all game saves — Geometry Dash, Eaglercraft, Brawl Stars, Tomb of the Mask, Drift Hunters, Stickman Merge, Escape Road, and more. Import replaces current data. Reload games after importing.
+                  Export downloads one file per game — e.g. geometry-dash-save.json, eaglercraft-save.json. Import works with any individual game save file. Reload the game after importing.
                 </p>
               </div>
             </div>
