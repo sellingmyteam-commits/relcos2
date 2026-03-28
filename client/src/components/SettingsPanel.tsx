@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, RotateCcw, ChevronDown, ChevronRight, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, RotateCcw, ChevronDown, ChevronRight, CheckCircle, AlertCircle, Info, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getSettings,
@@ -7,7 +7,7 @@ import {
   downloadSave,
   importSave,
   resetAllGameData,
-  exportSave,
+  getSaveInfo,
   type GameSettings,
 } from "@/lib/saveSystem";
 
@@ -44,17 +44,23 @@ export function SettingsPanel({ onClose }: Props) {
   const [toast, setToast] = useState<Toast>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showGameSettings, setShowGameSettings] = useState(false);
-  const [saveInfo, setSaveInfo] = useState<{ count: number } | null>(null);
+  const [saveInfo, setSaveInfo] = useState<{ lsCount: number; idbCount: number } | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const save = exportSave();
-    setSaveInfo({ count: save.entryCount });
+    getSaveInfo().then(setSaveInfo);
   }, []);
+
+  const refreshSaveInfo = () => {
+    getSaveInfo().then(setSaveInfo);
+  };
 
   const showToast = (type: Toast["type"], message: string) => {
     setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), 5000);
   };
 
   const updateSetting = (key: keyof GameSettings, value: boolean) => {
@@ -63,12 +69,15 @@ export function SettingsPanel({ onClose }: Props) {
     saveSettings(next);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    setExporting(true);
     try {
-      downloadSave();
-      showToast("success", "Save file downloaded successfully!");
+      await downloadSave();
+      showToast("success", "Save file downloaded! All your game data including Eaglercraft worlds is in the file.");
     } catch {
       showToast("error", "Failed to export save file.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -81,29 +90,56 @@ export function SettingsPanel({ onClose }: Props) {
       showToast("error", "Please select a .json save file.");
       return;
     }
+    setImporting(true);
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      const result = importSave(text);
-      if (result.success) {
-        showToast("success", `Restored ${result.entriesRestored} save entries! Reload any open games to apply.`);
-        const newSettings = getSettings();
-        setSettings(newSettings);
-        setSaveInfo({ count: result.entriesRestored });
-      } else {
-        showToast("error", result.error);
+    reader.onload = async (ev) => {
+      try {
+        const text = ev.target?.result as string;
+        const result = await importSave(text);
+        if (result.success) {
+          const idbMsg = result.idbCount > 0 ? ` + ${result.idbCount} game database(s) (e.g. Eaglercraft worlds)` : "";
+          showToast("success", `Imported ${result.lsCount} save entries${idbMsg}. Reload any open games to apply.`);
+          const newSettings = getSettings();
+          setSettings(newSettings);
+          refreshSaveInfo();
+        } else {
+          showToast("error", result.error);
+        }
+      } catch {
+        showToast("error", "An unexpected error occurred while importing.");
+      } finally {
+        setImporting(false);
       }
+    };
+    reader.onerror = () => {
+      showToast("error", "Failed to read the file.");
+      setImporting(false);
     };
     reader.readAsText(file);
     e.target.value = "";
   };
 
-  const handleReset = () => {
-    resetAllGameData();
-    setSaveInfo({ count: 0 });
-    setShowResetConfirm(false);
-    showToast("success", "All game data has been reset.");
+  const handleReset = async () => {
+    setResetting(true);
+    try {
+      await resetAllGameData();
+      refreshSaveInfo();
+      setShowResetConfirm(false);
+      showToast("success", "All game data has been reset.");
+    } catch {
+      showToast("error", "Failed to reset game data.");
+    } finally {
+      setResetting(false);
+    }
   };
+
+  const saveInfoLabel = (() => {
+    if (!saveInfo) return "Calculating...";
+    const parts: string[] = [];
+    if (saveInfo.lsCount > 0) parts.push(`${saveInfo.lsCount} save entries`);
+    if (saveInfo.idbCount > 0) parts.push(`${saveInfo.idbCount} game database(s)`);
+    return parts.length > 0 ? parts.join(" · ") + " stored" : "No save data found";
+  })();
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -141,31 +177,39 @@ export function SettingsPanel({ onClose }: Props) {
                 <div className="flex items-center gap-2">
                   <Info className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground font-mono">
-                    {saveInfo !== null ? `${saveInfo.count} save entries stored` : "Calculating..."}
+                    {saveInfoLabel}
                   </span>
                 </div>
               </div>
 
               <button
                 onClick={handleExport}
+                disabled={exporting}
                 data-testid="button-export-save"
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary/10 border border-secondary/20 text-secondary text-sm font-bold hover:bg-secondary/20 hover:border-secondary/40 transition-all group"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary/10 border border-secondary/20 text-secondary text-sm font-bold hover:bg-secondary/20 hover:border-secondary/40 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                {exporting
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                }
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold">Export Progress</p>
-                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads a .json save file</p>
+                  <p className="text-sm font-bold">{exporting ? "Exporting..." : "Export Progress"}</p>
+                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads a .json save file with all game data</p>
                 </div>
               </button>
 
               <button
                 onClick={handleImportClick}
+                disabled={importing}
                 data-testid="button-import-save"
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent text-sm font-bold hover:bg-accent/20 hover:border-accent/40 transition-all group"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent text-sm font-bold hover:bg-accent/20 hover:border-accent/40 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+                {importing
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+                }
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold">Import Progress</p>
+                  <p className="text-sm font-bold">{importing ? "Importing..." : "Import Progress"}</p>
                   <p className="text-[10px] font-normal text-accent/70 font-mono">Restore from a .json save file</p>
                 </div>
               </button>
@@ -177,6 +221,12 @@ export function SettingsPanel({ onClose }: Props) {
                 onChange={handleFileChange}
                 data-testid="input-import-file"
               />
+
+              <div className="px-4 py-2.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                <p className="text-[10px] text-blue-400/70 font-mono leading-relaxed">
+                  Export saves all game progress including Eaglercraft worlds. Import replaces current data with the file contents. Reload games after importing.
+                </p>
+              </div>
             </div>
           </Section>
 
@@ -201,7 +251,7 @@ export function SettingsPanel({ onClose }: Props) {
             </div>
           </Section>
 
-          <Section label="Per-Game Settings">
+          <Section label="Per-Game Data">
             <button
               onClick={() => setShowGameSettings(!showGameSettings)}
               data-testid="button-toggle-game-settings"
@@ -266,23 +316,27 @@ export function SettingsPanel({ onClose }: Props) {
                   <p className="text-xs text-red-400 font-bold">This cannot be undone.</p>
                 </div>
                 <p className="text-[11px] text-red-400/70 font-mono leading-relaxed">
-                  All saved progress, scores, achievements, and settings for every game will be permanently deleted.
+                  All saved progress, scores, achievements, and settings for every game (including Eaglercraft worlds) will be permanently deleted.
                 </p>
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={() => setShowResetConfirm(false)}
+                    disabled={resetting}
                     data-testid="button-cancel-reset"
-                    className="flex-1 py-2 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-muted-foreground hover:text-white hover:bg-white/10 transition-all"
+                    className="flex-1 py-2 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-muted-foreground hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
                   >
                     CANCEL
                   </button>
                   <button
                     onClick={handleReset}
+                    disabled={resetting}
                     data-testid="button-confirm-reset"
-                    className="flex-1 py-2 rounded-lg bg-red-500/20 border border-red-500/40 text-xs font-bold text-red-400 hover:bg-red-500/30 transition-all"
+                    className="flex-1 py-2 rounded-lg bg-red-500/20 border border-red-500/40 text-xs font-bold text-red-400 hover:bg-red-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                   >
-                    <RotateCcw className="w-3 h-3 inline mr-1.5" />
-                    RESET ALL
+                    {resetting
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> RESETTING...</>
+                      : <><RotateCcw className="w-3 h-3" /> RESET ALL</>
+                    }
                   </button>
                 </div>
               </div>
@@ -291,7 +345,7 @@ export function SettingsPanel({ onClose }: Props) {
 
           <div className="px-5 pb-6 pt-2">
             <p className="text-[9px] text-muted-foreground/40 font-mono text-center leading-relaxed">
-              RELC.OS Save System v1.0 · All data stored locally in your browser · Export regularly to keep backups
+              RELC.OS Save System v2.0 · All data stored locally in your browser · Export regularly to keep backups
             </p>
           </div>
         </div>
