@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, RotateCcw, ChevronDown, ChevronRight, CheckCircle, AlertCircle, Info, Loader2, BellOff, Bell } from "lucide-react";
+import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, RotateCcw, CheckCircle, AlertCircle, Info, Loader2, BellOff, Bell, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getSettings,
   saveSettings,
   resetAllGameData,
-  getSaveInfo,
-  downloadAllGamesSave,
+  downloadGameSave,
   importAllGamesSave,
   type GameSettings,
 } from "@/lib/saveSystem";
-import { GAME_LIST } from "@/lib/gameConfig";
+
+const EAGLERCRAFT_LS_TERMS = ["eaglercraft", "eagler"];
+const EAGLERCRAFT_IDB_TERMS = ["eaglercraft", "eagler"];
 
 type Toast = { type: "success" | "error" | "info"; message: string } | null;
 
@@ -22,36 +23,37 @@ export function SettingsPanel({ onClose }: Props) {
   const [settings, setSettings] = useState<GameSettings>(getSettings);
   const [toast, setToast] = useState<Toast>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showGameSettings, setShowGameSettings] = useState(false);
-  const [saveInfo, setSaveInfo] = useState<{ lsCount: number; idbCount: number } | null>(null);
-  const [idbNames, setIdbNames] = useState<string[]>([]);
+  const [eaglercraftDetected, setEaglercraftDetected] = useState<boolean | null>(null);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    getSaveInfo().then(setSaveInfo);
-    // Load IndexedDB names for per-game detection
+  const checkEaglercraftData = () => {
+    let found = false;
     try {
-      if (indexedDB.databases) {
-        indexedDB.databases().then((dbs) => {
-          setIdbNames(dbs.map((d) => (d.name || "").toLowerCase()));
-        }).catch(() => {});
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = (localStorage.key(i) || "").toLowerCase();
+        if (EAGLERCRAFT_LS_TERMS.some((t) => k.includes(t))) { found = true; break; }
       }
     } catch {}
-  }, []);
-
-  const refreshSaveInfo = () => {
-    getSaveInfo().then(setSaveInfo);
-    try {
-      if (indexedDB.databases) {
-        indexedDB.databases().then((dbs) => {
-          setIdbNames(dbs.map((d) => (d.name || "").toLowerCase()));
-        }).catch(() => {});
-      }
-    } catch {}
+    if (!found) {
+      try {
+        if (indexedDB.databases) {
+          indexedDB.databases().then((dbs) => {
+            const names = dbs.map((d) => (d.name || "").toLowerCase());
+            setEaglercraftDetected(EAGLERCRAFT_IDB_TERMS.some((t) => names.some((n) => n.includes(t))));
+          }).catch(() => setEaglercraftDetected(false));
+          return;
+        }
+      } catch {}
+    }
+    setEaglercraftDetected(found);
   };
+
+  useEffect(() => {
+    checkEaglercraftData();
+  }, []);
 
   const showToast = (type: Toast["type"], message: string) => {
     setToast({ type, message });
@@ -67,14 +69,10 @@ export function SettingsPanel({ onClose }: Props) {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const { gameCount } = await downloadAllGamesSave(GAME_LIST);
-      if (gameCount === 0) {
-        showToast("info", "No game save data found yet — play some games first!");
-      } else {
-        showToast("success", `all-games-save.json downloaded — ${gameCount} game${gameCount > 1 ? "s" : ""} included.`);
-      }
+      await downloadGameSave("eaglercraft", "Eaglercraft", EAGLERCRAFT_LS_TERMS, EAGLERCRAFT_IDB_TERMS);
+      showToast("success", "eaglercraft-save.json downloaded successfully.");
     } catch {
-      showToast("error", "Failed to export save file.");
+      showToast("error", "Failed to export Eaglercraft data.");
     } finally {
       setExporting(false);
     }
@@ -96,11 +94,8 @@ export function SettingsPanel({ onClose }: Props) {
         const text = ev.target?.result as string;
         const result = await importAllGamesSave(text);
         if (result.success) {
-          const idbMsg = result.idbCount > 0 ? ` + ${result.idbCount} game database(s)` : "";
-          showToast("success", `Imported ${result.lsCount} save entries${idbMsg}. Reload any open games to see your data.`);
-          const newSettings = getSettings();
-          setSettings(newSettings);
-          refreshSaveInfo();
+          showToast("success", "Eaglercraft data imported. Reload the game to see your worlds.");
+          checkEaglercraftData();
         } else {
           showToast("error", result.error);
         }
@@ -122,7 +117,7 @@ export function SettingsPanel({ onClose }: Props) {
     setResetting(true);
     try {
       await resetAllGameData();
-      refreshSaveInfo();
+      checkEaglercraftData();
       setShowResetConfirm(false);
       showToast("success", "All game data has been reset.");
     } catch {
@@ -131,30 +126,6 @@ export function SettingsPanel({ onClose }: Props) {
       setResetting(false);
     }
   };
-
-  const gameHasData = (game: typeof GAME_LIST[number]): boolean => {
-    // Check localStorage
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = (localStorage.key(i) || "").toLowerCase();
-        const terms = game.lsTerms ?? [game.id.replace(/-/g, "")];
-        if (terms.some((t) => k.includes(t))) return true;
-      }
-    } catch {}
-    // Check IndexedDB names
-    if (game.idbTerms && idbNames.length > 0) {
-      if (game.idbTerms.some((t) => idbNames.some((n) => n.includes(t)))) return true;
-    }
-    return false;
-  };
-
-  const saveInfoLabel = (() => {
-    if (!saveInfo) return "Calculating...";
-    const parts: string[] = [];
-    if (saveInfo.lsCount > 0) parts.push(`${saveInfo.lsCount} save entries`);
-    if (saveInfo.idbCount > 0) parts.push(`${saveInfo.idbCount} game database(s)`);
-    return parts.length > 0 ? parts.join(" · ") + " stored" : "No save data found";
-  })();
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -186,21 +157,12 @@ export function SettingsPanel({ onClose }: Props) {
         )}
 
         <div className="flex-1 overflow-y-auto">
-          <Section label="Save & Restore">
+          <Section label="Eaglercraft Data">
             <div className="space-y-2">
-              <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/3 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Info className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground font-mono">
-                    {saveInfoLabel}
-                  </span>
-                </div>
-              </div>
-
               <button
                 onClick={handleExport}
                 disabled={exporting}
-                data-testid="button-export-save"
+                data-testid="button-export-eaglercraft"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary/10 border border-secondary/20 text-secondary text-sm font-bold hover:bg-secondary/20 hover:border-secondary/40 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {exporting
@@ -208,15 +170,15 @@ export function SettingsPanel({ onClose }: Props) {
                   : <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
                 }
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold">{exporting ? "Exporting..." : "Export All Saves"}</p>
-                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads all-games-save.json with every game's data</p>
+                  <p className="text-sm font-bold">{exporting ? "Exporting..." : "Export Eaglercraft Data"}</p>
+                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Download worlds & settings as eaglercraft-save.json</p>
                 </div>
               </button>
 
               <button
                 onClick={handleImportClick}
                 disabled={importing}
-                data-testid="button-import-save"
+                data-testid="button-import-eaglercraft"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent text-sm font-bold hover:bg-accent/20 hover:border-accent/40 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {importing
@@ -224,10 +186,11 @@ export function SettingsPanel({ onClose }: Props) {
                   : <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
                 }
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold">{importing ? "Importing..." : "Import Save"}</p>
-                  <p className="text-[10px] font-normal text-accent/70 font-mono">Restore all game saves from all-games-save.json</p>
+                  <p className="text-sm font-bold">{importing ? "Importing..." : "Import Eaglercraft Data"}</p>
+                  <p className="text-[10px] font-normal text-accent/70 font-mono">Restore worlds from eaglercraft-save.json</p>
                 </div>
               </button>
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -237,10 +200,38 @@ export function SettingsPanel({ onClose }: Props) {
                 data-testid="input-import-file"
               />
 
-              <div className="px-4 py-2.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
-                <p className="text-[10px] text-blue-400/70 font-mono leading-relaxed">
-                  One file contains ALL game saves — Eaglercraft worlds, Drift Hunters progress, Brawl Stars data, and more. Import on any device to restore everything. Reload games after importing.
-                </p>
+              <div className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all",
+                eaglercraftDetected === null
+                  ? "bg-white/3 border-white/5"
+                  : eaglercraftDetected
+                    ? "bg-green-500/8 border-green-500/20"
+                    : "bg-white/3 border-white/8"
+              )}>
+                {eaglercraftDetected === null ? (
+                  <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin shrink-0" />
+                ) : eaglercraftDetected ? (
+                  <Wifi className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                ) : (
+                  <WifiOff className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+                )}
+                <div>
+                  <p className={cn(
+                    "text-xs font-bold font-mono",
+                    eaglercraftDetected ? "text-green-400" : "text-muted-foreground/60"
+                  )}>
+                    {eaglercraftDetected === null
+                      ? "Checking..."
+                      : eaglercraftDetected
+                        ? "Eaglercraft data detected"
+                        : "No Eaglercraft data found"}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground/40 font-mono mt-0.5">
+                    {eaglercraftDetected
+                      ? "Worlds and settings are saved in this browser"
+                      : "Play Eaglercraft to create save data here"}
+                  </p>
+                </div>
               </div>
             </div>
           </Section>
@@ -286,43 +277,6 @@ export function SettingsPanel({ onClose }: Props) {
             </div>
           </Section>
 
-          <Section label="Per-Game Data">
-            <button
-              onClick={() => setShowGameSettings(!showGameSettings)}
-              data-testid="button-toggle-game-settings"
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-muted-foreground hover:text-white hover:bg-white/8 transition-all"
-            >
-              <span className="font-mono text-xs uppercase tracking-wider">
-                {GAME_LIST.length} games tracked
-              </span>
-              {showGameSettings ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-
-            {showGameSettings && (
-              <div className="mt-2 space-y-1 max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-black/20">
-                {GAME_LIST.map((game) => {
-                  const hasData = gameHasData(game);
-                  return (
-                    <div
-                      key={game.id}
-                      className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
-                    >
-                      <span className="text-xs text-white font-medium">{game.label}</span>
-                      <span className={cn(
-                        "text-[9px] font-mono px-2 py-0.5 rounded-full border",
-                        hasData
-                          ? "bg-green-500/10 text-green-400 border-green-500/20"
-                          : "bg-white/5 text-muted-foreground/50 border-white/10"
-                      )}>
-                        {hasData ? "SAVED" : "NO DATA"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Section>
-
           <Section label="Danger Zone">
             {!showResetConfirm ? (
               <button
@@ -343,7 +297,7 @@ export function SettingsPanel({ onClose }: Props) {
                   <p className="text-xs text-red-400 font-bold">This cannot be undone.</p>
                 </div>
                 <p className="text-[11px] text-red-400/70 font-mono leading-relaxed">
-                  All saved progress, scores, and data for every game (Geometry Dash, Eaglercraft, Brawl Stars, Tomb of the Mask, Drift Hunters, Stickman Merge, Escape Road, and more) will be permanently deleted.
+                  All saved progress, scores, and data for every game including Eaglercraft worlds will be permanently deleted.
                 </p>
                 <div className="flex gap-2 mt-3">
                   <button
@@ -372,7 +326,7 @@ export function SettingsPanel({ onClose }: Props) {
 
           <div className="px-5 pb-6 pt-2">
             <p className="text-[9px] text-muted-foreground/40 font-mono text-center leading-relaxed">
-              RELC.OS Save System v2.0 · All data stored locally in your browser · Export regularly to keep backups
+              RELC.OS Save System v3.0 · All data stored locally in your browser · Export regularly to keep backups
             </p>
           </div>
         </div>
