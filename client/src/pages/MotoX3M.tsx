@@ -1,43 +1,4 @@
-import { Layout } from "@/components/Layout";
-import { useRef, useEffect } from "react";
-import { SidebarChat } from "@/components/SidebarChat";
-
+import { GamePage } from "@/components/GamePage";
 export default function MotoX3M() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleToggleFullscreen = () => {
-      if (containerRef.current) {
-        if (!document.fullscreenElement) {
-          containerRef.current.requestFullscreen().catch((err) => {
-            console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-          });
-        } else {
-          document.exitFullscreen();
-        }
-      }
-    };
-
-    window.addEventListener('toggle-fullscreen', handleToggleFullscreen);
-    return () => window.removeEventListener('toggle-fullscreen', handleToggleFullscreen);
-  }, []);
-
-  return (
-    <Layout noContainer>
-      <div className="flex h-[calc(100vh-5rem)] overflow-hidden">
-        <div className="flex flex-1 overflow-hidden">
-          <div ref={containerRef} className="flex-1 relative bg-black group overflow-hidden">
-            <iframe 
-              src="/game/pool-party/index.html" 
-              className="w-full h-full border-0"
-              allow="autoplay; fullscreen; keyboard"
-              title="Moto X3M Pool Party"
-              onMouseEnter={(e) => e.currentTarget.focus()}
-            />
-          </div>
-          <SidebarChat />
-        </div>
-      </div>
-    </Layout>
-  );
+  return <GamePage src="/game/pool-party/index.html" title="Moto X3M Pool Party" />;
 }
