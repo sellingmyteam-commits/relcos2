@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, X, MessageSquare } from "lucide-react";
 import { useLocation } from "wouter";
 import type { DirectMessage } from "@shared/schema";
+import { getDoNotDisturb } from "@/lib/saveSystem";
 
 function truncateToWords(text: string, wordCount: number): string {
   const words = text.trim().split(/\s+/);
@@ -26,6 +27,8 @@ export function DmNotification() {
   }, []);
 
   useEffect(() => {
+    if (getDoNotDisturb()) return;
+
     const SESSION_KEY = "dm_offline_popup_shown";
     if (sessionStorage.getItem(SESSION_KEY)) return;
 
@@ -66,7 +69,7 @@ export function DmNotification() {
         if (latest.id > lastSeenId) {
           localStorage.setItem(LAST_SEEN_KEY, String(latest.id));
 
-          if (lastSeenId > 0) {
+          if (lastSeenId > 0 && !getDoNotDisturb()) {
             setToastMsg(latest);
             setToastVisible(true);
           }

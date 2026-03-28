@@ -10,7 +10,12 @@ const SESSION_KEYS = new Set([
 export interface GameSettings {
   sound: boolean;
   music: boolean;
+  doNotDisturb: boolean;
   [key: string]: unknown;
+}
+
+export function getDoNotDisturb(): boolean {
+  return getSettings().doNotDisturb === true;
 }
 
 interface IDBStoreDump {
@@ -40,9 +45,9 @@ export interface SaveFile {
 export function getSettings(): GameSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) return { sound: true, music: true, ...JSON.parse(raw) };
+    if (raw) return { sound: true, music: true, doNotDisturb: false, ...JSON.parse(raw) };
   } catch {}
-  return { sound: true, music: true };
+  return { sound: true, music: true, doNotDisturb: false };
 }
 
 export function saveSettings(settings: GameSettings): void {

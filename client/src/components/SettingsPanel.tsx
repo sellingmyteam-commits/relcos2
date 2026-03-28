@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, RotateCcw, ChevronDown, ChevronRight, CheckCircle, AlertCircle, Info, Loader2 } from "lucide-react";
+import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, RotateCcw, ChevronDown, ChevronRight, CheckCircle, AlertCircle, Info, Loader2, BellOff, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getSettings,
@@ -11,26 +11,26 @@ import {
   type GameSettings,
 } from "@/lib/saveSystem";
 
-const GAME_LIST = [
-  { id: "geometry-dash", label: "Geometry Dash" },
-  { id: "shellshockers", label: "Shellshockers" },
-  { id: "eaglercraft", label: "Eaglercraft" },
-  { id: "motox3m", label: "Moto X3M" },
-  { id: "stickman-merge", label: "Stickman Merge" },
-  { id: "slope", label: "Slope" },
-  { id: "retro-bowl", label: "Retro Bowl" },
-  { id: "rocket-soccer", label: "Rocket Soccer" },
-  { id: "drift-hunters", label: "Drift Hunters" },
-  { id: "brawl-stars", label: "Brawl Stars" },
-  { id: "block-blast", label: "Block Blast" },
-  { id: "bitlife", label: "BitLife" },
-  { id: "escape-road", label: "Escape Road" },
-  { id: "super-hot", label: "SuperHot" },
-  { id: "five-nights-at-winstons", label: "Five Nights At Winston's" },
-  { id: "car-king", label: "Car King" },
-  { id: "drift-boss", label: "Drift Boss" },
-  { id: "quake3", label: "Quake 3" },
-  { id: "tomb-of-the-mask", label: "Tomb of the Mask" },
+const GAME_LIST: Array<{ id: string; label: string; lsTerms?: string[]; idbTerms?: string[] }> = [
+  { id: "geometry-dash", label: "Geometry Dash", lsTerms: ["geometrydash", "geometry-dash", "geometry_dash", "gdash"] },
+  { id: "shellshockers", label: "Shellshockers", lsTerms: ["shellshock", "shellshocker"] },
+  { id: "eaglercraft", label: "Eaglercraft", lsTerms: ["eaglercraft", "eagler"], idbTerms: ["eaglercraft", "eagler"] },
+  { id: "motox3m", label: "Moto X3M", lsTerms: ["motox3m", "moto-x3m", "moto_x3m", "motox"] },
+  { id: "stickman-merge", label: "Stickman Merge", lsTerms: ["stickmanmerge", "stickman-merge", "stickman_merge", "stickman"] },
+  { id: "slope", label: "Slope", lsTerms: ["slope"] },
+  { id: "retro-bowl", label: "Retro Bowl", lsTerms: ["retrobowl", "retro-bowl", "retro_bowl"] },
+  { id: "rocket-soccer", label: "Rocket Soccer", lsTerms: ["rocketsoccer", "rocket-soccer", "rocket_soccer"] },
+  { id: "drift-hunters", label: "Drift Hunters", lsTerms: ["drifthunters", "drift-hunters", "drift_hunters", "drifthunter"], idbTerms: ["drifthunters", "drift"] },
+  { id: "brawl-stars", label: "Brawl Stars", lsTerms: ["brawlstars", "brawl-stars", "brawl_stars", "brawl"], idbTerms: ["brawlstars", "brawl"] },
+  { id: "block-blast", label: "Block Blast", lsTerms: ["blockblast", "block-blast", "block_blast"] },
+  { id: "bitlife", label: "BitLife", lsTerms: ["bitlife", "bit-life"] },
+  { id: "escape-road", label: "Escape Road", lsTerms: ["escaperoad", "escape-road", "escape_road", "escaperoad"], idbTerms: ["escaperoad", "escape"] },
+  { id: "super-hot", label: "SuperHot", lsTerms: ["superhot", "super-hot", "super_hot"] },
+  { id: "five-nights-at-winstons", label: "Five Nights At Winston's", lsTerms: ["winstons", "fivenight", "fnaw"] },
+  { id: "car-king", label: "Car King", lsTerms: ["carking", "car-king", "car_king"] },
+  { id: "drift-boss", label: "Drift Boss", lsTerms: ["driftboss", "drift-boss", "drift_boss"] },
+  { id: "quake3", label: "Quake 3", lsTerms: ["quake3", "quake-3", "quake_3", "quake"] },
+  { id: "tomb-of-the-mask", label: "Tomb of the Mask", lsTerms: ["tombofthemask", "tomb-of-the-mask", "tomb_of_the_mask", "tombmask", "tomb"], idbTerms: ["tombofthemask", "tomb"] },
 ];
 
 type Toast = { type: "success" | "error" | "info"; message: string } | null;
@@ -45,6 +45,7 @@ export function SettingsPanel({ onClose }: Props) {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showGameSettings, setShowGameSettings] = useState(false);
   const [saveInfo, setSaveInfo] = useState<{ lsCount: number; idbCount: number } | null>(null);
+  const [idbNames, setIdbNames] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -52,10 +53,25 @@ export function SettingsPanel({ onClose }: Props) {
 
   useEffect(() => {
     getSaveInfo().then(setSaveInfo);
+    // Load IndexedDB names for per-game detection
+    try {
+      if (indexedDB.databases) {
+        indexedDB.databases().then((dbs) => {
+          setIdbNames(dbs.map((d) => (d.name || "").toLowerCase()));
+        }).catch(() => {});
+      }
+    } catch {}
   }, []);
 
   const refreshSaveInfo = () => {
     getSaveInfo().then(setSaveInfo);
+    try {
+      if (indexedDB.databases) {
+        indexedDB.databases().then((dbs) => {
+          setIdbNames(dbs.map((d) => (d.name || "").toLowerCase()));
+        }).catch(() => {});
+      }
+    } catch {}
   };
 
   const showToast = (type: Toast["type"], message: string) => {
@@ -73,7 +89,7 @@ export function SettingsPanel({ onClose }: Props) {
     setExporting(true);
     try {
       await downloadSave();
-      showToast("success", "Save file downloaded! All your game data including Eaglercraft worlds is in the file.");
+      showToast("success", "Save file downloaded! All game data including worlds and progress is in the file.");
     } catch {
       showToast("error", "Failed to export save file.");
     } finally {
@@ -97,8 +113,8 @@ export function SettingsPanel({ onClose }: Props) {
         const text = ev.target?.result as string;
         const result = await importSave(text);
         if (result.success) {
-          const idbMsg = result.idbCount > 0 ? ` + ${result.idbCount} game database(s) (e.g. Eaglercraft worlds)` : "";
-          showToast("success", `Imported ${result.lsCount} save entries${idbMsg}. Reload any open games to apply.`);
+          const idbMsg = result.idbCount > 0 ? ` + ${result.idbCount} game database(s)` : "";
+          showToast("success", `Imported ${result.lsCount} save entries${idbMsg}. Reload any open games to see your data.`);
           const newSettings = getSettings();
           setSettings(newSettings);
           refreshSaveInfo();
@@ -131,6 +147,22 @@ export function SettingsPanel({ onClose }: Props) {
     } finally {
       setResetting(false);
     }
+  };
+
+  const gameHasData = (game: typeof GAME_LIST[number]): boolean => {
+    // Check localStorage
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = (localStorage.key(i) || "").toLowerCase();
+        const terms = game.lsTerms ?? [game.id.replace(/-/g, "")];
+        if (terms.some((t) => k.includes(t))) return true;
+      }
+    } catch {}
+    // Check IndexedDB names
+    if (game.idbTerms && idbNames.length > 0) {
+      if (game.idbTerms.some((t) => idbNames.some((n) => n.includes(t)))) return true;
+    }
+    return false;
   };
 
   const saveInfoLabel = (() => {
@@ -194,7 +226,7 @@ export function SettingsPanel({ onClose }: Props) {
                 }
                 <div className="flex-1 text-left">
                   <p className="text-sm font-bold">{exporting ? "Exporting..." : "Export Progress"}</p>
-                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads a .json save file with all game data</p>
+                  <p className="text-[10px] font-normal text-secondary/70 font-mono">Downloads all game saves as a .json file</p>
                 </div>
               </button>
 
@@ -210,7 +242,7 @@ export function SettingsPanel({ onClose }: Props) {
                 }
                 <div className="flex-1 text-left">
                   <p className="text-sm font-bold">{importing ? "Importing..." : "Import Progress"}</p>
-                  <p className="text-[10px] font-normal text-accent/70 font-mono">Restore from a .json save file</p>
+                  <p className="text-[10px] font-normal text-accent/70 font-mono">Restore all game saves from a .json file</p>
                 </div>
               </button>
               <input
@@ -224,7 +256,7 @@ export function SettingsPanel({ onClose }: Props) {
 
               <div className="px-4 py-2.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
                 <p className="text-[10px] text-blue-400/70 font-mono leading-relaxed">
-                  Export saves all game progress including Eaglercraft worlds. Import replaces current data with the file contents. Reload games after importing.
+                  Exports all game saves — Geometry Dash, Eaglercraft, Brawl Stars, Tomb of the Mask, Drift Hunters, Stickman Merge, Escape Road, and more. Import replaces current data. Reload games after importing.
                 </p>
               </div>
             </div>
@@ -251,6 +283,26 @@ export function SettingsPanel({ onClose }: Props) {
             </div>
           </Section>
 
+          <Section label="Notifications">
+            <div className="space-y-2">
+              <ToggleRow
+                icon={settings.doNotDisturb ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                label="Do Not Disturb"
+                description="Hide all message notifications"
+                value={!!settings.doNotDisturb}
+                testId="toggle-dnd"
+                onChange={(v) => updateSetting("doNotDisturb", v)}
+              />
+              {settings.doNotDisturb && (
+                <div className="px-4 py-2.5 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
+                  <p className="text-[10px] text-yellow-400/70 font-mono leading-relaxed">
+                    DM pop-ups and toast alerts are silenced. You can still view messages in the chat.
+                  </p>
+                </div>
+              )}
+            </div>
+          </Section>
+
           <Section label="Per-Game Data">
             <button
               onClick={() => setShowGameSettings(!showGameSettings)}
@@ -258,7 +310,7 @@ export function SettingsPanel({ onClose }: Props) {
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-muted-foreground hover:text-white hover:bg-white/8 transition-all"
             >
               <span className="font-mono text-xs uppercase tracking-wider">
-                {GAME_LIST.length} games configured
+                {GAME_LIST.length} games tracked
               </span>
               {showGameSettings ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
@@ -266,15 +318,7 @@ export function SettingsPanel({ onClose }: Props) {
             {showGameSettings && (
               <div className="mt-2 space-y-1 max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-black/20">
                 {GAME_LIST.map((game) => {
-                  const hasData = (() => {
-                    try {
-                      for (let i = 0; i < localStorage.length; i++) {
-                        const k = localStorage.key(i) || "";
-                        if (k.toLowerCase().includes(game.id.replace(/-/g, ""))) return true;
-                      }
-                    } catch {}
-                    return false;
-                  })();
+                  const hasData = gameHasData(game);
                   return (
                     <div
                       key={game.id}
@@ -316,7 +360,7 @@ export function SettingsPanel({ onClose }: Props) {
                   <p className="text-xs text-red-400 font-bold">This cannot be undone.</p>
                 </div>
                 <p className="text-[11px] text-red-400/70 font-mono leading-relaxed">
-                  All saved progress, scores, achievements, and settings for every game (including Eaglercraft worlds) will be permanently deleted.
+                  All saved progress, scores, and data for every game (Geometry Dash, Eaglercraft, Brawl Stars, Tomb of the Mask, Drift Hunters, Stickman Merge, Escape Road, and more) will be permanently deleted.
                 </p>
                 <div className="flex gap-2 mt-3">
                   <button
