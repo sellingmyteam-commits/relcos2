@@ -1,4 +1,5 @@
 const SAVE_VERSION = "2.0";
+const GAME_SAVE_VERSION = "1.0";
 const SETTINGS_KEY = "relcos_settings";
 
 const SESSION_KEYS = new Set([
@@ -399,6 +400,140 @@ export async function resetAllGameData(): Promise<void> {
   }
   keysToRemove.forEach((k) => localStorage.removeItem(k));
   await clearAllIndexedDB();
+}
+
+// ── Per-game save API ─────────────────────────────────────────────────────────
+
+export interface GameSaveFile {
+  version: string;
+  exportedAt: string;
+  appName: string;
+  gameId: string;
+  gameLabel: string;
+  gameData: Record<string, string>;
+  indexedDB: Record<string, IDBDatabaseDump>;
+}
+
+function lsKeyMatchesTerms(key: string, terms: string[]): boolean {
+  const lower = key.toLowerCase();
+  return terms.some((t) => lower.includes(t.toLowerCase()));
+}
+
+function dbNameMatchesTerms(name: string, terms: string[]): boolean {
+  const lower = name.toLowerCase();
+  return terms.some((t) => lower.includes(t.toLowerCase()));
+}
+
+export async function exportGameSave(
+  gameId: string,
+  gameLabel: string,
+  lsTerms: string[],
+  idbTerms?: string[]
+): Promise<GameSaveFile> {
+  const gameData: Record<string, string> = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || SESSION_KEYS.has(key) || key === SETTINGS_KEY) continue;
+    if (lsTerms.length === 0 || lsKeyMatchesTerms(key, lsTerms)) {
+      const value = localStorage.getItem(key);
+      if (value !== null) gameData[key] = value;
+    }
+  }
+
+  const idbData: Record<string, IDBDatabaseDump> = {};
+  if (idbTerms && idbTerms.length > 0) {
+    try {
+      if (indexedDB.databases) {
+        const dbs = await indexedDB.databases();
+        await Promise.all(
+          dbs.map(async (info) => {
+            if (!info.name) return;
+            if (!dbNameMatchesTerms(info.name, idbTerms)) return;
+            const dump = await dumpDatabase(info.name);
+            if (dump && Object.keys(dump.stores).length > 0) {
+              idbData[info.name] = dump;
+            }
+          })
+        );
+      }
+    } catch {}
+  }
+
+  return {
+    version: GAME_SAVE_VERSION,
+    exportedAt: new Date().toISOString(),
+    appName: "RELC.OS",
+    gameId,
+    gameLabel,
+    gameData,
+    indexedDB: idbData,
+  };
+}
+
+export async function downloadGameSave(
+  gameId: string,
+  gameLabel: string,
+  lsTerms: string[],
+  idbTerms?: string[]
+): Promise<void> {
+  const save = await exportGameSave(gameId, gameLabel, lsTerms, idbTerms);
+  const json = JSON.stringify(save, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeName = gameId.replace(/[^a-z0-9-]/gi, "-");
+  a.download = `${safeName}-save-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function validateGameSave(raw: unknown): raw is GameSaveFile {
+  if (!raw || typeof raw !== "object") return false;
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.version !== "string") return false;
+  if (typeof obj.appName !== "string") return false;
+  if (typeof obj.gameId !== "string") return false;
+  if (!obj.gameData || typeof obj.gameData !== "object") return false;
+  return true;
+}
+
+export async function importGameSave(jsonText: string): Promise<ImportResult> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    return { success: false, error: "Invalid JSON — the file could not be parsed." };
+  }
+
+  if (!validateGameSave(parsed)) {
+    return { success: false, error: "This doesn't look like a valid game save file." };
+  }
+
+  const save = parsed as GameSaveFile;
+  if (save.appName !== "RELC.OS") {
+    return { success: false, error: "This save file is from a different app." };
+  }
+
+  try {
+    for (const [key, value] of Object.entries(save.gameData)) {
+      if (SESSION_KEYS.has(key)) continue;
+      localStorage.setItem(key, value);
+    }
+
+    const idbData = save.indexedDB ?? {};
+    await restoreIndexedDB(idbData);
+
+    return {
+      success: true,
+      lsCount: Object.keys(save.gameData).length,
+      idbCount: Object.keys(idbData).length,
+    };
+  } catch (e) {
+    return { success: false, error: "Failed to restore data: " + String(e) };
+  }
 }
 
 export async function getSaveInfo(): Promise<{ lsCount: number; idbCount: number }> {
