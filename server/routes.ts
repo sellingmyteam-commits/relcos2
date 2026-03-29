@@ -4,6 +4,11 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 
+function safeUser(user: Record<string, unknown>) {
+  const { passwordHash: _ph, ...safe } = user;
+  return safe;
+}
+
 const BAD_WORDS = [
   "fuck", "fuk", "fck", "fucc", "phuck", "f.ck",
   "shit", "sh1t",
@@ -155,17 +160,98 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { username, password } = z.object({
+        username: z.string().min(2).max(20).regex(/^[a-zA-Z0-9_]+$/, "Letters, numbers, underscores only"),
+        password: z.string().min(4).max(100),
+      }).parse(req.body);
+      const { user, created } = await storage.createUserWithPassword(username, password);
+      if (!created) return res.status(409).json({ message: "Username already taken" });
+      res.status(201).json({ id: user.id, username: user.username });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = z.object({
+        username: z.string().min(1).max(20),
+        password: z.string().min(1).max(100),
+      }).parse(req.body);
+      const result = await storage.loginUser(username, password);
+      if (!result) return res.status(401).json({ message: "Wrong username or password" });
+      res.json({ id: result.user.id, username: result.user.username, claimed: result.claimed });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.post("/api/auth/change-username", async (req, res) => {
+    try {
+      const { userId, newUsername } = z.object({
+        userId: z.number().int().positive(),
+        newUsername: z.string().min(2).max(20).regex(/^[a-zA-Z0-9_]+$/, "Letters, numbers, underscores only"),
+      }).parse(req.body);
+      const existing = await storage.getSiteUserByUsername(newUsername);
+      if (existing && existing.id !== userId) return res.status(409).json({ message: "Username already taken" });
+      const updated = await storage.updateSiteUsername(userId, newUsername);
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.json({ id: updated.id, username: updated.username });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.post("/api/auth/change-password", async (req, res) => {
+    try {
+      const { userId, currentPassword, newPassword } = z.object({
+        userId: z.number().int().positive(),
+        currentPassword: z.string().min(1).max(100),
+        newPassword: z.string().min(4).max(100),
+      }).parse(req.body);
+      const user = await storage.getSiteUserById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (user.passwordHash) {
+        const bcrypt = await import("bcryptjs");
+        const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+        if (!matches) return res.status(401).json({ message: "Current password is incorrect" });
+      }
+      await storage.updateUserPassword(userId, newPassword);
+      res.json({ ok: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
   app.get("/api/user/status/id/:id", async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid id" });
     const user = await storage.getSiteUserById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
+    res.json(safeUser(user as unknown as Record<string, unknown>));
   });
 
   app.get("/api/admin/users", async (req, res) => {
     const users = await storage.getAllSiteUsers();
-    res.json(users);
+    res.json(users.map(u => safeUser(u as unknown as Record<string, unknown>)));
   });
 
   app.patch("/api/admin/users/:id/username", async (req, res) => {

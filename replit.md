@@ -35,11 +35,20 @@ The frontend follows a page-based architecture with shared layout components. Ga
 
 The server uses a shared schema approach where API routes, input validation, and response types are defined once and used by both client and server. This ensures type safety across the full stack.
 
+### Authentication System
+- **Login/Register**: `ChatUsernameOverlay.tsx` — username + password form with toggle between Login and Create Account modes
+- **API Routes**: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/change-username`, `POST /api/auth/change-password`
+- **Password Hashing**: bcryptjs (salt rounds: 10)
+- **Session Storage**: `chatUsername` and `siteUserId` stored in localStorage
+- **Legacy users** (no passwordHash): first login claim — any password is accepted and stored as their password
+- **Settings Panel** Account section: change username, change password, logout button
+
 ### Data Storage
 - **Database**: PostgreSQL via Drizzle ORM
 - **Schema Location**: shared/schema.ts
 - **Migrations**: Drizzle Kit with migrations output to /migrations
-- **Current Schema**: Messages table for public chat (id, username, content, createdAt), DirectMessages table for DMs (id, fromUser, toUser, content, createdAt)
+- **Current Schema**: Messages (public chat), DirectMessages (DMs), SiteUsers (id, username, passwordHash, status, isAdmin, isMuted), DmConversationHidden
+- **Security**: passwordHash is never returned by public API endpoints (stripped via safeUser helper)
 
 ### Real-time Features
 - **WebSocket**: Native ws library for online user count broadcasting

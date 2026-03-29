@@ -22,6 +22,7 @@ export const directMessages = pgTable("direct_messages", {
 export const siteUsers = pgTable("site_users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  passwordHash: text("password_hash"),
   status: integer("status").notNull().default(1),
   isAdmin: boolean("is_admin").default(false),
   isMuted: boolean("is_muted").default(false),
@@ -47,6 +48,7 @@ export const insertDirectMessageSchema = createInsertSchema(directMessages).pick
 
 export const insertSiteUserSchema = createInsertSchema(siteUsers).pick({
   username: true,
+  passwordHash: true,
 });
 
 export type Message = typeof messages.$inferSelect;

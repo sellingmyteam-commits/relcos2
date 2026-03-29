@@ -1,6 +1,7 @@
 import { messages, directMessages, siteUsers, dmConversationHidden, type Message, type InsertMessage, type DirectMessage, type InsertDirectMessage, type SiteUser } from "@shared/schema";
 import { db } from "./db";
 import { desc, eq, or, and, gt, isNull, lt } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   getMessages(): Promise<Message[]>;
@@ -11,6 +12,9 @@ export interface IStorage {
   getLatestDmFor(username: string): Promise<DirectMessage | null>;
   getAllUsers(): Promise<string[]>;
   registerUser(username: string): Promise<{ user: SiteUser; created: boolean }>;
+  createUserWithPassword(username: string, password: string): Promise<{ user: SiteUser; created: boolean }>;
+  loginUser(username: string, password: string): Promise<{ user: SiteUser; claimed: boolean } | null>;
+  updateUserPassword(id: number, newPassword: string): Promise<boolean>;
   getAllSiteUsers(): Promise<SiteUser[]>;
   getSiteUserById(id: number): Promise<SiteUser | null>;
   getSiteUserByUsername(username: string): Promise<SiteUser | null>;
@@ -233,6 +237,53 @@ export class DatabaseStorage implements IStorage {
       .values({ username, status: 1 })
       .returning();
     return { user: created, created: true };
+  }
+
+  async createUserWithPassword(username: string, password: string): Promise<{ user: SiteUser; created: boolean }> {
+    const existing = await db
+      .select()
+      .from(siteUsers)
+      .where(eq(siteUsers.username, username))
+      .limit(1);
+    if (existing.length > 0) return { user: existing[0], created: false };
+    const passwordHash = await bcrypt.hash(password, 10);
+    const [created] = await db
+      .insert(siteUsers)
+      .values({ username, passwordHash, status: 1 })
+      .returning();
+    return { user: created, created: true };
+  }
+
+  async loginUser(username: string, password: string): Promise<{ user: SiteUser; claimed: boolean } | null> {
+    const [user] = await db
+      .select()
+      .from(siteUsers)
+      .where(eq(siteUsers.username, username))
+      .limit(1);
+    if (!user) return null;
+    if (!user.passwordHash) {
+      // Legacy user with no password — claim the account by setting this password
+      const passwordHash = await bcrypt.hash(password, 10);
+      const [updated] = await db
+        .update(siteUsers)
+        .set({ passwordHash })
+        .where(eq(siteUsers.id, user.id))
+        .returning();
+      return { user: updated, claimed: true };
+    }
+    const matches = await bcrypt.compare(password, user.passwordHash);
+    if (!matches) return null;
+    return { user, claimed: false };
+  }
+
+  async updateUserPassword(id: number, newPassword: string): Promise<boolean> {
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const [updated] = await db
+      .update(siteUsers)
+      .set({ passwordHash })
+      .where(eq(siteUsers.id, id))
+      .returning();
+    return !!updated;
   }
 
   async getAllSiteUsers(): Promise<SiteUser[]> {

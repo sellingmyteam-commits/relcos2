@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, RotateCcw, CheckCircle, AlertCircle, Info, Loader2, BellOff, Bell, Wifi, WifiOff } from "lucide-react";
+import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, RotateCcw, CheckCircle, AlertCircle, Info, Loader2, BellOff, Bell, Wifi, WifiOff, LogOut, UserRoundPen, Lock, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getSettings,
@@ -28,6 +28,22 @@ export function SettingsPanel({ onClose }: Props) {
   const [importing, setImporting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [currentUsername] = useState(() => localStorage.getItem("chatUsername") || "");
+  const [siteUserId] = useState(() => {
+    const v = localStorage.getItem("siteUserId");
+    return v ? parseInt(v, 10) : null;
+  });
+
+  const [newUsername, setNewUsername] = useState("");
+  const [changingUsername, setChangingUsername] = useState(false);
+
+  const [currentPass, setCurrentPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const checkEaglercraftData = () => {
     let found = false;
@@ -127,6 +143,65 @@ export function SettingsPanel({ onClose }: Props) {
     }
   };
 
+  const handleChangeUsername = async () => {
+    const clean = newUsername.trim();
+    if (!clean) return showToast("error", "Enter a new username.");
+    if (!/^[a-zA-Z0-9_]+$/.test(clean)) return showToast("error", "Letters, numbers, underscores only.");
+    if (clean.length < 2 || clean.length > 20) return showToast("error", "Username must be 2–20 characters.");
+    if (clean === currentUsername) return showToast("info", "That's already your username.");
+    if (!siteUserId) return showToast("error", "Not logged in.");
+    setChangingUsername(true);
+    try {
+      const res = await fetch("/api/auth/change-username", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: siteUserId, newUsername: clean }),
+      });
+      const data = await res.json();
+      if (res.status === 409) return showToast("error", "Username already taken.");
+      if (!res.ok) return showToast("error", data.message || "Failed to change username.");
+      localStorage.setItem("chatUsername", data.username);
+      setNewUsername("");
+      showToast("success", `Username changed to "${data.username}". Page will reload.`);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch {
+      showToast("error", "Connection error.");
+    } finally {
+      setChangingUsername(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPass) return showToast("error", "Enter your current password.");
+    if (!newPass) return showToast("error", "Enter a new password.");
+    if (newPass.length < 4) return showToast("error", "New password must be at least 4 characters.");
+    if (newPass !== confirmPass) return showToast("error", "New passwords don't match.");
+    if (!siteUserId) return showToast("error", "Not logged in.");
+    setChangingPassword(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: siteUserId, currentPassword: currentPass, newPassword: newPass }),
+      });
+      const data = await res.json();
+      if (res.status === 401) return showToast("error", "Current password is incorrect.");
+      if (!res.ok) return showToast("error", data.message || "Failed to change password.");
+      setCurrentPass(""); setNewPass(""); setConfirmPass("");
+      showToast("success", "Password updated successfully.");
+    } catch {
+      showToast("error", "Connection error.");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("chatUsername");
+    localStorage.removeItem("siteUserId");
+    window.location.reload();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -157,6 +232,108 @@ export function SettingsPanel({ onClose }: Props) {
         )}
 
         <div className="flex-1 overflow-y-auto">
+          <Section label="Account">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/3 border border-white/5">
+                <div className="flex items-center gap-2">
+                  <UserRoundPen className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs text-white font-mono font-bold">{currentUsername}</span>
+                </div>
+                <span className="text-[9px] text-muted-foreground/50 font-mono uppercase tracking-wider">logged in</span>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider px-1">Change Username</p>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <UserRoundPen className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
+                    <input
+                      type="text"
+                      placeholder={`Current: ${currentUsername}`}
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value.replace(/\s/g, "").slice(0, 20))}
+                      onKeyDown={(e) => e.key === "Enter" && handleChangeUsername()}
+                      data-testid="input-new-username"
+                      className="w-full h-9 bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 text-xs font-mono text-white placeholder:text-muted-foreground/30 focus:outline-none focus:border-secondary/50 transition-colors"
+                    />
+                  </div>
+                  <button
+                    onClick={handleChangeUsername}
+                    disabled={changingUsername || !newUsername.trim()}
+                    data-testid="button-change-username"
+                    className="px-3 h-9 rounded-lg bg-secondary/15 border border-secondary/30 text-secondary text-[10px] font-bold hover:bg-secondary/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  >
+                    {changingUsername ? <Loader2 className="w-3 h-3 animate-spin" /> : "SAVE"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider px-1">Change Password</p>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
+                  <input
+                    type={showCurrentPass ? "text" : "password"}
+                    placeholder="Current password"
+                    value={currentPass}
+                    onChange={(e) => setCurrentPass(e.target.value)}
+                    data-testid="input-current-password"
+                    className="w-full h-9 bg-white/5 border border-white/10 rounded-lg pl-9 pr-9 text-xs font-mono text-white placeholder:text-muted-foreground/30 focus:outline-none focus:border-secondary/50 transition-colors"
+                  />
+                  <button type="button" onClick={() => setShowCurrentPass(!showCurrentPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors">
+                    {showCurrentPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
+                  <input
+                    type={showNewPass ? "text" : "password"}
+                    placeholder="New password (min 4 chars)"
+                    value={newPass}
+                    onChange={(e) => setNewPass(e.target.value)}
+                    data-testid="input-new-password"
+                    className="w-full h-9 bg-white/5 border border-white/10 rounded-lg pl-9 pr-9 text-xs font-mono text-white placeholder:text-muted-foreground/30 focus:outline-none focus:border-secondary/50 transition-colors"
+                  />
+                  <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors">
+                    {showNewPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmPass}
+                    onChange={(e) => setConfirmPass(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
+                    data-testid="input-confirm-new-password"
+                    className="w-full h-9 bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 text-xs font-mono text-white placeholder:text-muted-foreground/30 focus:outline-none focus:border-secondary/50 transition-colors"
+                  />
+                </div>
+                <button
+                  onClick={handleChangePassword}
+                  disabled={changingPassword || !currentPass || !newPass || !confirmPass}
+                  data-testid="button-change-password"
+                  className="w-full h-9 rounded-lg bg-secondary/15 border border-secondary/30 text-secondary text-[10px] font-bold hover:bg-secondary/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                >
+                  {changingPassword ? <><Loader2 className="w-3 h-3 animate-spin" /> UPDATING...</> : "UPDATE PASSWORD"}
+                </button>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                data-testid="button-logout"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-muted-foreground text-sm font-bold hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all group"
+              >
+                <LogOut className="w-4 h-4" />
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-bold">Log Out</p>
+                  <p className="text-[10px] font-normal opacity-50 font-mono">Sign out of your account</p>
+                </div>
+              </button>
+            </div>
+          </Section>
+
           <Section label="Eaglercraft Data">
             <div className="space-y-2">
               <button
