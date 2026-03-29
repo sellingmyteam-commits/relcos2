@@ -23,6 +23,7 @@ import CarKing from "@/pages/CarKing";
 import DriftBoss from "@/pages/DriftBoss";
 import Quake3 from "@/pages/Quake3";
 import TombOfTheMask from "@/pages/TombOfTheMask";
+import NaziZombies from "@/pages/NaziZombies";
 import OneLoveLol from "@/pages/OneLoveLol";
 import BikersRepublic from "@/pages/BikersRepublic";
 import CounterStrike from "@/pages/CounterStrike";
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/drift-boss" component={DriftBoss} />
       <Route path="/quake3" component={Quake3} />
       <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
+      <Route path="/nazi-zombies" component={NaziZombies} />
       <Route path="/chat" component={Chat} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />

@@ -72,6 +72,7 @@ export default function Home() {
     { href: "/car-king", label: "Car King", desc: "Rule the arena in your car.", icon: Crown, color: "primary" },
     { href: "/drift-boss", label: "Drift Boss", desc: "Master the art of drifting.", icon: Gauge, color: "purple" },
     { href: "/tomb-of-the-mask", label: "Tomb of the Mask", desc: "Fast-paced arcade maze runner.", icon: Layers, color: "pink" },
+    { href: "/nazi-zombies", label: "NZ: Portable", desc: "Survive endless waves of the undead.", icon: Skull, color: "purple" },
   ];
 
   return (
