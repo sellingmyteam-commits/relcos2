@@ -40,6 +40,7 @@ import { BootLoader } from "@/components/BootLoader";
 import { motion, AnimatePresence } from "framer-motion";
 import { DmNotification } from "@/components/DmNotification";
 import { cloudPushSave } from "@/lib/saveSystem";
+import { GAME_SAVE_MAP } from "@/lib/gameSaveMap";
 
 function Router() {
   return (
@@ -232,15 +233,34 @@ function App() {
   }, [username]);
 
   const pushRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!siteUserId) return;
-    const push = () => cloudPushSave(siteUserId);
+    const push = () => cloudPushSave(siteUserId, GAME_SAVE_MAP);
+
     push();
     pushRef.current = setInterval(push, 30_000);
     window.addEventListener("beforeunload", push);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") push();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const handleGameSaveMessage = (e: MessageEvent) => {
+      if (e.data?.type !== "RELCOS_SAVE_CHANGED") return;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => cloudPushSave(siteUserId, GAME_SAVE_MAP), 3000);
+    };
+    window.addEventListener("message", handleGameSaveMessage);
+
     return () => {
       if (pushRef.current) clearInterval(pushRef.current);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       window.removeEventListener("beforeunload", push);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("message", handleGameSaveMessage);
     };
   }, [siteUserId]);
 

@@ -697,9 +697,12 @@ export async function cloudPullSave(userId: number): Promise<ImportResult> {
   }
 }
 
-export async function cloudPushSave(userId: number): Promise<void> {
+export async function cloudPushSave(
+  userId: number,
+  gameList?: Array<{ id: string; lsTerms?: string[]; idbTerms?: string[] }>
+): Promise<void> {
   try {
-    const save = await exportAllGamesSave([]);
+    const save = await exportAllGamesSave(gameList ?? []);
     await fetch(`/api/saves/${userId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
