@@ -23,7 +23,6 @@ import CarKing from "@/pages/CarKing";
 import DriftBoss from "@/pages/DriftBoss";
 import Quake3 from "@/pages/Quake3";
 import TombOfTheMask from "@/pages/TombOfTheMask";
-import NaziZombies from "@/pages/NaziZombies";
 import OneLoveLol from "@/pages/OneLoveLol";
 import BikersRepublic from "@/pages/BikersRepublic";
 import CounterStrike from "@/pages/CounterStrike";
@@ -40,6 +39,7 @@ import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
 import { BootLoader } from "@/components/BootLoader";
 import { motion, AnimatePresence } from "framer-motion";
 import { DmNotification } from "@/components/DmNotification";
+import { cloudPushSave } from "@/lib/saveSystem";
 
 function Router() {
   return (
@@ -72,7 +72,6 @@ function Router() {
       <Route path="/drift-boss" component={DriftBoss} />
       <Route path="/quake3" component={Quake3} />
       <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
-      <Route path="/nazi-zombies" component={NaziZombies} />
       <Route path="/chat" component={Chat} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
@@ -231,6 +230,19 @@ function App() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [username]);
+
+  const pushRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!siteUserId) return;
+    const push = () => cloudPushSave(siteUserId);
+    push();
+    pushRef.current = setInterval(push, 30_000);
+    window.addEventListener("beforeunload", push);
+    return () => {
+      if (pushRef.current) clearInterval(pushRef.current);
+      window.removeEventListener("beforeunload", push);
+    };
+  }, [siteUserId]);
 
   return (
     <QueryClientProvider client={queryClient}>

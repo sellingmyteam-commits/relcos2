@@ -43,11 +43,18 @@ The server uses a shared schema approach where API routes, input validation, and
 - **Legacy users** (no passwordHash): first login claim — any password is accepted and stored as their password
 - **Settings Panel** Account section: change username, change password, logout button
 
+### Cloud Save System
+- **How it works**: All game progress (localStorage + IndexedDB) is serialized into a single JSON document and synced to the database per user
+- **On login**: After authentication, a loading screen ("Accessing relc.os user database and game data") is shown while cloud saves are fetched and restored to the browser
+- **Auto-push**: Every 30 seconds and on page close (`beforeunload`), the current save state is pushed to the backend
+- **API routes**: `GET /api/saves/:userId` (fetch) and `POST /api/saves/:userId` (upsert)
+- **Functions in saveSystem.ts**: `cloudPullSave(userId)` — restores from cloud; `cloudPushSave(userId)` — serializes and pushes to cloud
+
 ### Data Storage
 - **Database**: PostgreSQL via Drizzle ORM
 - **Schema Location**: shared/schema.ts
 - **Migrations**: Drizzle Kit with migrations output to /migrations
-- **Current Schema**: Messages (public chat), DirectMessages (DMs), SiteUsers (id, username, passwordHash, status, isAdmin, isMuted), DmConversationHidden
+- **Current Schema**: Messages (public chat), DirectMessages (DMs), SiteUsers (id, username, passwordHash, status, isAdmin, isMuted), DmConversationHidden, GameSaves (id, userId, saveData [jsonb], updatedAt)
 - **Security**: passwordHash is never returned by public API endpoints (stripped via safeUser helper)
 
 ### Real-time Features

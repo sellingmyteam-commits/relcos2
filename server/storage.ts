@@ -1,4 +1,4 @@
-import { messages, directMessages, siteUsers, dmConversationHidden, type Message, type InsertMessage, type DirectMessage, type InsertDirectMessage, type SiteUser } from "@shared/schema";
+import { messages, directMessages, siteUsers, dmConversationHidden, gameSaves, type Message, type InsertMessage, type DirectMessage, type InsertDirectMessage, type SiteUser } from "@shared/schema";
 import { db } from "./db";
 import { desc, eq, or, and, gt, isNull, lt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -25,6 +25,8 @@ export interface IStorage {
   markConversationRead(currentUser: string, otherUser: string): Promise<void>;
   getUnreadCounts(username: string): Promise<Record<string, number>>;
   hideConversation(username: string, otherUser: string): Promise<void>;
+  getGameSave(userId: number): Promise<unknown | null>;
+  upsertGameSave(userId: number, saveData: unknown): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -342,6 +344,35 @@ export class DatabaseStorage implements IStorage {
       .where(eq(siteUsers.id, id))
       .returning();
     return updated || null;
+  }
+
+  async getGameSave(userId: number): Promise<unknown | null> {
+    const [row] = await db
+      .select()
+      .from(gameSaves)
+      .where(eq(gameSaves.userId, userId))
+      .limit(1);
+    return row ? row.saveData : null;
+  }
+
+  async upsertGameSave(userId: number, saveData: unknown): Promise<void> {
+    const existing = await db
+      .select({ id: gameSaves.id })
+      .from(gameSaves)
+      .where(eq(gameSaves.userId, userId))
+      .limit(1);
+
+    const now = new Date();
+    if (existing.length > 0) {
+      await db
+        .update(gameSaves)
+        .set({ saveData: saveData as Record<string, unknown>, updatedAt: now })
+        .where(eq(gameSaves.userId, userId));
+    } else {
+      await db
+        .insert(gameSaves)
+        .values({ userId, saveData: saveData as Record<string, unknown>, updatedAt: now });
+    }
   }
 }
 

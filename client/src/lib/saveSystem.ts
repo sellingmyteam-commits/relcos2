@@ -680,3 +680,32 @@ export async function getSaveInfo(): Promise<{ lsCount: number; idbCount: number
   } catch {}
   return { lsCount, idbCount };
 }
+
+// ── Cloud Save Sync ────────────────────────────────────────────────────────────
+
+export async function cloudPullSave(userId: number): Promise<ImportResult> {
+  try {
+    const res = await fetch(`/api/saves/${userId}`);
+    if (!res.ok) return { success: false, error: "Failed to fetch cloud save" };
+    const { saveData } = await res.json();
+    if (!saveData) return { success: true, lsCount: 0, idbCount: 0 };
+
+    const jsonText = typeof saveData === "string" ? saveData : JSON.stringify(saveData);
+    return await importAllGamesSave(jsonText);
+  } catch (e) {
+    return { success: false, error: "Cloud pull failed: " + String(e) };
+  }
+}
+
+export async function cloudPushSave(userId: number): Promise<void> {
+  try {
+    const save = await exportAllGamesSave([]);
+    await fetch(`/api/saves/${userId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ saveData: save }),
+    });
+  } catch {
+    // Silent fail — don't interrupt user experience on push error
+  }
+}

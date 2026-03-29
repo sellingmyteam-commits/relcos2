@@ -318,6 +318,30 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/saves/:userId", async (req, res) => {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId)) return res.status(400).json({ message: "Invalid userId" });
+    try {
+      const saveData = await storage.getGameSave(userId);
+      res.json({ saveData: saveData ?? null });
+    } catch {
+      res.status(500).json({ message: "Failed to load save" });
+    }
+  });
+
+  app.post("/api/saves/:userId", async (req, res) => {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId)) return res.status(400).json({ message: "Invalid userId" });
+    const { saveData } = req.body;
+    if (saveData === undefined) return res.status(400).json({ message: "saveData is required" });
+    try {
+      await storage.upsertGameSave(userId, saveData);
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Failed to save" });
+    }
+  });
+
   const existingMessages = await storage.getMessages();
   if (existingMessages.length === 0) {
     await storage.createMessage({ username: "System", content: "Welcome to the chat! Be nice to each other." });
