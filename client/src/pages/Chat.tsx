@@ -5,8 +5,8 @@ import { useDirectMessages, useCreateDirectMessage, useConversations, useDeleteC
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import {
-  Send, User, Loader2, MessageSquare, Mail, ArrowLeft, Plus, X,
-  Globe, Users, Wifi, Ban, Trash2, Hash, ChevronDown, Check, CheckCheck,
+  Send, User, Loader2, MessageSquare, Mail, Plus, X,
+  Globe, Users, Wifi, Ban, Trash2, Hash,
   Shield
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
@@ -126,9 +126,9 @@ function DMMessage({ msg, isMe, isLast }: {
           </span>
           {isMe && isLast && (
             msg.isRead ? (
-              <CheckCheck className="w-3 h-3 text-secondary/60" />
+              <span className="text-[9px] font-mono text-secondary/70 uppercase tracking-widest">READ</span>
             ) : (
-              <Check className="w-3 h-3 text-muted-foreground/30" />
+              <span className="text-[9px] font-mono text-muted-foreground/35 uppercase tracking-widest">SENT</span>
             )
           )}
         </div>

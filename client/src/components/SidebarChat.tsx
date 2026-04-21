@@ -3,7 +3,7 @@ import { useMessages, useCreateMessage } from "@/hooks/use-messages";
 import { useDirectMessages, useCreateDirectMessage, useConversations, useUnreadCounts, useDeleteConversation } from "@/hooks/use-dm";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Send, User, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Mail, Globe, ArrowLeft, Plus, X, ChevronDown, Wifi, Trash2, Check, CheckCheck } from "lucide-react";
+import { Send, User, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Mail, Globe, ArrowLeft, Plus, X, ChevronDown, Wifi, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
@@ -161,17 +161,9 @@ function SidebarDMView({ username, initialChat, onUnreadCountChange }: { usernam
                   {isLastMyMsg && (
                     <div className="flex items-center gap-1 mt-0.5" data-testid={`text-read-receipt-${msg.id}`}>
                       {msg.isRead ? (
-                        <>
-                          <CheckCheck className="w-2.5 h-2.5 text-accent/60" />
-                          <span className="text-[8px] text-accent/60 font-mono">
-                            Read{msg.readAt ? ` at ${format(new Date(msg.readAt), "h:mm a")}` : ""}
-                          </span>
-                        </>
+                        <span className="text-[8px] text-accent/60 font-mono uppercase tracking-widest">READ</span>
                       ) : (
-                        <>
-                          <Check className="w-2.5 h-2.5 text-muted-foreground/40" />
-                          <span className="text-[8px] text-muted-foreground/40 font-mono">Delivered</span>
-                        </>
+                        <span className="text-[8px] text-muted-foreground/35 font-mono uppercase tracking-widest">SENT</span>
                       )}
                     </div>
                   )}
