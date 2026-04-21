@@ -2,38 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { useState, useEffect, useRef } from "react";
-import Home from "@/pages/Home";
-import Eaglercraft from "@/pages/Eaglercraft";
-import Shellshockers from "@/pages/Shellshockers";
-import GeometryDash from "@/pages/GeometryDash";
-import MotoX3M from "@/pages/MotoX3M";
-import StickmanMerge from "@/pages/StickmanMerge";
-import Slope from "@/pages/Slope";
-import FiveNightsAtWinstons from "@/pages/FiveNightsAtWinstons";
-import RocketSoccer from "@/pages/RocketSoccer";
-import RetroBowl from "@/pages/RetroBowl";
-import DriftHunters from "@/pages/DriftHunters";
-import BrawlStars from "@/pages/BrawlStars";
-import BlockBlast from "@/pages/BlockBlast";
-import BitLife from "@/pages/BitLife";
-import EscapeRoad from "@/pages/EscapeRoad";
-import SuperHot from "@/pages/SuperHot";
-import CarKing from "@/pages/CarKing";
-import DriftBoss from "@/pages/DriftBoss";
-import Quake3 from "@/pages/Quake3";
-import TombOfTheMask from "@/pages/TombOfTheMask";
-import OneLoveLol from "@/pages/OneLoveLol";
-import BikersRepublic from "@/pages/BikersRepublic";
-import CounterStrike from "@/pages/CounterStrike";
-import TenMinutesTillDawn from "@/pages/TenMinutesTillDawn";
-import BabySniperVietnam from "@/pages/BabySniperVietnam";
-import Chess from "@/pages/Chess";
-import DriveMad from "@/pages/DriveMad";
-import SnowballIO from "@/pages/SnowballIO";
-import Chat from "@/pages/Chat";
-import Admin from "@/pages/Admin";
-import NotFound from "@/pages/not-found";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { SecurityBlock } from "@/components/SecurityBlock";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
 import { BootLoader } from "@/components/BootLoader";
@@ -42,41 +11,86 @@ import { DmNotification } from "@/components/DmNotification";
 import { cloudPushSave } from "@/lib/saveSystem";
 import { GAME_SAVE_MAP } from "@/lib/gameSaveMap";
 
+const Home = lazy(() => import("@/pages/Home"));
+const Eaglercraft = lazy(() => import("@/pages/Eaglercraft"));
+const Shellshockers = lazy(() => import("@/pages/Shellshockers"));
+const GeometryDash = lazy(() => import("@/pages/GeometryDash"));
+const MotoX3M = lazy(() => import("@/pages/MotoX3M"));
+const StickmanMerge = lazy(() => import("@/pages/StickmanMerge"));
+const Slope = lazy(() => import("@/pages/Slope"));
+const FiveNightsAtWinstons = lazy(() => import("@/pages/FiveNightsAtWinstons"));
+const RocketSoccer = lazy(() => import("@/pages/RocketSoccer"));
+const RetroBowl = lazy(() => import("@/pages/RetroBowl"));
+const DriftHunters = lazy(() => import("@/pages/DriftHunters"));
+const BrawlStars = lazy(() => import("@/pages/BrawlStars"));
+const BlockBlast = lazy(() => import("@/pages/BlockBlast"));
+const BitLife = lazy(() => import("@/pages/BitLife"));
+const EscapeRoad = lazy(() => import("@/pages/EscapeRoad"));
+const SuperHot = lazy(() => import("@/pages/SuperHot"));
+const CarKing = lazy(() => import("@/pages/CarKing"));
+const DriftBoss = lazy(() => import("@/pages/DriftBoss"));
+const Quake3 = lazy(() => import("@/pages/Quake3"));
+const TombOfTheMask = lazy(() => import("@/pages/TombOfTheMask"));
+const OneLoveLol = lazy(() => import("@/pages/OneLoveLol"));
+const BikersRepublic = lazy(() => import("@/pages/BikersRepublic"));
+const CounterStrike = lazy(() => import("@/pages/CounterStrike"));
+const TenMinutesTillDawn = lazy(() => import("@/pages/TenMinutesTillDawn"));
+const BabySniperVietnam = lazy(() => import("@/pages/BabySniperVietnam"));
+const Chess = lazy(() => import("@/pages/Chess"));
+const DriveMad = lazy(() => import("@/pages/DriveMad"));
+const SnowballIO = lazy(() => import("@/pages/SnowballIO"));
+const Chat = lazy(() => import("@/pages/Chat"));
+const Admin = lazy(() => import("@/pages/Admin"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+function PageLoader() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-background z-40">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-mono text-muted-foreground tracking-widest uppercase">Loading</span>
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/eaglercraft" component={Eaglercraft} />
-      <Route path="/shellshockers" component={Shellshockers} />
-      <Route path="/geometry-dash" component={GeometryDash} />
-      <Route path="/motox3m" component={MotoX3M} />
-      <Route path="/stickman-merge" component={StickmanMerge} />
-      <Route path="/slope" component={Slope} />
-      <Route path="/1v1-lol" component={OneLoveLol} />
-      <Route path="/bikers-republic" component={BikersRepublic} />
-      <Route path="/counter-strike" component={CounterStrike} />
-      <Route path="/10-minutes-till-dawn" component={TenMinutesTillDawn} />
-      <Route path="/baby-sniper-vietnam" component={BabySniperVietnam} />
-      <Route path="/chess" component={Chess} />
-      <Route path="/drive-mad" component={DriveMad} />
-      <Route path="/snowball-io" component={SnowballIO} />
-      <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
-      <Route path="/rocket-soccer" component={RocketSoccer} />
-      <Route path="/retro-bowl" component={RetroBowl} />
-      <Route path="/drift-hunters" component={DriftHunters} />
-      <Route path="/brawl-stars" component={BrawlStars} />
-      <Route path="/block-blast" component={BlockBlast} />
-      <Route path="/bitlife" component={BitLife} />
-      <Route path="/escape-road" component={EscapeRoad} />
-      <Route path="/super-hot" component={SuperHot} />
-      <Route path="/car-king" component={CarKing} />
-      <Route path="/drift-boss" component={DriftBoss} />
-      <Route path="/quake3" component={Quake3} />
-      <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
-      <Route path="/chat" component={Chat} />
-      <Route path="/admin" component={Admin} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/eaglercraft" component={Eaglercraft} />
+        <Route path="/shellshockers" component={Shellshockers} />
+        <Route path="/geometry-dash" component={GeometryDash} />
+        <Route path="/motox3m" component={MotoX3M} />
+        <Route path="/stickman-merge" component={StickmanMerge} />
+        <Route path="/slope" component={Slope} />
+        <Route path="/1v1-lol" component={OneLoveLol} />
+        <Route path="/bikers-republic" component={BikersRepublic} />
+        <Route path="/counter-strike" component={CounterStrike} />
+        <Route path="/10-minutes-till-dawn" component={TenMinutesTillDawn} />
+        <Route path="/baby-sniper-vietnam" component={BabySniperVietnam} />
+        <Route path="/chess" component={Chess} />
+        <Route path="/drive-mad" component={DriveMad} />
+        <Route path="/snowball-io" component={SnowballIO} />
+        <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
+        <Route path="/rocket-soccer" component={RocketSoccer} />
+        <Route path="/retro-bowl" component={RetroBowl} />
+        <Route path="/drift-hunters" component={DriftHunters} />
+        <Route path="/brawl-stars" component={BrawlStars} />
+        <Route path="/block-blast" component={BlockBlast} />
+        <Route path="/bitlife" component={BitLife} />
+        <Route path="/escape-road" component={EscapeRoad} />
+        <Route path="/super-hot" component={SuperHot} />
+        <Route path="/car-king" component={CarKing} />
+        <Route path="/drift-boss" component={DriftBoss} />
+        <Route path="/quake3" component={Quake3} />
+        <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
+        <Route path="/chat" component={Chat} />
+        <Route path="/admin" component={Admin} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
@@ -109,7 +123,7 @@ function WelcomeNotification() {
           animate={{ opacity: 1, y: 0, x: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="fixed top-20 right-4 z-[60] max-w-xs"
+          className="fixed top-4 right-4 z-[60] max-w-xs"
         >
           <div className="bg-card/95 backdrop-blur-xl border border-secondary/30 rounded-xl px-4 py-3 shadow-2xl shadow-secondary/10">
             <div className="flex items-center gap-2 mb-1">
@@ -150,11 +164,6 @@ function BanWall() {
         >
           TOO BAD.
         </p>
-        <div className="mt-10 flex gap-2 justify-center opacity-20">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="w-1 h-8 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -199,14 +208,13 @@ function App() {
           localStorage.setItem("chatUsername", data.username);
           setUsername(data.username);
         }
-      } catch {
-      }
+      } catch {}
     };
 
     const ensureRegistered = async () => {
       if (siteUserId && siteUserId > 0) {
         await checkStatus(siteUserId);
-        pollRef.current = setInterval(() => checkStatus(siteUserId), 5000);
+        pollRef.current = setInterval(() => checkStatus(siteUserId), 10000);
         return;
       }
       try {
@@ -220,10 +228,9 @@ function App() {
           setSiteUserId(data.id);
           localStorage.setItem("siteUserId", String(data.id));
           await checkStatus(data.id);
-          pollRef.current = setInterval(() => checkStatus(data.id), 5000);
+          pollRef.current = setInterval(() => checkStatus(data.id), 10000);
         }
-      } catch {
-      }
+      } catch {}
     };
 
     ensureRegistered();
@@ -240,7 +247,7 @@ function App() {
     const push = () => cloudPushSave(siteUserId, GAME_SAVE_MAP);
 
     push();
-    pushRef.current = setInterval(push, 30_000);
+    pushRef.current = setInterval(push, 60_000);
     window.addEventListener("beforeunload", push);
 
     const handleVisibilityChange = () => {
@@ -251,7 +258,7 @@ function App() {
     const handleGameSaveMessage = (e: MessageEvent) => {
       if (e.data?.type !== "RELCOS_SAVE_CHANGED") return;
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => cloudPushSave(siteUserId, GAME_SAVE_MAP), 3000);
+      debounceRef.current = setTimeout(() => cloudPushSave(siteUserId, GAME_SAVE_MAP), 5000);
     };
     window.addEventListener("message", handleGameSaveMessage);
 

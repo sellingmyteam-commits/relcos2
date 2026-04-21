@@ -1,43 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Users, Maximize2, Search, Box, Egg, Zap, Bike, Circle, Goal, Trophy, Car, Swords, Grid3x3, Heart, Route, Flame, Cctv, MessageSquare, Crown, Gauge, Bomb, Layers, Settings, Crosshair, Target, Skull, Clock, Sword, Square, Snowflake, Cuboid, Home, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
 import { AdminPanel } from "@/components/AdminPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
-
-export const ALL_GAMES = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/1v1-lol", label: "1v1.lol", icon: Crosshair },
-  { href: "/counter-strike", label: "Counter Strike", icon: Target },
-  { href: "/bikers-republic", label: "Bikers Republic", icon: Skull },
-  { href: "/10-minutes-till-dawn", label: "10 Min Till Dawn", icon: Clock },
-  { href: "/baby-sniper-vietnam", label: "Baby Sniper Vietnam", icon: Sword },
-  { href: "/chess", label: "Chess Classic", icon: Box },
-  { href: "/drive-mad", label: "Drive Mad", icon: Square },
-  { href: "/snowball-io", label: "Snowball.io", icon: Snowflake },
-  { href: "/quake3", label: "Quake 3", icon: Bomb },
-  { href: "/super-hot", label: "Super Hot", icon: Flame },
-  { href: "/eaglercraft", label: "Eagler Craft X", icon: Cuboid },
-  { href: "/shellshockers", label: "Shellshockers", icon: Egg },
-  { href: "/geometry-dash", label: "Geometry Dash", icon: Zap },
-  { href: "/motox3m", label: "Moto X3M", icon: Bike },
-  { href: "/five-nights-at-winstons", label: "Five Nights At Winston's", icon: Cctv },
-  { href: "/slope", label: "Slope", icon: Circle },
-  { href: "/retro-bowl", label: "Retro Bowl", icon: Goal },
-  { href: "/rocket-soccer", label: "Rocket Soccer", icon: Trophy },
-  { href: "/drift-hunters", label: "Drift Hunters", icon: Car },
-  { href: "/brawl-stars", label: "Brawl Stars", icon: Swords },
-  { href: "/block-blast", label: "Block Blast", icon: Grid3x3 },
-  { href: "/bitlife", label: "BitLife", icon: Heart },
-  { href: "/escape-road", label: "Escape Road", icon: Route },
-  { href: "/stickman-merge", label: "Stickman Merge", icon: Users },
-  { href: "/car-king", label: "Car King", icon: Crown },
-  { href: "/drift-boss", label: "Drift Boss", icon: Gauge },
-  { href: "/tomb-of-the-mask", label: "Tomb of the Mask", icon: Layers },
-  { href: "/chat", label: "Live Comms", icon: MessageSquare },
-];
+import { ALL_GAMES } from "@/lib/games";
 
 export function Navigation() {
   const [location, setLocation] = useLocation();
@@ -48,6 +17,10 @@ export function Navigation() {
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--sidebar-width", collapsed ? "56px" : "224px");
+  }, [collapsed]);
 
   useEffect(() => {
     const socket = getSharedSocket();

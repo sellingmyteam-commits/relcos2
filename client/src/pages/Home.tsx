@@ -1,8 +1,8 @@
 import { Layout } from "@/components/Layout";
 import { Link } from "wouter";
-import { Gamepad2, MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail, Snowflake, Clock, Star, Search, X } from "lucide-react";
+import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail, Snowflake, Clock, Star, Search, X, Gamepad2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 
@@ -58,51 +58,31 @@ function useFavourites() {
 }
 
 function GameCard({
-  href,
-  label,
-  desc,
-  icon: Icon,
-  color,
-  isFavourite,
-  onToggleFavourite,
-  variants,
+  href, label, desc, icon: Icon, color, isFavourite, onToggleFavourite,
 }: {
-  href: string;
-  label: string;
-  desc: string;
-  icon: React.ElementType;
-  color: string;
-  isFavourite: boolean;
-  onToggleFavourite: (e: React.MouseEvent) => void;
-  variants?: any;
+  href: string; label: string; desc: string; icon: React.ElementType;
+  color: string; isFavourite: boolean; onToggleFavourite: (e: React.MouseEvent) => void;
 }) {
   return (
-    <motion.div variants={variants} className="relative group">
+    <div className="relative group">
       <Link href={href}>
         <div
           className={cn(
             "glitch-card cursor-pointer p-5 rounded-2xl bg-card/50 border border-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full",
-            color === "purple"
-              ? "hover:shadow-purple-500/20 hover:bg-purple-500/10 hover:border-purple-500/50"
-              : color === "pink"
-              ? "hover:shadow-pink-500/20 hover:bg-pink-500/10 hover:border-pink-500/50"
+            color === "purple" ? "hover:shadow-purple-500/20 hover:bg-purple-500/10 hover:border-purple-500/50"
+              : color === "pink" ? "hover:shadow-pink-500/20 hover:bg-pink-500/10 hover:border-pink-500/50"
               : "hover:shadow-secondary/20 hover:bg-secondary/10 hover:border-secondary/50"
           )}
           data-testid={`card-game-${href.slice(1)}`}
         >
-          <Icon
-            className={cn(
-              "glitch-icon w-10 h-10 mb-3 mx-auto group-hover:scale-110 transition-transform",
-              color === "purple" ? "text-purple-500" : color === "pink" ? "text-pink-500" : "text-secondary"
-            )}
-          />
-          <h3 className="text-base font-bold text-white mb-1 text-center" data-testid={`text-game-${href.slice(1)}`}>
-            {label}
-          </h3>
+          <Icon className={cn(
+            "glitch-icon w-10 h-10 mb-3 mx-auto group-hover:scale-110 transition-transform",
+            color === "purple" ? "text-purple-500" : color === "pink" ? "text-pink-500" : "text-secondary"
+          )} />
+          <h3 className="text-base font-bold text-white mb-1 text-center" data-testid={`text-game-${href.slice(1)}`}>{label}</h3>
           <p className="text-xs text-muted-foreground text-center leading-relaxed">{desc}</p>
         </div>
       </Link>
-      {/* Star / favourite button */}
       <button
         onClick={onToggleFavourite}
         data-testid={`button-favourite-${href.slice(1)}`}
@@ -116,7 +96,7 @@ function GameCard({
       >
         <Star className={cn("w-4 h-4", isFavourite && "fill-yellow-400")} />
       </button>
-    </motion.div>
+    </div>
   );
 }
 
@@ -126,12 +106,6 @@ export default function Home() {
   const { favourites, toggle } = useFavourites();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.04 } },
-  };
-  const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
-
   const filteredGames = searchQuery.trim()
     ? GAMES.filter(g => g.label.toLowerCase().includes(searchQuery.toLowerCase()))
     : GAMES;
@@ -139,96 +113,84 @@ export default function Home() {
   const favouriteGames = filteredGames.filter(g => favourites.includes(g.href));
   const otherGames = filteredGames.filter(g => !favourites.includes(g.href));
 
+  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
+  const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, type: "spring" }}
-          className="mb-8"
-        >
-          <div className="relative">
-            <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-secondary to-accent opacity-10 blur-2xl" />
-            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-4xl md:text-5xl font-display font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 tracking-tighter leading-none mb-2">
-                  WELCOME BACK <span className="text-secondary">USER</span>
-                </h1>
-                <p className="text-sm font-mono text-muted-foreground/70 border-l-2 border-accent pl-3">
-                  "You're meant to do your school work but we all know this is better."
-                </p>
+        <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-display font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 tracking-tighter leading-none mb-2">
+              WELCOME BACK <span className="text-secondary">USER</span>
+            </h1>
+            <p className="text-sm font-mono text-muted-foreground/70 border-l-2 border-accent pl-3">
+              "You're meant to do your school work but we all know this is better."
+            </p>
+          </div>
+
+          {/* Right side: Live Comms + online users */}
+          <div className="flex flex-col gap-2 shrink-0 w-44">
+            <Link href="/chat">
+              <button
+                data-testid="button-live-comms"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-secondary/10 border border-secondary/30 text-secondary text-xs font-display font-bold uppercase tracking-widest hover:bg-secondary/20 hover:border-secondary/60 transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Live Comms
+              </button>
+            </Link>
+
+            <div className="bg-card/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-xl">
+              <div className="px-3 py-2 border-b border-white/10 bg-green-500/5 flex items-center gap-2">
+                <Wifi className="w-3 h-3 text-green-400" />
+                <span className="text-[10px] font-display font-bold text-green-400 uppercase tracking-wider">Online</span>
+                <span className="ml-auto text-[10px] font-mono text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full border border-green-500/20">
+                  {onlineUsers.length}
+                </span>
               </div>
-
-              {/* Right side: comms button + online users */}
-              <div className="flex flex-col gap-2 shrink-0">
-                <Link href="/chat">
-                  <button
-                    data-testid="button-live-comms"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-secondary/10 border border-secondary/30 text-secondary text-xs font-display font-bold uppercase tracking-widest hover:bg-secondary/20 hover:border-secondary/60 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-secondary/10"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Live Comms
-                  </button>
-                </Link>
-
-              {/* Online users pill */}
-              <div className="w-44 shrink-0 bg-card/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-xl">
-                <div className="px-3 py-2 border-b border-white/10 bg-green-500/5 flex items-center gap-2">
-                  <Wifi className="w-3 h-3 text-green-400" />
-                  <span className="text-[10px] font-display font-bold text-green-400 uppercase tracking-wider">Online</span>
-                  <span className="ml-auto text-[10px] font-mono text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full border border-green-500/20">
-                    {onlineUsers.length}
-                  </span>
-                </div>
-                <div className="overflow-y-auto p-1.5 max-h-28">
-                  {onlineUsers.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-4 text-muted-foreground/40 gap-1">
-                      <Users className="w-4 h-4 opacity-20" />
-                      <p className="text-[9px] font-mono text-center">No one online yet</p>
-                    </div>
-                  ) : (
-                    onlineUsers.map((user) => (
-                      <div key={user} className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg hover:bg-white/5 transition-colors group">
-                        <div className="relative shrink-0">
-                          <div className="w-4 h-4 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                            <User className="w-2 h-2 text-green-400" />
-                          </div>
-                          <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-green-400 border border-card animate-pulse" />
+              <div className="overflow-y-auto p-1.5 max-h-28">
+                {onlineUsers.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-4 text-muted-foreground/40 gap-1">
+                    <Users className="w-4 h-4 opacity-20" />
+                    <p className="text-[9px] font-mono text-center">No one online yet</p>
+                  </div>
+                ) : (
+                  onlineUsers.map((user) => (
+                    <div key={user} className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg hover:bg-white/5 transition-colors group">
+                      <div className="relative shrink-0">
+                        <div className="w-4 h-4 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                          <User className="w-2 h-2 text-green-400" />
                         </div>
-                        <span className={cn("text-[10px] font-medium truncate flex-1", user === username ? "text-secondary" : "text-white")}>
-                          {user === username ? `${user} (you)` : user}
-                        </span>
-                        {user !== username && (
-                          <Link href={`/chat?dm=${encodeURIComponent(user)}`}>
-                            <button
-                              data-testid={`button-dm-${user}`}
-                              title={`DM ${user}`}
-                              className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-accent/10 border border-accent/20 text-accent hover:bg-accent/25 transition-colors"
-                            >
-                              <Mail className="w-2 h-2" />
-                              DM
-                            </button>
-                          </Link>
-                        )}
+                        <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-green-400 border border-card animate-pulse" />
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
+                      <span className={cn("text-[10px] font-medium truncate flex-1", user === username ? "text-secondary" : "text-white")}>
+                        {user === username ? `${user} (you)` : user}
+                      </span>
+                      {user !== username && (
+                        <Link href={`/chat?dm=${encodeURIComponent(user)}`}>
+                          <button
+                            data-testid={`button-dm-${user}`}
+                            title={`DM ${user}`}
+                            className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-accent/10 border border-accent/20 text-accent hover:bg-accent/25 transition-colors"
+                          >
+                            <Mail className="w-2 h-2" />
+                            DM
+                          </button>
+                        </Link>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Search bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mb-6"
-        >
+        <div className="mb-6">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <input
@@ -248,50 +210,28 @@ export default function Home() {
               </button>
             )}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Favourites section */}
+        {/* Favourites */}
         {favouriteGames.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mb-8"
-          >
+          <div className="mb-8">
             <div className="flex items-center gap-2 mb-3">
               <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
               <h2 className="text-sm font-display font-bold text-yellow-400 uppercase tracking-widest">Favourites</h2>
               <div className="flex-1 h-px bg-yellow-400/20" />
             </div>
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
-            >
+            <motion.div variants={container} initial="hidden" animate="show"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {favouriteGames.map(({ href, label, desc, icon, color }) => (
-                <GameCard
-                  key={href}
-                  href={href}
-                  label={label}
-                  desc={desc}
-                  icon={icon}
-                  color={color}
-                  isFavourite={true}
-                  onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }}
-                  variants={item}
-                />
+                <GameCard key={href} href={href} label={label} desc={desc} icon={icon} color={color}
+                  isFavourite={true} onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }} />
               ))}
             </motion.div>
-          </motion.div>
+          </div>
         )}
 
-        {/* All games section */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-        >
+        {/* All games */}
+        <div>
           {(favouriteGames.length > 0 || searchQuery) && (
             <div className="flex items-center gap-2 mb-3">
               <Gamepad2 className="w-4 h-4 text-muted-foreground" />
@@ -309,29 +249,15 @@ export default function Home() {
             </div>
           )}
 
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
-          >
+          <motion.div variants={container} initial="hidden" animate="show"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {otherGames.map(({ href, label, desc, icon, color }) => (
-              <GameCard
-                key={href}
-                href={href}
-                label={label}
-                desc={desc}
-                icon={icon}
-                color={color}
-                isFavourite={false}
-                onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }}
-                variants={item}
-              />
+              <GameCard key={href} href={href} label={label} desc={desc} icon={icon} color={color}
+                isFavourite={false} onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }} />
             ))}
           </motion.div>
-        </motion.div>
+        </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-center gap-2 mt-12 pb-8 text-xs font-mono text-muted-foreground/40">
           <Zap className="w-3 h-3" />
           <span>SYSTEM ONLINE • SECURE CONNECTION • READY TO PLAY</span>

@@ -469,3 +469,7 @@
   80% { clip: rect(8px, 9999px, 34px, 0); }
   100% { clip: rect(54px, 9999px, 72px, 0); }
 }
+
+.sidebar-offset {
+  margin-left: var(--sidebar-width, 224px);
+}
