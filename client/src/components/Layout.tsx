@@ -1,5 +1,6 @@
 import { Navigation } from "./Navigation";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export function Layout({ children, noContainer = false }: { children: React.ReactNode, noContainer?: boolean }) {
   return (
@@ -28,17 +29,19 @@ export function Layout({ children, noContainer = false }: { children: React.Reac
 
       <Navigation />
 
-      <main className="flex-1 relative z-10 sidebar-offset transition-all duration-300">
-        <div className={noContainer ? "h-full" : "px-6 py-6 pb-12"}>
+      <main className={cn("relative z-10 sidebar-offset transition-[margin] duration-300 ease-in-out", noContainer ? "h-screen overflow-hidden" : "min-h-screen")}>
+        {noContainer ? (
+          <div className="h-full">{children}</div>
+        ) : (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="h-full"
+            className="px-6 py-6 pb-12"
           >
             {children}
           </motion.div>
-        </div>
+        )}
       </main>
     </div>
   );

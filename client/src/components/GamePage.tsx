@@ -61,7 +61,7 @@ export function GamePage({ src, title, banner }: GamePageProps) {
       {banner && (
         <div className="shrink-0">{banner}</div>
       )}
-      <div className={cn("flex overflow-hidden", banner ? "h-[calc(100vh-8rem)]" : "h-[calc(100vh-5rem)]")}>
+      <div className={cn("flex overflow-hidden", "h-screen")}>
         <div ref={containerRef} className="flex-1 relative bg-black overflow-hidden">
           <iframe
             src={src}

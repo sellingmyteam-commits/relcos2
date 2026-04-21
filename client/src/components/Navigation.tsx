@@ -18,9 +18,17 @@ export function Navigation() {
   const [collapsed, setCollapsed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const isGamePage = location !== "/" && location !== "/chat" && location !== "/admin";
+
   useEffect(() => {
     document.documentElement.style.setProperty("--sidebar-width", collapsed ? "56px" : "224px");
   }, [collapsed]);
+
+  useEffect(() => {
+    if (isGamePage) {
+      setCollapsed(true);
+    }
+  }, [isGamePage]);
 
   useEffect(() => {
     const socket = getSharedSocket();
@@ -58,8 +66,6 @@ export function Navigation() {
   const filtered = ALL_GAMES.filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const isGamePage = location !== "/" && location !== "/chat";
 
   return (
     <>
