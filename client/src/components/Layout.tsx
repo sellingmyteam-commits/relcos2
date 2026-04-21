@@ -29,10 +29,15 @@ export function Layout({ children, noContainer = false }: { children: React.Reac
 
       <Navigation />
 
-      <main className={cn("relative z-10 sidebar-offset transition-[margin] duration-300 ease-in-out", noContainer ? "h-screen overflow-hidden" : "min-h-screen")}>
-        {noContainer ? (
-          <div className="h-full">{children}</div>
-        ) : (
+      {noContainer ? (
+        <main
+          className="fixed top-0 bottom-0 right-0 z-10 overflow-hidden transition-[left] duration-300 ease-in-out"
+          style={{ left: "var(--sidebar-width, 224px)" }}
+        >
+          {children}
+        </main>
+      ) : (
+        <main className="relative z-10 sidebar-offset transition-[margin] duration-300 ease-in-out min-h-screen">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -41,8 +46,8 @@ export function Layout({ children, noContainer = false }: { children: React.Reac
           >
             {children}
           </motion.div>
-        )}
-      </main>
+        </main>
+      )}
     </div>
   );
 }

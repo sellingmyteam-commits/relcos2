@@ -158,8 +158,8 @@ export default function Home() {
                     <p className="text-[9px] font-mono text-center">No one online yet</p>
                   </div>
                 ) : (
-                  onlineUsers.map((user) => (
-                    <div key={user} className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg hover:bg-white/5 transition-colors group">
+                  onlineUsers.map((user, idx) => (
+                    <div key={`${user}-${idx}`} className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg hover:bg-white/5 transition-colors group">
                       <div className="relative shrink-0">
                         <div className="w-4 h-4 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
                           <User className="w-2 h-2 text-green-400" />

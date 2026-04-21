@@ -58,56 +58,54 @@ export function GamePage({ src, title, banner }: GamePageProps) {
 
   return (
     <Layout noContainer>
-      {banner && (
-        <div className="shrink-0">{banner}</div>
-      )}
-      <div className={cn("flex overflow-hidden", "h-screen")}>
-        <div ref={containerRef} className="flex-1 relative bg-black overflow-hidden">
-          <iframe
-            src={src}
-            className="w-full h-full border-0"
-            allow="autoplay; fullscreen; keyboard"
-            title={title}
-            onMouseEnter={(e) => e.currentTarget.focus()}
-          />
+      <div className="flex flex-col h-full w-full">
+        {banner && <div className="shrink-0">{banner}</div>}
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          <div ref={containerRef} className="flex-1 relative bg-black overflow-hidden">
+            <iframe
+              src={src}
+              className="absolute inset-0 w-full h-full border-0"
+              allow="autoplay; fullscreen; keyboard"
+              title={title}
+              onMouseEnter={(e) => e.currentTarget.focus()}
+            />
 
-          {visible && (
-            <div
-              className={cn(
-                "absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 transition-opacity duration-500",
-                done ? "opacity-0 pointer-events-none" : "opacity-100",
-                "bg-[#080810]"
-              )}
-            >
-              <div className="flex flex-col items-center gap-5 w-full max-w-xs px-6">
-                <Loader2 className="w-10 h-10 text-secondary animate-spin" />
-
-                <div className="text-center space-y-1">
-                  <p className="text-white font-display font-black text-lg uppercase tracking-widest">
-                    {title}
-                  </p>
-                  <p className="text-muted-foreground text-xs font-mono uppercase tracking-widest">
-                    Loading...
-                  </p>
-                </div>
-
-                <div className="w-full">
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-secondary rounded-full transition-all duration-100 ease-linear shadow-[0_0_8px_theme(colors.secondary.DEFAULT)]"
-                      style={{ width: `${progress}%` }}
-                    />
+            {visible && (
+              <div
+                className={cn(
+                  "absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 transition-opacity duration-500",
+                  done ? "opacity-0 pointer-events-none" : "opacity-100",
+                  "bg-[#080810]"
+                )}
+              >
+                <div className="flex flex-col items-center gap-5 w-full max-w-xs px-6">
+                  <Loader2 className="w-10 h-10 text-secondary animate-spin" />
+                  <div className="text-center space-y-1">
+                    <p className="text-white font-display font-black text-lg uppercase tracking-widest">
+                      {title}
+                    </p>
+                    <p className="text-muted-foreground text-xs font-mono uppercase tracking-widest">
+                      Loading...
+                    </p>
                   </div>
-                  <div className="flex justify-between mt-1.5">
-                    <span className="text-[9px] text-muted-foreground/50 font-mono">INITIALIZING</span>
-                    <span className="text-[9px] text-secondary/80 font-mono">{Math.floor(progress)}%</span>
+                  <div className="w-full">
+                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-secondary rounded-full transition-all duration-100 ease-linear shadow-[0_0_8px_theme(colors.secondary.DEFAULT)]"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1.5">
+                      <span className="text-[9px] text-muted-foreground/50 font-mono">INITIALIZING</span>
+                      <span className="text-[9px] text-secondary/80 font-mono">{Math.floor(progress)}%</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <SidebarChat />
         </div>
-        <SidebarChat />
       </div>
     </Layout>
   );
