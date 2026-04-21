@@ -161,6 +161,18 @@ export default function Home() {
                 </p>
               </div>
 
+              {/* Right side: comms button + online users */}
+              <div className="flex flex-col gap-2 shrink-0">
+                <Link href="/chat">
+                  <button
+                    data-testid="button-live-comms"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-secondary/10 border border-secondary/30 text-secondary text-xs font-display font-bold uppercase tracking-widest hover:bg-secondary/20 hover:border-secondary/60 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-secondary/10"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Live Comms
+                  </button>
+                </Link>
+
               {/* Online users pill */}
               <div className="w-44 shrink-0 bg-card/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-xl">
                 <div className="px-3 py-2 border-b border-white/10 bg-green-500/5 flex items-center gap-2">
@@ -204,6 +216,7 @@ export default function Home() {
                     ))
                   )}
                 </div>
+              </div>
               </div>
             </div>
           </div>
