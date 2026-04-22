@@ -318,6 +318,106 @@ export async function registerRoutes(
     }
   });
 
+  // ── Group chats ──
+  app.post("/api/groups", async (req, res) => {
+    try {
+      const { name, createdBy, members } = z.object({
+        name: z.string().min(1).max(40),
+        createdBy: z.string().min(1).max(20),
+        members: z.array(z.string().min(1).max(20)).min(1).max(50),
+      }).parse(req.body);
+      const group = await storage.createGroup(name, createdBy, members);
+      const full = await storage.getGroupById(group.id);
+      res.status(201).json(full);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.get("/api/groups/user/:username", async (req, res) => {
+    const groups = await storage.getGroupsForUser(req.params.username);
+    res.json(groups);
+  });
+
+  app.get("/api/groups/:groupId", async (req, res) => {
+    const groupId = parseInt(req.params.groupId, 10);
+    if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
+    const group = await storage.getGroupById(groupId);
+    if (!group) return res.status(404).json({ message: "Group not found" });
+    res.json(group);
+  });
+
+  app.get("/api/groups/:groupId/messages", async (req, res) => {
+    const groupId = parseInt(req.params.groupId, 10);
+    if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
+    const username = String(req.query.username || "");
+    if (!username) return res.status(400).json({ message: "username required" });
+    const member = await storage.isGroupMember(groupId, username);
+    if (!member) return res.status(403).json({ message: "Not a member of this group" });
+    const msgs = await storage.getGroupMessages(groupId);
+    res.json(msgs);
+  });
+
+  app.post("/api/groups/:groupId/messages", async (req, res) => {
+    try {
+      const groupId = parseInt(req.params.groupId, 10);
+      if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
+      const { fromUser, content } = z.object({
+        fromUser: z.string().min(1).max(20),
+        content: z.string().min(1).max(2000),
+      }).parse(req.body);
+      const member = await storage.isGroupMember(groupId, fromUser);
+      if (!member) return res.status(403).json({ message: "Not a member of this group" });
+      const siteUser = await storage.getSiteUserByUsername(fromUser);
+      if (siteUser && siteUser.isMuted) {
+        return res.status(403).json({ message: "You are muted." });
+      }
+      const filtered = filterContent(content);
+      if (!filtered.trim()) return res.status(400).json({ message: "Message blocked by chat filter" });
+      const msg = await storage.createGroupMessage({ groupId, fromUser, content: filtered });
+      res.status(201).json(msg);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.post("/api/groups/:groupId/members", async (req, res) => {
+    try {
+      const groupId = parseInt(req.params.groupId, 10);
+      if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
+      const { username, addedBy } = z.object({
+        username: z.string().min(1).max(20),
+        addedBy: z.string().min(1).max(20),
+      }).parse(req.body);
+      const isMember = await storage.isGroupMember(groupId, addedBy);
+      if (!isMember) return res.status(403).json({ message: "Only members can add others" });
+      await storage.addGroupMember(groupId, username);
+      const full = await storage.getGroupById(groupId);
+      res.json(full);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.delete("/api/groups/:groupId/members/:username", async (req, res) => {
+    const groupId = parseInt(req.params.groupId, 10);
+    if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
+    await storage.leaveGroup(groupId, req.params.username);
+    res.json({ ok: true });
+  });
+
   app.get("/api/saves/:userId", async (req, res) => {
     const userId = parseInt(req.params.userId, 10);
     if (isNaN(userId)) return res.status(400).json({ message: "Invalid userId" });

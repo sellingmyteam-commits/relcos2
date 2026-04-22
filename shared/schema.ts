@@ -42,6 +42,28 @@ export const dmConversationHidden = pgTable("dm_conversation_hidden", {
   hiddenBefore: timestamp("hidden_before").defaultNow(),
 });
 
+export const chatGroups = pgTable("chat_groups", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const chatGroupMembers = pgTable("chat_group_members", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").notNull().references(() => chatGroups.id, { onDelete: "cascade" }),
+  username: text("username").notNull(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+export const groupMessages = pgTable("group_messages", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").notNull().references(() => chatGroups.id, { onDelete: "cascade" }),
+  fromUser: text("from_user").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertMessageSchema = createInsertSchema(messages).pick({
   username: true,
   content: true,
@@ -66,3 +88,19 @@ export type SiteUser = typeof siteUsers.$inferSelect;
 export type InsertSiteUser = z.infer<typeof insertSiteUserSchema>;
 export type DmConversationHidden = typeof dmConversationHidden.$inferSelect;
 export type GameSave = typeof gameSaves.$inferSelect;
+
+export const insertChatGroupSchema = createInsertSchema(chatGroups).pick({
+  name: true,
+  createdBy: true,
+});
+export const insertGroupMessageSchema = createInsertSchema(groupMessages).pick({
+  groupId: true,
+  fromUser: true,
+  content: true,
+});
+
+export type ChatGroup = typeof chatGroups.$inferSelect;
+export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;
+export type GroupMessage = typeof groupMessages.$inferSelect;
+export type InsertChatGroup = z.infer<typeof insertChatGroupSchema>;
+export type InsertGroupMessage = z.infer<typeof insertGroupMessageSchema>;

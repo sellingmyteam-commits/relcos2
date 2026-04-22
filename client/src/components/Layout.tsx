@@ -6,8 +6,43 @@ export function Layout({ children, noContainer = false }: { children: React.Reac
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-background to-black flex font-body">
 
-      {/* Static grid overlay */}
-      <div className="fixed inset-0 z-0 pointer-events-none bg-grid-glitch" />
+      {/* Animated grid glitch overlay */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none bg-grid-glitch"
+        style={{ animation: "grid-glitch 3s steps(1) infinite", transformOrigin: "center" }}
+      />
+
+      {/* Glitch bars (red & cyan offset slices) */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none bg-grid-glitch"
+        style={{
+          animation: "strip-shift-a 3s steps(1) infinite",
+          mixBlendMode: "screen",
+        }}
+      />
+      <div
+        className="fixed inset-0 z-0 pointer-events-none bg-grid-glitch"
+        style={{
+          animation: "strip-shift-b 3s steps(1) infinite",
+          mixBlendMode: "screen",
+        }}
+      />
+
+      {/* Horizontal glitch tear bars */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none bg-secondary/20"
+        style={{ animation: "glitch-bar 4s steps(1) infinite" }}
+      />
+      <div
+        className="fixed inset-0 z-0 pointer-events-none bg-accent/15"
+        style={{ animation: "glitch-bar-2 4s steps(1) infinite 1.3s" }}
+      />
+
+      {/* CRT flicker */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none bg-white"
+        style={{ animation: "crt-flicker 6s steps(1) infinite" }}
+      />
 
       {/* Scanlines */}
       <div className="fixed inset-0 z-0 pointer-events-none bg-scanlines opacity-30" />
