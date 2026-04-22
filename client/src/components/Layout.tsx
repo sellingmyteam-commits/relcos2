@@ -5,6 +5,9 @@ export function Layout({ children, noContainer = false }: { children: React.Reac
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-background to-black flex font-body">
 
+      {/* Grid */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-grid-glitch opacity-60" />
+
       {/* Scanlines */}
       <div className="fixed inset-0 z-0 pointer-events-none bg-scanlines opacity-30" />
 

@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { SecurityBlock } from "@/components/SecurityBlock";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
-import { BootLoader } from "@/components/BootLoader";
 import { motion, AnimatePresence } from "framer-motion";
 import { DmNotification } from "@/components/DmNotification";
 import { cloudPushSave } from "@/lib/saveSystem";
@@ -171,7 +170,6 @@ function BanWall() {
 
 function App() {
   const [securityFinished, setSecurityFinished] = useState(false);
-  const [bootDone, setBootDone] = useState(false);
   const [username, setUsername] = useState(() => localStorage.getItem("chatUsername") || "");
   const [siteUserId, setSiteUserId] = useState<number | null>(() => {
     const stored = localStorage.getItem("siteUserId");
@@ -180,7 +178,7 @@ function App() {
   const [banned, setBanned] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const allReady = securityFinished && bootDone && !!username;
+  const allReady = securityFinished && !!username;
 
   const handleUsernameComplete = (name: string, id: number) => {
     setUsername(name);
@@ -276,11 +274,7 @@ function App() {
       <PanicButton />
       <SecurityBlock onComplete={() => setSecurityFinished(true)} />
 
-      {securityFinished && !bootDone && (
-        <BootLoader onComplete={() => setBootDone(true)} />
-      )}
-
-      {securityFinished && bootDone && !username && (
+      {securityFinished && !username && (
         <ChatUsernameOverlay onComplete={handleUsernameComplete} />
       )}
 
