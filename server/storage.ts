@@ -32,6 +32,7 @@ export interface IStorage {
   getGroupById(groupId: number): Promise<(ChatGroup & { members: string[] }) | null>;
   isGroupMember(groupId: number, username: string): Promise<boolean>;
   getGroupMessages(groupId: number): Promise<GroupMessage[]>;
+  getLatestGroupMessageForUser(username: string): Promise<(GroupMessage & { groupName: string }) | null>;
   createGroupMessage(msg: InsertGroupMessage): Promise<GroupMessage>;
   addGroupMember(groupId: number, username: string): Promise<void>;
   leaveGroup(groupId: number, username: string): Promise<void>;
@@ -425,6 +426,28 @@ export class DatabaseStorage implements IStorage {
   async createGroupMessage(msg: InsertGroupMessage): Promise<GroupMessage> {
     const [created] = await db.insert(groupMessages).values(msg).returning();
     return created;
+  }
+
+  async getLatestGroupMessageForUser(username: string): Promise<(GroupMessage & { groupName: string }) | null> {
+    const memberships = await db
+      .select({ groupId: chatGroupMembers.groupId })
+      .from(chatGroupMembers)
+      .where(eq(chatGroupMembers.username, username));
+    const groupIds = memberships.map(m => m.groupId);
+    if (groupIds.length === 0) return null;
+    const [latest] = await db
+      .select()
+      .from(groupMessages)
+      .where(inArray(groupMessages.groupId, groupIds))
+      .orderBy(desc(groupMessages.createdAt))
+      .limit(1);
+    if (!latest) return null;
+    const [group] = await db
+      .select({ name: chatGroups.name })
+      .from(chatGroups)
+      .where(eq(chatGroups.id, latest.groupId))
+      .limit(1);
+    return { ...latest, groupName: group?.name ?? "Group" };
   }
 
   async addGroupMember(groupId: number, username: string): Promise<void> {
