@@ -7,6 +7,8 @@ import { SecurityBlock } from "@/components/SecurityBlock";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { DmNotification } from "@/components/DmNotification";
+import { GroupInviteNotification } from "@/components/GroupInviteNotification";
+import { WarningModal } from "@/components/WarningModal";
 import { cloudPushSave } from "@/lib/saveSystem";
 import { GAME_SAVE_MAP } from "@/lib/gameSaveMap";
 
@@ -280,6 +282,8 @@ function App() {
 
       {allReady && <WelcomeNotification />}
       {allReady && <DmNotification />}
+      {allReady && <GroupInviteNotification />}
+      {allReady && <WarningModal />}
 
       {banned && <BanWall />}
 

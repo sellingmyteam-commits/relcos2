@@ -64,6 +64,23 @@ export const groupMessages = pgTable("group_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const groupInvites = pgTable("group_invites", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").notNull().references(() => chatGroups.id, { onDelete: "cascade" }),
+  username: text("username").notNull(),
+  invitedBy: text("invited_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userWarnings = pgTable("user_warnings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => siteUsers.id, { onDelete: "cascade" }),
+  message: text("message").notNull(),
+  fromAdmin: text("from_admin").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  acknowledged: boolean("acknowledged").default(false),
+});
+
 export const insertMessageSchema = createInsertSchema(messages).pick({
   username: true,
   content: true,

@@ -423,6 +423,80 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
+  // ── Group invites ──
+  app.get("/api/groups/invites/:username", async (req, res) => {
+    const invites = await storage.getPendingInvitesForUser(req.params.username);
+    res.json(invites);
+  });
+
+  app.post("/api/groups/invites/:inviteId/accept", async (req, res) => {
+    try {
+      const inviteId = parseInt(req.params.inviteId, 10);
+      if (isNaN(inviteId)) return res.status(400).json({ message: "Invalid inviteId" });
+      const { username } = z.object({ username: z.string().min(1).max(20) }).parse(req.body);
+      const result = await storage.acceptGroupInvite(inviteId, username);
+      if (!result) return res.status(404).json({ message: "Invite not found" });
+      res.json({ ok: true, groupId: result.groupId });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/groups/invites/:inviteId/decline", async (req, res) => {
+    try {
+      const inviteId = parseInt(req.params.inviteId, 10);
+      if (isNaN(inviteId)) return res.status(400).json({ message: "Invalid inviteId" });
+      const { username } = z.object({ username: z.string().min(1).max(20) }).parse(req.body);
+      const ok = await storage.declineGroupInvite(inviteId, username);
+      if (!ok) return res.status(404).json({ message: "Invite not found" });
+      res.json({ ok: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ── Admin warnings ──
+  app.post("/api/admin/users/:id/warn", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid id" });
+      const { message, fromAdmin } = z.object({
+        message: z.string().min(1).max(500),
+        fromAdmin: z.string().min(1).max(20),
+      }).parse(req.body);
+      const target = await storage.getSiteUserById(id);
+      if (!target) return res.status(404).json({ message: "User not found" });
+      await storage.createWarning(id, message, fromAdmin);
+      res.json({ ok: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/user/warnings/:userId", async (req, res) => {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId)) return res.status(400).json({ message: "Invalid userId" });
+    const warnings = await storage.getActiveWarningsForUser(userId);
+    res.json(warnings);
+  });
+
+  app.post("/api/user/warnings/:warningId/ack", async (req, res) => {
+    try {
+      const warningId = parseInt(req.params.warningId, 10);
+      if (isNaN(warningId)) return res.status(400).json({ message: "Invalid warningId" });
+      const { userId } = z.object({ userId: z.number().int().positive() }).parse(req.body);
+      const ok = await storage.acknowledgeWarning(warningId, userId);
+      if (!ok) return res.status(404).json({ message: "Warning not found" });
+      res.json({ ok: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/saves/:userId", async (req, res) => {
     const userId = parseInt(req.params.userId, 10);
     if (isNaN(userId)) return res.status(400).json({ message: "Invalid userId" });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, RefreshCw, Shield, VolumeX, Volume2, Ban, CheckCircle, ChevronDown } from "lucide-react";
+import { X, RefreshCw, Shield, VolumeX, Volume2, Ban, CheckCircle, ChevronDown, AlertTriangle, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SiteUser {
@@ -19,6 +19,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [warnTarget, setWarnTarget] = useState<SiteUser | null>(null);
+  const [warnMessage, setWarnMessage] = useState("");
+  const [warnSending, setWarnSending] = useState(false);
+  const [warnSentForId, setWarnSentForId] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const fetchUsers = async () => {
@@ -67,6 +71,28 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
 
   const toggleAdmin = (user: SiteUser) =>
     patch(user.id, "admin", { isAdmin: !user.isAdmin });
+
+  const sendWarning = async () => {
+    if (!warnTarget || !warnMessage.trim()) return;
+    const fromAdmin = localStorage.getItem("chatUsername") || "Admin";
+    setWarnSending(true);
+    try {
+      const res = await fetch(`/api/admin/users/${warnTarget.id}/warn`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: warnMessage.trim(), fromAdmin }),
+      });
+      if (res.ok) {
+        const id = warnTarget.id;
+        setWarnSentForId(id);
+        setWarnTarget(null);
+        setWarnMessage("");
+        setTimeout(() => setWarnSentForId(prev => (prev === id ? null : prev)), 2500);
+      }
+    } finally {
+      setWarnSending(false);
+    }
+  };
 
   const filtered = users.filter(u =>
     u.username.toLowerCase().includes(search.toLowerCase())
@@ -210,6 +236,23 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                       }
                     </button>
 
+                    {/* Warn */}
+                    <button
+                      onClick={() => { setWarnTarget(user); setWarnMessage(""); }}
+                      disabled={isSaving}
+                      data-testid={`button-admin-warn-${user.id}`}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] font-bold font-mono tracking-wider border transition-all disabled:opacity-40",
+                        warnSentForId === user.id
+                          ? "border-green-500/40 text-green-400 bg-green-500/10"
+                          : "border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/60"
+                      )}
+                      title="Send warning"
+                    >
+                      <AlertTriangle className="w-3 h-3" />
+                      {warnSentForId === user.id ? "SENT" : "WARN"}
+                    </button>
+
                     {/* Admin toggle */}
                     <button
                       onClick={() => toggleAdmin(user)}
@@ -232,6 +275,75 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             })
           )}
         </div>
+
+        {/* Warn modal */}
+        {warnTarget && (
+          <div
+            className="fixed inset-0 z-[9995] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => !warnSending && setWarnTarget(null)}
+          >
+            <div
+              className="bg-[#0d0d18] border-2 border-orange-500/50 rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+              data-testid="modal-warn-user"
+            >
+              <div className="h-1 w-full bg-gradient-to-r from-transparent via-orange-400 to-transparent" />
+              <div className="px-5 py-4 border-b border-white/10 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-orange-500/20 border border-orange-500/40 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-orange-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] text-orange-400/70 font-mono uppercase tracking-[0.2em]">Warn User</p>
+                  <p className="text-sm font-bold text-white truncate">{warnTarget.username}</p>
+                </div>
+                <button
+                  onClick={() => setWarnTarget(null)}
+                  disabled={warnSending}
+                  className="p-1.5 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors disabled:opacity-40"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                <label className="block text-[10px] font-mono text-orange-400/70 uppercase tracking-widest">
+                  Warning Message
+                </label>
+                <textarea
+                  value={warnMessage}
+                  onChange={(e) => setWarnMessage(e.target.value)}
+                  placeholder="Explain why this user is being warned..."
+                  data-testid="textarea-warn-message"
+                  rows={5}
+                  maxLength={500}
+                  autoFocus
+                  className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-orange-400/50 resize-none"
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-white/30 font-mono">{warnMessage.length}/500</span>
+                  <span className="text-[10px] text-orange-400/60 font-mono">User will see this as a forced popup</span>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => setWarnTarget(null)}
+                    disabled={warnSending}
+                    className="flex-1 py-2.5 bg-white/5 border border-white/15 rounded-lg text-muted-foreground text-xs font-bold uppercase tracking-wider hover:bg-white/10 hover:text-white transition-colors disabled:opacity-40"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={sendWarning}
+                    disabled={warnSending || !warnMessage.trim()}
+                    data-testid="button-send-warning"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-orange-500/20 border border-orange-500/50 rounded-lg text-orange-300 text-xs font-bold uppercase tracking-wider hover:bg-orange-500/30 transition-colors disabled:opacity-40"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    {warnSending ? "Sending..." : "Send Warning"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-white/10 bg-white/[0.02]">

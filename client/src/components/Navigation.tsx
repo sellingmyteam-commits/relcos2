@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
@@ -103,6 +103,27 @@ export function Navigation() {
           </button>
         </div>
 
+        {/* Live Comms */}
+        <div className={cn("px-2 pt-2 shrink-0", collapsed ? "flex justify-center" : "")}>
+          <button
+            onClick={() => setLocation("/chat")}
+            data-testid="button-live-comms"
+            title={collapsed ? "Live Comms" : undefined}
+            className={cn(
+              "flex items-center gap-2 rounded-lg border transition-all duration-200",
+              "bg-gradient-to-r from-pink-500/15 to-cyan-500/15 border-pink-500/30 hover:border-pink-400/60 hover:from-pink-500/25 hover:to-cyan-500/25",
+              "text-pink-300 hover:text-white",
+              collapsed ? "w-9 h-9 justify-center" : "w-full px-2.5 py-2",
+              location === "/chat" && "border-pink-400/70 from-pink-500/30 to-cyan-500/30 text-white"
+            )}
+          >
+            <Radio className="w-4 h-4 shrink-0 animate-pulse" />
+            {!collapsed && (
+              <span className="text-[10px] font-bold font-mono tracking-widest uppercase">Live Comms</span>
+            )}
+          </button>
+        </div>
+
         {/* Search */}
         {!collapsed && (
           <div className="px-3 py-2 border-b border-white/10 shrink-0">
@@ -161,15 +182,27 @@ export function Navigation() {
         {/* Bottom actions */}
         <div className={cn("border-t border-white/10 p-2 flex flex-col gap-1 shrink-0", collapsed ? "items-center" : "")}>
           {/* Online count */}
-          <div className={cn(
-            "flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10",
-            collapsed ? "justify-center" : ""
-          )}>
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
-            {!collapsed && (
-              <span className="font-mono text-[10px] font-bold text-secondary whitespace-nowrap" data-testid="text-online-count">
-                {onlineCount} ONLINE
-              </span>
+          <div
+            className={cn(
+              "flex items-center gap-2 rounded-lg bg-white/5 border border-white/10",
+              collapsed ? "justify-center w-9 h-9 px-0 py-0 flex-col gap-0.5" : "px-2.5 py-1.5"
+            )}
+            title={collapsed ? `${onlineCount} online` : undefined}
+          >
+            {collapsed ? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
+                <span className="font-mono text-[10px] font-bold text-secondary leading-none" data-testid="text-online-count-collapsed">
+                  {onlineCount}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
+                <span className="font-mono text-[10px] font-bold text-secondary whitespace-nowrap" data-testid="text-online-count">
+                  {onlineCount} ONLINE
+                </span>
+              </>
             )}
           </div>
 
