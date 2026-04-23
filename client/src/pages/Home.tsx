@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { Link, useLocation } from "wouter";
-import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail, Snowflake, Clock, Star, Search, X, Gamepad2 } from "lucide-react";
+import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail, Snowflake, Clock, Star, Search, X, Gamepad2, Sprout, Dribbble, Train } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,10 @@ const GAMES = [
   { href: "/chess", label: "Chess Classic", desc: "The timeless game of strategy.", icon: Box, color: "primary" },
   { href: "/drive-mad", label: "Drive Mad", desc: "Crazy physics-based driving action.", icon: Square, color: "purple" },
   { href: "/snowball-io", label: "Snowball.io", desc: "Throw snowballs and knock out opponents.", icon: Snowflake, color: "pink" },
+  { href: "/pixel-shooter", label: "Pixel Shooter", desc: "Pixel-art FPS with arcade chaos.", icon: Crosshair, color: "primary" },
+  { href: "/pvz2-gardenless", label: "PvZ2 Gardenless", desc: "Plants vs Zombies 2 reborn online.", icon: Sprout, color: "purple" },
+  { href: "/basketball-stars", label: "Basketball Stars", desc: "Fast-paced 1v1 basketball duels.", icon: Dribbble, color: "pink" },
+  { href: "/subway-surfers-houston", label: "Subway Surfers: Houston", desc: "Surf the Houston subway. Don't get caught.", icon: Train, color: "primary" },
   { href: "/quake3", label: "Quake 3", desc: "Classic FPS arena combat.", icon: Bomb, color: "purple" },
   { href: "/super-hot", label: "Super Hot", desc: "Time moves only when you move.", icon: Flame, color: "pink" },
   { href: "/eaglercraft", label: "Eagler Craft X", desc: "Minecraft in your browser.", icon: Cuboid, color: "primary" },
