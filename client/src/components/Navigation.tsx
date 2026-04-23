@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Radio } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Radio, Gamepad2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
@@ -149,7 +149,8 @@ export function Navigation() {
 
         {/* Nav items */}
         <div className="flex-1 overflow-y-auto py-2 px-2 scrollbar-thin">
-          {filtered.map(({ href, label, icon: Icon }) => {
+          {filtered.map(({ href, label, icon }) => {
+            const Icon = (icon as any) ?? Gamepad2;
             const isActive = location === href;
             return (
               <button
