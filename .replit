@@ -50,3 +50,4 @@ VITE_ADSENSE_SLOT_RIGHT = ""
 
 [agent]
 expertMode = true
+stack = "FULLSTACK_JS"
