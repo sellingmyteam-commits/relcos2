@@ -1,7 +1,7 @@
 import {
   MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg,
   Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route,
-  Flame, Crown, Gauge, Bomb, Layers, Snowflake, Clock,
+  Flame, Crown, Gauge, Bomb, Layers, Snowflake, Clock, Sprout, Dribbble, Train,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -16,6 +16,10 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/chess", label: "Chess Classic", icon: Box },
   { href: "/drive-mad", label: "Drive Mad", icon: Square },
   { href: "/snowball-io", label: "Snowball.io", icon: Snowflake },
+  { href: "/pixel-shooter", label: "Pixel Shooter", icon: Crosshair },
+  { href: "/pvz2-gardenless", label: "PvZ2 Gardenless", icon: Sprout },
+  { href: "/basketball-stars", label: "Basketball Stars", icon: Dribbble },
+  { href: "/subway-surfers-houston", label: "Subway Surfers: Houston", icon: Train },
   { href: "/quake3", label: "Quake 3", icon: Bomb },
   { href: "/super-hot", label: "Super Hot", icon: Flame },
   { href: "/eaglercraft", label: "Eagler Craft X", icon: Cuboid },

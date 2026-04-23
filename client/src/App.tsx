@@ -40,6 +40,10 @@ const BabySniperVietnam = lazy(() => import("@/pages/BabySniperVietnam"));
 const Chess = lazy(() => import("@/pages/Chess"));
 const DriveMad = lazy(() => import("@/pages/DriveMad"));
 const SnowballIO = lazy(() => import("@/pages/SnowballIO"));
+const PixelShooter = lazy(() => import("@/pages/PixelShooter"));
+const Pvz2Gardenless = lazy(() => import("@/pages/Pvz2Gardenless"));
+const BasketballStars = lazy(() => import("@/pages/BasketballStars"));
+const SubwaySurfersHouston = lazy(() => import("@/pages/SubwaySurfersHouston"));
 const Chat = lazy(() => import("@/pages/Chat"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -74,6 +78,10 @@ function Router() {
         <Route path="/chess" component={Chess} />
         <Route path="/drive-mad" component={DriveMad} />
         <Route path="/snowball-io" component={SnowballIO} />
+        <Route path="/pixel-shooter" component={PixelShooter} />
+        <Route path="/pvz2-gardenless" component={Pvz2Gardenless} />
+        <Route path="/basketball-stars" component={BasketballStars} />
+        <Route path="/subway-surfers-houston" component={SubwaySurfersHouston} />
         <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
         <Route path="/rocket-soccer" component={RocketSoccer} />
         <Route path="/retro-bowl" component={RetroBowl} />
