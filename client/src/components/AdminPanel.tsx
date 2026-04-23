@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { X, RefreshCw, Shield, VolumeX, Volume2, Ban, CheckCircle, ChevronDown, AlertTriangle, Send } from "lucide-react";
+import { X, RefreshCw, Shield, VolumeX, Volume2, Ban, CheckCircle, ChevronDown, AlertTriangle, Send, Lock, Unlock, Gamepad2 } from "lucide-react";
+import { ALL_GAMES, gameIdFromPath } from "@/lib/games";
 import { cn } from "@/lib/utils";
 
 interface SiteUser {
@@ -23,7 +24,47 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [warnMessage, setWarnMessage] = useState("");
   const [warnSending, setWarnSending] = useState(false);
   const [warnSentForId, setWarnSentForId] = useState<number | null>(null);
+  const [lockedGames, setLockedGames] = useState<Set<string>>(new Set());
+  const [locksOpen, setLocksOpen] = useState(false);
+  const [lockBusy, setLockBusy] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const fetchLocks = async () => {
+    try {
+      const res = await fetch("/api/locked-games");
+      if (!res.ok) return;
+      const list: { gameId: string }[] = await res.json();
+      setLockedGames(new Set(list.map(l => l.gameId)));
+    } catch {}
+  };
+
+  useEffect(() => { fetchLocks(); }, []);
+
+  const toggleLock = async (href: string) => {
+    const gameId = gameIdFromPath(href);
+    const isLocked = lockedGames.has(gameId);
+    setLockBusy(gameId);
+    try {
+      if (isLocked) {
+        const res = await fetch(`/api/admin/games/lock/${gameId}`, { method: "DELETE" });
+        if (res.ok) {
+          setLockedGames(prev => { const n = new Set(prev); n.delete(gameId); return n; });
+        }
+      } else {
+        const lockedBy = localStorage.getItem("chatUsername") || "Admin";
+        const res = await fetch("/api/admin/games/lock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gameId, lockedBy }),
+        });
+        if (res.ok) {
+          setLockedGames(prev => new Set(prev).add(gameId));
+        }
+      }
+    } finally {
+      setLockBusy(null);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -147,6 +188,60 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           <span className="text-red-400/60">{users.filter(u => u.status === 0).length} BANNED</span>
           <span className="text-yellow-400/60">{users.filter(u => u.isMuted).length} MUTED</span>
           <span className="text-cyan-400/60">{users.filter(u => u.isAdmin).length} ADMINS</span>
+        </div>
+
+        {/* Game locks accordion */}
+        <div className="border-b border-white/5">
+          <button
+            onClick={() => setLocksOpen(o => !o)}
+            data-testid="button-toggle-locks"
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-white/[0.03] transition-colors"
+          >
+            <Gamepad2 className="w-3.5 h-3.5 text-purple-400" />
+            <span className="text-[11px] font-mono font-bold text-purple-400 uppercase tracking-widest flex-1">
+              Game Locks
+            </span>
+            <span className="text-[9px] font-mono text-purple-400/60 bg-purple-500/10 border border-purple-500/20 px-1.5 py-0.5 rounded">
+              {lockedGames.size} / {ALL_GAMES.length}
+            </span>
+            <ChevronDown className={cn("w-3.5 h-3.5 text-white/40 transition-transform", locksOpen && "rotate-180")} />
+          </button>
+          {locksOpen && (
+            <div className="max-h-64 overflow-y-auto px-2 pb-2 space-y-1">
+              {ALL_GAMES.map(g => {
+                const id = gameIdFromPath(g.href);
+                const locked = lockedGames.has(id);
+                const busy = lockBusy === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => toggleLock(g.href)}
+                    disabled={busy}
+                    data-testid={`button-toggle-lock-${id}`}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-left transition-all border disabled:opacity-40",
+                      locked
+                        ? "bg-red-500/10 border-red-500/30 hover:bg-red-500/20"
+                        : "bg-white/[0.02] border-white/5 hover:bg-white/[0.06] hover:border-white/15"
+                    )}
+                  >
+                    {locked
+                      ? <Lock className="w-3 h-3 text-red-400 shrink-0" />
+                      : <Unlock className="w-3 h-3 text-white/40 shrink-0" />}
+                    <span className={cn("text-xs font-mono flex-1 truncate", locked ? "text-red-300" : "text-white/70")}>
+                      {g.label}
+                    </span>
+                    <span className={cn(
+                      "text-[9px] font-mono uppercase tracking-widest font-bold",
+                      locked ? "text-red-400" : "text-white/30"
+                    )}>
+                      {locked ? "Locked" : "Open"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* User list */}

@@ -72,6 +72,13 @@ export const groupInvites = pgTable("group_invites", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const lockedGames = pgTable("locked_games", {
+  id: serial("id").primaryKey(),
+  gameId: text("game_id").notNull().unique(),
+  lockedBy: text("locked_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const userWarnings = pgTable("user_warnings", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => siteUsers.id, { onDelete: "cascade" }),

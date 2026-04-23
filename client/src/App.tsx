@@ -9,8 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DmNotification } from "@/components/DmNotification";
 import { GroupInviteNotification } from "@/components/GroupInviteNotification";
 import { WarningModal } from "@/components/WarningModal";
-import { cloudPushSave } from "@/lib/saveSystem";
-import { GAME_SAVE_MAP } from "@/lib/gameSaveMap";
+import { GameLockGuard } from "@/components/GameLockGuard";
 
 const Home = lazy(() => import("@/pages/Home"));
 const Eaglercraft = lazy(() => import("@/pages/Eaglercraft"));
@@ -239,38 +238,6 @@ function App() {
     };
   }, [username]);
 
-  const pushRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (!siteUserId) return;
-    const push = () => cloudPushSave(siteUserId, GAME_SAVE_MAP);
-
-    push();
-    pushRef.current = setInterval(push, 60_000);
-    window.addEventListener("beforeunload", push);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") push();
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    const handleGameSaveMessage = (e: MessageEvent) => {
-      if (e.data?.type !== "RELCOS_SAVE_CHANGED") return;
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => cloudPushSave(siteUserId, GAME_SAVE_MAP), 5000);
-    };
-    window.addEventListener("message", handleGameSaveMessage);
-
-    return () => {
-      if (pushRef.current) clearInterval(pushRef.current);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      window.removeEventListener("beforeunload", push);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("message", handleGameSaveMessage);
-    };
-  }, [siteUserId]);
-
   return (
     <QueryClientProvider client={queryClient}>
       <PanicButton />
@@ -284,6 +251,7 @@ function App() {
       {allReady && <DmNotification />}
       {allReady && <GroupInviteNotification />}
       {allReady && <WarningModal />}
+      {allReady && <GameLockGuard />}
 
       {banned && <BanWall />}
 

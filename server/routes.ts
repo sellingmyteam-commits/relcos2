@@ -497,6 +497,32 @@ export async function registerRoutes(
     }
   });
 
+  // ── Game locks ──
+  app.get("/api/locked-games", async (_req, res) => {
+    const list = await storage.getLockedGames();
+    res.json(list);
+  });
+
+  app.post("/api/admin/games/lock", async (req, res) => {
+    try {
+      const { gameId, lockedBy } = z.object({
+        gameId: z.string().min(1).max(100),
+        lockedBy: z.string().min(1).max(20),
+      }).parse(req.body);
+      await storage.lockGame(gameId, lockedBy);
+      res.json({ ok: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/admin/games/lock/:gameId", async (req, res) => {
+    const ok = await storage.unlockGame(req.params.gameId);
+    if (!ok) return res.status(404).json({ message: "Not locked" });
+    res.json({ ok: true });
+  });
+
   app.get("/api/saves/:userId", async (req, res) => {
     const userId = parseInt(req.params.userId, 10);
     if (isNaN(userId)) return res.status(400).json({ message: "Invalid userId" });

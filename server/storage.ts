@@ -1,4 +1,4 @@
-import { messages, directMessages, siteUsers, dmConversationHidden, gameSaves, chatGroups, chatGroupMembers, groupMessages, groupInvites, userWarnings, type Message, type InsertMessage, type DirectMessage, type InsertDirectMessage, type SiteUser, type ChatGroup, type GroupMessage, type InsertGroupMessage } from "@shared/schema";
+import { messages, directMessages, siteUsers, dmConversationHidden, gameSaves, chatGroups, chatGroupMembers, groupMessages, groupInvites, userWarnings, lockedGames, type Message, type InsertMessage, type DirectMessage, type InsertDirectMessage, type SiteUser, type ChatGroup, type GroupMessage, type InsertGroupMessage } from "@shared/schema";
 import { db } from "./db";
 import { desc, eq, or, and, gt, isNull, lt, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -441,6 +441,20 @@ export class DatabaseStorage implements IStorage {
       .from(userWarnings)
       .where(and(eq(userWarnings.userId, userId), eq(userWarnings.acknowledged, false)))
       .orderBy(userWarnings.createdAt);
+  }
+
+  async getLockedGames(): Promise<{ gameId: string; lockedBy: string }[]> {
+    const rows = await db.select({ gameId: lockedGames.gameId, lockedBy: lockedGames.lockedBy }).from(lockedGames);
+    return rows;
+  }
+
+  async lockGame(gameId: string, lockedBy: string): Promise<void> {
+    await db.insert(lockedGames).values({ gameId, lockedBy }).onConflictDoNothing();
+  }
+
+  async unlockGame(gameId: string): Promise<boolean> {
+    const result = await db.delete(lockedGames).where(eq(lockedGames.gameId, gameId)).returning();
+    return result.length > 0;
   }
 
   async acknowledgeWarning(warningId: number, userId: number): Promise<boolean> {

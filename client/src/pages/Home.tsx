@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useGameLocks } from "@/hooks/useGameLocks";
+import { Lock } from "lucide-react";
 
 const GAMES = [
   { href: "/1v1-lol", label: "1v1.lol", desc: "Build, edit and eliminate your opponents.", icon: Crosshair, color: "purple" },
@@ -58,31 +60,61 @@ function useFavourites() {
 }
 
 function GameCard({
-  href, label, desc, icon: Icon, color, isFavourite, onToggleFavourite,
+  href, label, desc, icon: Icon, color, isFavourite, onToggleFavourite, locked,
 }: {
   href: string; label: string; desc: string; icon: React.ElementType;
   color: string; isFavourite: boolean; onToggleFavourite: (e: React.MouseEvent) => void;
+  locked?: boolean;
 }) {
+  const cardInner = (
+    <div
+      className={cn(
+        "glitch-card p-5 rounded-2xl bg-card/50 border border-white/5 transition-all duration-300 h-full relative overflow-hidden",
+        locked
+          ? "cursor-not-allowed grayscale opacity-50"
+          : cn(
+              "cursor-pointer hover:-translate-y-1 hover:shadow-xl",
+              color === "purple" ? "hover:shadow-purple-500/20 hover:bg-purple-500/10 hover:border-purple-500/50"
+                : color === "pink" ? "hover:shadow-pink-500/20 hover:bg-pink-500/10 hover:border-pink-500/50"
+                : "hover:shadow-secondary/20 hover:bg-secondary/10 hover:border-secondary/50"
+            )
+      )}
+      data-testid={`card-game-${href.slice(1)}`}
+    >
+      <Icon className={cn(
+        "glitch-icon w-10 h-10 mb-3 mx-auto transition-transform",
+        !locked && "group-hover:scale-110",
+        color === "purple" ? "text-purple-500" : color === "pink" ? "text-pink-500" : "text-secondary"
+      )} />
+      <h3 className="text-base font-bold text-white mb-1 text-center" data-testid={`text-game-${href.slice(1)}`}>{label}</h3>
+      <p className="text-xs text-muted-foreground text-center leading-relaxed">{desc}</p>
+
+      {locked && (
+        <>
+          <div
+            className="absolute inset-0 pointer-events-none rounded-2xl"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 1px, transparent 1px 3px)",
+              animation: "tv-static 0.12s steps(2) infinite",
+              opacity: 0.7,
+              mixBlendMode: "screen",
+            }}
+          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/55 rounded-2xl backdrop-blur-[2px] pointer-events-none">
+            <Lock className="w-6 h-6 text-red-400 mb-1.5" />
+            <p className="text-[9px] font-mono text-red-300 uppercase tracking-[0.2em] text-center px-2 leading-tight">
+              Game Locked<br/>by Admin
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="relative group">
-      <Link href={href}>
-        <div
-          className={cn(
-            "glitch-card cursor-pointer p-5 rounded-2xl bg-card/50 border border-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full",
-            color === "purple" ? "hover:shadow-purple-500/20 hover:bg-purple-500/10 hover:border-purple-500/50"
-              : color === "pink" ? "hover:shadow-pink-500/20 hover:bg-pink-500/10 hover:border-pink-500/50"
-              : "hover:shadow-secondary/20 hover:bg-secondary/10 hover:border-secondary/50"
-          )}
-          data-testid={`card-game-${href.slice(1)}`}
-        >
-          <Icon className={cn(
-            "glitch-icon w-10 h-10 mb-3 mx-auto group-hover:scale-110 transition-transform",
-            color === "purple" ? "text-purple-500" : color === "pink" ? "text-pink-500" : "text-secondary"
-          )} />
-          <h3 className="text-base font-bold text-white mb-1 text-center" data-testid={`text-game-${href.slice(1)}`}>{label}</h3>
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">{desc}</p>
-        </div>
-      </Link>
+      {locked ? cardInner : <Link href={href}>{cardInner}</Link>}
       <button
         onClick={onToggleFavourite}
         data-testid={`button-favourite-${href.slice(1)}`}
@@ -105,6 +137,7 @@ export default function Home() {
   const onlineUsers = useOnlineUsers();
   const { favourites, toggle } = useFavourites();
   const [searchQuery, setSearchQuery] = useState("");
+  const { isLocked } = useGameLocks();
 
   const filteredGames = searchQuery.trim()
     ? GAMES.filter(g => g.label.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -224,7 +257,7 @@ export default function Home() {
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {favouriteGames.map(({ href, label, desc, icon, color }) => (
                 <GameCard key={href} href={href} label={label} desc={desc} icon={icon} color={color}
-                  isFavourite={true} onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }} />
+                  isFavourite={true} locked={isLocked(href)} onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }} />
               ))}
             </motion.div>
           </div>
@@ -253,7 +286,7 @@ export default function Home() {
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {otherGames.map(({ href, label, desc, icon, color }) => (
               <GameCard key={href} href={href} label={label} desc={desc} icon={icon} color={color}
-                isFavourite={false} onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }} />
+                isFavourite={false} locked={isLocked(href)} onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }} />
             ))}
           </motion.div>
         </div>

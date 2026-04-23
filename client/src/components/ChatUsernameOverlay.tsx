@@ -3,7 +3,6 @@ import { Lock, Terminal, Eye, EyeOff, UserPlus, LogIn, Database } from "lucide-r
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { cloudPullSave } from "@/lib/saveSystem";
 
 type Mode = "login" | "register";
 type Status = "idle" | "loading" | "error" | "taken" | "bad_password" | "success" | "syncing";
@@ -40,9 +39,7 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
     setSyncStep(1);
     await new Promise(r => setTimeout(r, 500));
     setSyncStep(2);
-
-    await cloudPullSave(userId);
-
+    await new Promise(r => setTimeout(r, 400));
     setSyncStep(3);
     await new Promise(r => setTimeout(r, 400));
 
