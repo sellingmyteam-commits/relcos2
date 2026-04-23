@@ -71,7 +71,7 @@ function GameCard({
   const cardInner = (
     <div
       className={cn(
-        "glitch-card p-5 rounded-2xl bg-card/50 border border-white/5 transition-all duration-300 h-full relative overflow-hidden",
+        "p-5 rounded-2xl bg-card/50 border border-white/5 transition-all duration-300 h-full relative overflow-hidden",
         locked
           ? "cursor-not-allowed grayscale opacity-50"
           : cn(
@@ -84,7 +84,7 @@ function GameCard({
       data-testid={`card-game-${href.slice(1)}`}
     >
       <Icon className={cn(
-        "glitch-icon w-10 h-10 mb-3 mx-auto transition-transform",
+        "w-10 h-10 mb-3 mx-auto transition-transform",
         !locked && "group-hover:scale-110",
         color === "purple" ? "text-purple-500" : color === "pink" ? "text-pink-500" : "text-secondary"
       )} />
