@@ -8,7 +8,7 @@ import { useOnlineUsers } from "@/hooks/use-online-users";
 import {
   Send, Loader2, MessageSquare, Mail, Plus, X,
   Wifi, Ban, Trash2, Hash,
-  Shield, UsersRound, LogOut, Check
+  Shield, UsersRound, LogOut, Check, RefreshCw
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -159,12 +159,14 @@ function DMMessage({ msg, isMe, isLast }: {
   );
 }
 
-function CreateGroupModal({ open, onClose, allUsers, currentUser, onlineUsers }: {
+function CreateGroupModal({ open, onClose, allUsers, currentUser, onlineUsers, onRefresh, isRefreshing }: {
   open: boolean;
   onClose: () => void;
   allUsers: string[];
   currentUser: string;
   onlineUsers: string[];
+  onRefresh: () => void;
+  isRefreshing: boolean;
 }) {
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -238,14 +240,26 @@ function CreateGroupModal({ open, onClose, allUsers, currentUser, onlineUsers }:
             maxLength={40}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-secondary/50 placeholder:text-muted-foreground/40"
           />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search users to add..."
-            data-testid="input-group-search-users"
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-accent/50 placeholder:text-muted-foreground/40"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search users to add..."
+              data-testid="input-group-search-users"
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-accent/50 placeholder:text-muted-foreground/40"
+            />
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              data-testid="button-refresh-users-group"
+              title="Refresh user list"
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:text-white hover:bg-white/10 disabled:opacity-40 transition-all"
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
+            </button>
+          </div>
           {selected.size > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {Array.from(selected).map(u => (
@@ -352,7 +366,12 @@ export default function Chat() {
   const { mutate: sendDm, isPending: sendingDm } = useCreateDirectMessage();
   const { mutate: deleteConversation } = useDeleteConversation();
   const { data: unreadCounts } = useUnreadCounts(username);
-  const { data: allUsers } = useQuery<string[]>({ queryKey: ["/api/users"] });
+  const { data: allUsers, refetch: refetchUsers, isFetching: isFetchingUsers } = useQuery<string[]>({
+    queryKey: ["/api/users"],
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
 
   const { data: groups } = useGroups(username);
   const activeGroupId = activeView.kind === "group" ? activeView.id : null;
@@ -552,15 +571,27 @@ export default function Chat() {
 
             {showNewDm && (
               <div className="mx-2 mb-2">
-                <input
-                  type="text"
-                  value={newDmSearch}
-                  onChange={(e) => setNewDmSearch(e.target.value)}
-                  placeholder="Search users..."
-                  autoFocus
-                  data-testid="input-new-dm-recipient"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-accent/50 transition-all placeholder:text-muted-foreground/40"
-                />
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={newDmSearch}
+                    onChange={(e) => setNewDmSearch(e.target.value)}
+                    placeholder="Search users..."
+                    autoFocus
+                    data-testid="input-new-dm-recipient"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-accent/50 transition-all placeholder:text-muted-foreground/40"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => refetchUsers()}
+                    disabled={isFetchingUsers}
+                    data-testid="button-refresh-users-dm"
+                    title="Refresh user list"
+                    className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:text-white hover:bg-white/10 disabled:opacity-40 transition-all"
+                  >
+                    <RefreshCw className={cn("w-3 h-3", isFetchingUsers && "animate-spin")} />
+                  </button>
+                </div>
                 {newDmSearch && (
                   <div className="mt-1 bg-card/80 border border-white/10 rounded-lg overflow-hidden shadow-xl max-h-40 overflow-y-auto">
                     {filteredUsers.length === 0 ? (
@@ -938,6 +969,8 @@ export default function Chat() {
         allUsers={allUsers ?? []}
         currentUser={username}
         onlineUsers={onlineUsers}
+        onRefresh={() => refetchUsers()}
+        isRefreshing={isFetchingUsers}
       />
     </Layout>
   );
