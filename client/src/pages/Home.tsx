@@ -52,6 +52,7 @@ function useFavourites() {
     setFavourites(prev => {
       const next = prev.includes(href) ? prev.filter(h => h !== href) : [...prev, href];
       localStorage.setItem("favouriteGames", JSON.stringify(next));
+      window.dispatchEvent(new Event("favourites-updated"));
       return next;
     });
   };

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Radio, Gamepad2 } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Radio, Gamepad2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
@@ -16,7 +16,30 @@ export function Navigation() {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [favourites, setFavourites] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("favouriteGames") || "[]");
+    } catch {
+      return [];
+    }
+  });
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const reload = () => {
+      try {
+        setFavourites(JSON.parse(localStorage.getItem("favouriteGames") || "[]"));
+      } catch {
+        setFavourites([]);
+      }
+    };
+    window.addEventListener("storage", reload);
+    window.addEventListener("favourites-updated", reload);
+    return () => {
+      window.removeEventListener("storage", reload);
+      window.removeEventListener("favourites-updated", reload);
+    };
+  }, []);
 
   const isGamePage = location !== "/" && location !== "/chat" && location !== "/admin";
 
@@ -66,6 +89,13 @@ export function Navigation() {
   const filtered = ALL_GAMES.filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const favSet = new Set(favourites);
+  const sorted = [
+    ...favourites
+      .map(href => filtered.find(g => g.href === href))
+      .filter((g): g is typeof ALL_GAMES[number] => !!g),
+    ...filtered.filter(g => !favSet.has(g.href)),
+  ];
 
   return (
     <>
@@ -149,9 +179,10 @@ export function Navigation() {
 
         {/* Nav items */}
         <div className="flex-1 overflow-y-auto py-2 px-2 scrollbar-thin">
-          {filtered.map(({ href, label, icon }) => {
+          {sorted.map(({ href, label, icon }) => {
             const Icon = (icon as any) ?? Gamepad2;
             const isActive = location === href;
+            const isFav = favSet.has(href);
             return (
               <button
                 key={href}
@@ -171,7 +202,10 @@ export function Navigation() {
               >
                 <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-secondary" : "")} />
                 {!collapsed && <span className="text-xs font-medium truncate">{label}</span>}
-                {!collapsed && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />}
+                {!collapsed && isFav && (
+                  <Star className="ml-auto w-3 h-3 shrink-0 text-yellow-400 fill-yellow-400" />
+                )}
+                {!collapsed && !isFav && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />}
               </button>
             );
           })}
