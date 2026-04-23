@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { useDoor } from "@/components/DoorTransition";
 
 export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
+  const door = useDoor();
   const [showModal, setShowModal] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -32,9 +34,11 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
 
   const handleEnter = () => {
     if (code === "2048") {
-      setDismissed(true);
-      document.body.style.overflow = "unset";
-      if (onComplete) onComplete();
+      door.open("WELCOME", () => {
+        setDismissed(true);
+        document.body.style.overflow = "unset";
+        if (onComplete) onComplete();
+      });
     } else {
       setError("Invalid Code");
       setCode("");

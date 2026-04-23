@@ -10,6 +10,7 @@ import { DmNotification } from "@/components/DmNotification";
 import { GroupInviteNotification } from "@/components/GroupInviteNotification";
 import { WarningModal } from "@/components/WarningModal";
 import { GameLockGuard } from "@/components/GameLockGuard";
+import { DoorProvider } from "@/components/DoorTransition";
 
 const Home = lazy(() => import("@/pages/Home"));
 const Eaglercraft = lazy(() => import("@/pages/Eaglercraft"));
@@ -240,23 +241,25 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <PanicButton />
-      <SecurityBlock onComplete={() => setSecurityFinished(true)} />
+      <DoorProvider>
+        <PanicButton />
+        <SecurityBlock onComplete={() => setSecurityFinished(true)} />
 
-      {securityFinished && !username && (
-        <ChatUsernameOverlay onComplete={handleUsernameComplete} />
-      )}
+        {securityFinished && !username && (
+          <ChatUsernameOverlay onComplete={handleUsernameComplete} />
+        )}
 
-      {allReady && <WelcomeNotification />}
-      {allReady && <DmNotification />}
-      {allReady && <GroupInviteNotification />}
-      {allReady && <WarningModal />}
-      {allReady && <GameLockGuard />}
+        {allReady && <WelcomeNotification />}
+        {allReady && <DmNotification />}
+        {allReady && <GroupInviteNotification />}
+        {allReady && <WarningModal />}
+        {allReady && <GameLockGuard />}
 
-      {banned && <BanWall />}
+        {banned && <BanWall />}
 
-      <Router />
-      <Toaster />
+        <Router />
+        <Toaster />
+      </DoorProvider>
     </QueryClientProvider>
   );
 }

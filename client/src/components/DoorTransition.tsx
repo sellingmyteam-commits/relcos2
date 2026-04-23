@@ -1,23 +1,60 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-export function DoorTransition({ active, label }: { active: boolean; label?: string }) {
-  const [show, setShow] = useState(false);
+type DoorState = { id: number; label: string };
+
+type DoorContextValue = {
+  open: (label: string, onReveal?: () => void) => void;
+};
+
+const DoorContext = createContext<DoorContextValue>({ open: () => {} });
+
+export function useDoor() {
+  return useContext(DoorContext);
+}
+
+export function DoorProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<DoorState | null>(null);
+  const onRevealRef = useRef<(() => void) | undefined>(undefined);
+
+  const open = useCallback((label: string, onReveal?: () => void) => {
+    onRevealRef.current = onReveal;
+    setState({ id: Date.now(), label });
+  }, []);
 
   useEffect(() => {
-    if (active) setShow(true);
-  }, [active]);
+    if (!state) return;
+    const reveal = onRevealRef.current;
+    onRevealRef.current = undefined;
+    const r = requestAnimationFrame(() => {
+      reveal?.();
+    });
+    const t = setTimeout(() => setState(null), 1400);
+    return () => {
+      cancelAnimationFrame(r);
+      clearTimeout(t);
+    };
+  }, [state]);
 
   return (
+    <DoorContext.Provider value={{ open }}>
+      {children}
+      <DoorOverlay state={state} />
+    </DoorContext.Provider>
+  );
+}
+
+function DoorOverlay({ state }: { state: DoorState | null }) {
+  return (
     <AnimatePresence>
-      {show && active && (
+      {state && (
         <motion.div
-          key="door-transition"
-          className="fixed inset-0 z-[200] pointer-events-none overflow-hidden"
+          key={state.id}
+          className="fixed inset-0 z-[10000] pointer-events-none overflow-hidden"
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.3 }}
           data-testid="door-transition"
         >
           <motion.div
@@ -28,9 +65,10 @@ export function DoorTransition({ active, label }: { active: boolean; label?: str
             }}
             initial={{ x: 0 }}
             animate={{ x: "-100%" }}
-            transition={{ duration: 1.0, ease: [0.7, 0, 0.2, 1], delay: 0.15 }}
+            transition={{ duration: 1.0, ease: [0.7, 0, 0.2, 1], delay: 0.2 }}
           >
-            <div className="absolute inset-0 opacity-40 mix-blend-overlay"
+            <div
+              className="absolute inset-0 opacity-40 mix-blend-overlay"
               style={{
                 backgroundImage:
                   "repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 4px)",
@@ -51,9 +89,10 @@ export function DoorTransition({ active, label }: { active: boolean; label?: str
             }}
             initial={{ x: 0 }}
             animate={{ x: "100%" }}
-            transition={{ duration: 1.0, ease: [0.7, 0, 0.2, 1], delay: 0.15 }}
+            transition={{ duration: 1.0, ease: [0.7, 0, 0.2, 1], delay: 0.2 }}
           >
-            <div className="absolute inset-0 opacity-40 mix-blend-overlay"
+            <div
+              className="absolute inset-0 opacity-40 mix-blend-overlay"
               style={{
                 backgroundImage:
                   "repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 4px)",
@@ -70,14 +109,14 @@ export function DoorTransition({ active, label }: { active: boolean; label?: str
             className="absolute inset-0 flex items-center justify-center pointer-events-none"
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: [0, 1, 1, 0], scale: [0.7, 1, 1, 1.4] }}
-            transition={{ duration: 1.1, times: [0, 0.2, 0.7, 1], ease: "easeOut" }}
+            transition={{ duration: 1.1, times: [0, 0.18, 0.65, 1], ease: "easeOut" }}
           >
             <div className="text-center">
               <div className="text-[10px] font-mono tracking-[0.4em] text-secondary/70 mb-1">
                 ACCESS GRANTED
               </div>
               <div className="text-3xl font-display font-black tracking-tight text-white drop-shadow-[0_0_20px_rgba(56,189,248,0.7)]">
-                {label || "ENTERING"}
+                {state.label || "ENTERING"}
               </div>
             </div>
           </motion.div>

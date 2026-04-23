@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock } from "lucide-react";
-import { DoorTransition } from "@/components/DoorTransition";
+import { useDoor } from "@/components/DoorTransition";
 
 const GAMES = [
   { href: "/1v1-lol", label: "1v1.lol", desc: "Build, edit and eliminate your opponents.", icon: Crosshair, color: "purple" },
@@ -150,14 +150,10 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const { isLocked } = useGameLocks();
   const [, setLocation] = useLocation();
-  const [doorTarget, setDoorTarget] = useState<{ href: string; label: string } | null>(null);
+  const door = useDoor();
 
   const handleLaunch = (href: string, label: string) => {
-    if (doorTarget) return;
-    setDoorTarget({ href, label });
-    setTimeout(() => {
-      setLocation(href);
-    }, 1100);
+    door.open(label, () => setLocation(href));
   };
 
   const filteredGames = searchQuery.trim()
@@ -328,7 +324,6 @@ export default function Home() {
           <span>SYSTEM ONLINE • SECURE CONNECTION • READY TO PLAY</span>
         </div>
       </div>
-      <DoorTransition active={!!doorTarget} label={doorTarget?.label} />
     </Layout>
   );
 }
