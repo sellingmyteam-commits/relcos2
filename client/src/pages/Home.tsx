@@ -1,12 +1,13 @@
 import { Layout } from "@/components/Layout";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail, Snowflake, Clock, Star, Search, X, Gamepad2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock } from "lucide-react";
+import { DoorTransition } from "@/components/DoorTransition";
 
 const GAMES = [
   { href: "/1v1-lol", label: "1v1.lol", desc: "Build, edit and eliminate your opponents.", icon: Crosshair, color: "purple" },
@@ -52,7 +53,7 @@ function useFavourites() {
     setFavourites(prev => {
       const next = prev.includes(href) ? prev.filter(h => h !== href) : [...prev, href];
       localStorage.setItem("favouriteGames", JSON.stringify(next));
-      window.dispatchEvent(new Event("favourites-updated"));
+      queueMicrotask(() => window.dispatchEvent(new Event("favourites-updated")));
       return next;
     });
   };
@@ -61,11 +62,11 @@ function useFavourites() {
 }
 
 function GameCard({
-  href, label, desc, icon: Icon, color, isFavourite, onToggleFavourite, locked,
+  href, label, desc, icon: Icon, color, isFavourite, onToggleFavourite, locked, onLaunch,
 }: {
   href: string; label: string; desc: string; icon: React.ElementType;
   color: string; isFavourite: boolean; onToggleFavourite: (e: React.MouseEvent) => void;
-  locked?: boolean;
+  locked?: boolean; onLaunch: (href: string, label: string) => void;
 }) {
   const cardInner = (
     <div
@@ -115,7 +116,16 @@ function GameCard({
 
   return (
     <div className="relative group">
-      {locked ? cardInner : <Link href={href}>{cardInner}</Link>}
+      {locked ? cardInner : (
+        <button
+          type="button"
+          onClick={() => onLaunch(href, label)}
+          className="block w-full text-left"
+          data-testid={`launch-game-${href.slice(1)}`}
+        >
+          {cardInner}
+        </button>
+      )}
       <button
         onClick={onToggleFavourite}
         data-testid={`button-favourite-${href.slice(1)}`}
@@ -139,6 +149,16 @@ export default function Home() {
   const { favourites, toggle } = useFavourites();
   const [searchQuery, setSearchQuery] = useState("");
   const { isLocked } = useGameLocks();
+  const [, setLocation] = useLocation();
+  const [doorTarget, setDoorTarget] = useState<{ href: string; label: string } | null>(null);
+
+  const handleLaunch = (href: string, label: string) => {
+    if (doorTarget) return;
+    setDoorTarget({ href, label });
+    setTimeout(() => {
+      setLocation(href);
+    }, 1100);
+  };
 
   const filteredGames = searchQuery.trim()
     ? GAMES.filter(g => g.label.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -147,8 +167,11 @@ export default function Home() {
   const favouriteGames = filteredGames.filter(g => favourites.includes(g.href));
   const otherGames = filteredGames.filter(g => !favourites.includes(g.href));
 
-  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
-  const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.045, delayChildren: 0.05 } } };
+  const item = {
+    hidden: { opacity: 0, y: 24, scale: 0.92 },
+    show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring" as const, stiffness: 260, damping: 22 } },
+  };
 
   return (
     <Layout>
@@ -257,8 +280,12 @@ export default function Home() {
             <motion.div variants={container} initial="hidden" animate="show"
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {favouriteGames.map(({ href, label, desc, icon, color }) => (
-                <GameCard key={href} href={href} label={label} desc={desc} icon={icon} color={color}
-                  isFavourite={true} locked={isLocked(href)} onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }} />
+                <motion.div key={href} variants={item} whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 22 }}>
+                  <GameCard href={href} label={label} desc={desc} icon={icon} color={color}
+                    isFavourite={true} locked={isLocked(href)}
+                    onLaunch={handleLaunch}
+                    onToggleFavourite={(e) => { e.preventDefault(); e.stopPropagation(); toggle(href); }} />
+                </motion.div>
               ))}
             </motion.div>
           </div>
@@ -286,8 +313,12 @@ export default function Home() {
           <motion.div variants={container} initial="hidden" animate="show"
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {otherGames.map(({ href, label, desc, icon, color }) => (
-              <GameCard key={href} href={href} label={label} desc={desc} icon={icon} color={color}
-                isFavourite={false} locked={isLocked(href)} onToggleFavourite={(e) => { e.preventDefault(); toggle(href); }} />
+              <motion.div key={href} variants={item} whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 22 }}>
+                <GameCard href={href} label={label} desc={desc} icon={icon} color={color}
+                  isFavourite={false} locked={isLocked(href)}
+                  onLaunch={handleLaunch}
+                  onToggleFavourite={(e) => { e.preventDefault(); e.stopPropagation(); toggle(href); }} />
+              </motion.div>
             ))}
           </motion.div>
         </div>
@@ -297,6 +328,7 @@ export default function Home() {
           <span>SYSTEM ONLINE • SECURE CONNECTION • READY TO PLAY</span>
         </div>
       </div>
+      <DoorTransition active={!!doorTarget} label={doorTarget?.label} />
     </Layout>
   );
 }
