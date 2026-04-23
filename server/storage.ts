@@ -46,6 +46,9 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getAllUsers(): Promise<string[]> {
+    const registered = await db
+      .select({ username: siteUsers.username })
+      .from(siteUsers);
     const globalUsers = await db
       .select({ username: messages.username })
       .from(messages);
@@ -57,12 +60,15 @@ export class DatabaseStorage implements IStorage {
       .from(directMessages);
 
     const allUsers = new Set([
+      ...registered.map(u => u.username),
       ...globalUsers.map(u => u.username),
       ...dmFromUsers.map(u => u.username),
       ...dmToUsers.map(u => u.username)
     ]);
 
-    return Array.from(allUsers).filter(u => u && u !== "System" && !u.toLowerCase().startsWith("guest"));
+    return Array.from(allUsers)
+      .filter(u => u && u !== "System" && !u.toLowerCase().startsWith("guest"))
+      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   }
 
   async getMessages(): Promise<Message[]> {
