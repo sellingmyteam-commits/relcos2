@@ -23,7 +23,7 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/subway-surfers-houston", label: "Subway Surfers: Houston", icon: Train },
   { href: "/russian-buckshot", label: "Russian Buckshot", icon: Bomb },
   { href: "/rooftop-snipers", label: "Rooftop Snipers", icon: Building2 },
-  { href: "/nz-portable", label: "NZ: Portable", icon: Ghost },
+  { href: "/nz-portable", label: "COD Zombies", icon: Ghost },
   { href: "/jetpack-joyride", label: "Jetpack Joyride", icon: Rocket },
   { href: "/google-baseball", label: "Google Baseball", icon: Baseline },
   { href: "/angry-birds", label: "Angry Birds", icon: Bird },

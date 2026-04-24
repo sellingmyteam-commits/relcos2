@@ -16,7 +16,7 @@ const GAMES = [
   { href: "/subway-surfers-houston", label: "Subway Surfers: Houston", desc: "Surf the Houston subway. Don't get caught.", icon: Train, color: "primary" },
   { href: "/russian-buckshot", label: "Russian Buckshot", desc: "Russian roulette with a shotgun.", icon: Bomb, color: "purple" },
   { href: "/rooftop-snipers", label: "Rooftop Snipers", desc: "Knock your opponent off the roof.", icon: Building2, color: "pink" },
-  { href: "/nz-portable", label: "NZ: Portable", desc: "Nazi Zombies, Quake-engine style.", icon: Ghost, color: "primary" },
+  { href: "/nz-portable", label: "COD Zombies", desc: "Survive the undead horde, round after round.", icon: Ghost, color: "primary" },
   { href: "/jetpack-joyride", label: "Jetpack Joyride", desc: "Blast through the lab with a jetpack.", icon: Rocket, color: "purple" },
   { href: "/google-baseball", label: "Google Baseball", desc: "The classic Google Doodle BBQ baseball.", icon: Baseline, color: "pink" },
   { href: "/angry-birds", label: "Angry Birds", desc: "Launch birds at smug green pigs.", icon: Bird, color: "primary" },
