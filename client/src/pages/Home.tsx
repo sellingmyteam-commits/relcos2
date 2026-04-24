@@ -28,7 +28,6 @@ const GAMES = [
   { href: "/bikers-republic", label: "Bikers Republic", desc: "MX offroad bike racing madness.", icon: Skull, color: "primary" },
   { href: "/10-minutes-till-dawn", label: "10 Min Till Dawn", desc: "Survive waves of monsters until dawn.", icon: Clock, color: "purple" },
   { href: "/baby-sniper-vietnam", label: "Baby Sniper Vietnam", desc: "Tactical sniper action game.", icon: Sword, color: "pink" },
-  { href: "/chess", label: "Chess Classic", desc: "The timeless game of strategy.", icon: Box, color: "primary" },
   { href: "/drive-mad", label: "Drive Mad", desc: "Crazy physics-based driving action.", icon: Square, color: "purple" },
   { href: "/snowball-io", label: "Snowball.io", desc: "Throw snowballs and knock out opponents.", icon: Snowflake, color: "pink" },
   { href: "/quake3", label: "Quake 3", desc: "Classic FPS arena combat.", icon: Bomb, color: "purple" },

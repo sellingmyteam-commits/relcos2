@@ -14,7 +14,6 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/bikers-republic", label: "Bikers Republic", icon: Skull },
   { href: "/10-minutes-till-dawn", label: "10 Min Till Dawn", icon: Clock },
   { href: "/baby-sniper-vietnam", label: "Baby Sniper Vietnam", icon: Sword },
-  { href: "/chess", label: "Chess Classic", icon: Box },
   { href: "/drive-mad", label: "Drive Mad", icon: Square },
   { href: "/snowball-io", label: "Snowball.io", icon: Snowflake },
   { href: "/pixel-shooter", label: "Pixel Shooter", icon: Crosshair },

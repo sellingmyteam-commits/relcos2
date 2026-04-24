@@ -37,7 +37,6 @@ const BikersRepublic = lazy(() => import("@/pages/BikersRepublic"));
 const CounterStrike = lazy(() => import("@/pages/CounterStrike"));
 const TenMinutesTillDawn = lazy(() => import("@/pages/TenMinutesTillDawn"));
 const BabySniperVietnam = lazy(() => import("@/pages/BabySniperVietnam"));
-const Chess = lazy(() => import("@/pages/Chess"));
 const DriveMad = lazy(() => import("@/pages/DriveMad"));
 const SnowballIO = lazy(() => import("@/pages/SnowballIO"));
 const PixelShooter = lazy(() => import("@/pages/PixelShooter"));
@@ -84,7 +83,6 @@ function Router() {
         <Route path="/counter-strike" component={CounterStrike} />
         <Route path="/10-minutes-till-dawn" component={TenMinutesTillDawn} />
         <Route path="/baby-sniper-vietnam" component={BabySniperVietnam} />
-        <Route path="/chess" component={Chess} />
         <Route path="/drive-mad" component={DriveMad} />
         <Route path="/snowball-io" component={SnowballIO} />
         <Route path="/pixel-shooter" component={PixelShooter} />
