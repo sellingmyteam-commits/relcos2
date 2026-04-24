@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Radio, Gamepad2, Star } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Radio, Gamepad2, Star, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AdminPanel } from "@/components/AdminPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { ALL_GAMES } from "@/lib/games";
+import { useGameLocks } from "@/hooks/useGameLocks";
 
 export function Navigation() {
   const [location, setLocation] = useLocation();
@@ -24,6 +25,7 @@ export function Navigation() {
     }
   });
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isLocked } = useGameLocks();
 
   useEffect(() => {
     const reload = () => {
@@ -183,6 +185,7 @@ export function Navigation() {
             const Icon = (icon as any) ?? Gamepad2;
             const isActive = location === href;
             const isFav = favSet.has(href);
+            const locked = isLocked(href);
             return (
               <button
                 key={href}
@@ -191,21 +194,35 @@ export function Navigation() {
                   setLocation(href);
                   setSearchQuery("");
                 }}
-                title={collapsed ? label : undefined}
+                title={collapsed ? `${label}${locked ? " (locked)" : ""}` : undefined}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-200 mb-0.5",
+                  "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-200 mb-0.5 relative",
                   collapsed ? "justify-center" : "",
-                  isActive
-                    ? "bg-secondary/15 text-secondary border border-secondary/30"
-                    : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                  locked
+                    ? "text-red-400/80 hover:bg-red-500/10 hover:text-red-300 border border-red-500/20 bg-red-500/5"
+                    : isActive
+                      ? "bg-secondary/15 text-secondary border border-secondary/30"
+                      : "text-muted-foreground hover:bg-white/5 hover:text-white"
                 )}
               >
-                <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-secondary" : "")} />
-                {!collapsed && <span className="text-xs font-medium truncate">{label}</span>}
-                {!collapsed && isFav && (
+                <span className="relative shrink-0">
+                  <Icon className={cn("w-4 h-4", isActive && !locked ? "text-secondary" : "", locked && "opacity-60")} />
+                  {locked && collapsed && (
+                    <Lock className="absolute -bottom-1 -right-1 w-2.5 h-2.5 text-red-400 bg-background rounded-sm" />
+                  )}
+                </span>
+                {!collapsed && (
+                  <span className={cn("text-xs font-medium truncate", locked && "line-through decoration-red-500/60")}>
+                    {label}
+                  </span>
+                )}
+                {!collapsed && locked && (
+                  <Lock className="ml-auto w-3 h-3 shrink-0 text-red-400 animate-pulse" />
+                )}
+                {!collapsed && !locked && isFav && (
                   <Star className="ml-auto w-3 h-3 shrink-0 text-yellow-400 fill-yellow-400" />
                 )}
-                {!collapsed && !isFav && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />}
+                {!collapsed && !locked && !isFav && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />}
               </button>
             );
           })}

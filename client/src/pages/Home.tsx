@@ -85,7 +85,7 @@ function GameCard({
       className={cn(
         "p-5 rounded-2xl bg-card/50 border border-white/5 transition-all duration-300 h-full relative overflow-hidden",
         locked
-          ? "cursor-not-allowed grayscale opacity-50"
+          ? "locked-glitch cursor-not-allowed border-red-500/40 bg-red-950/10"
           : cn(
               "cursor-pointer hover:-translate-y-1 hover:shadow-xl",
               color === "purple" ? "hover:shadow-purple-500/20 hover:bg-purple-500/10 hover:border-purple-500/50"
@@ -98,10 +98,19 @@ function GameCard({
       <Icon className={cn(
         "w-10 h-10 mb-3 mx-auto transition-transform",
         !locked && "group-hover:scale-110",
-        color === "purple" ? "text-purple-500" : color === "pink" ? "text-pink-500" : "text-secondary"
+        locked && "locked-icon text-red-400",
+        !locked && (color === "purple" ? "text-purple-500" : color === "pink" ? "text-pink-500" : "text-secondary")
       )} />
-      <h3 className="text-base font-bold text-white mb-1 text-center" data-testid={`text-game-${href.slice(1)}`}>{label}</h3>
-      <p className="text-xs text-muted-foreground text-center leading-relaxed">{desc}</p>
+      <h3
+        className={cn(
+          "text-base font-bold mb-1 text-center",
+          locked ? "locked-title text-red-200" : "text-white"
+        )}
+        data-testid={`text-game-${href.slice(1)}`}
+      >
+        {label}
+      </h3>
+      <p className={cn("text-xs text-center leading-relaxed", locked ? "text-red-300/70" : "text-muted-foreground")}>{desc}</p>
 
       {locked && (
         <>
@@ -109,14 +118,14 @@ function GameCard({
             className="absolute inset-0 pointer-events-none rounded-2xl"
             style={{
               backgroundImage:
-                "repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 1px, transparent 1px 3px)",
-              animation: "tv-static 0.12s steps(2) infinite",
-              opacity: 0.7,
+                "repeating-linear-gradient(0deg, rgba(255,80,80,0.18) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,200,255,0.12) 0 1px, transparent 1px 3px)",
+              animation: "tv-static 0.08s steps(2) infinite",
+              opacity: 0.85,
               mixBlendMode: "screen",
             }}
           />
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/55 rounded-2xl backdrop-blur-[2px] pointer-events-none">
-            <Lock className="w-6 h-6 text-red-400 mb-1.5" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/65 rounded-2xl backdrop-blur-[2px] pointer-events-none z-30">
+            <Lock className="w-6 h-6 text-red-400 mb-1.5 drop-shadow-[0_0_8px_rgba(255,80,80,0.7)]" />
             <p className="text-[9px] font-mono text-red-300 uppercase tracking-[0.2em] text-center px-2 leading-tight">
               Game Locked<br/>by Admin
             </p>
