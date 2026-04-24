@@ -44,6 +44,15 @@ const PixelShooter = lazy(() => import("@/pages/PixelShooter"));
 const Pvz2Gardenless = lazy(() => import("@/pages/Pvz2Gardenless"));
 const BasketballStars = lazy(() => import("@/pages/BasketballStars"));
 const SubwaySurfersHouston = lazy(() => import("@/pages/SubwaySurfersHouston"));
+const RussianBuckshot = lazy(() => import("@/pages/RussianBuckshot"));
+const RooftopSnipers = lazy(() => import("@/pages/RooftopSnipers"));
+const NzPortable = lazy(() => import("@/pages/NzPortable"));
+const JetpackJoyride = lazy(() => import("@/pages/JetpackJoyride"));
+const GoogleBaseball = lazy(() => import("@/pages/GoogleBaseball"));
+const AngryBirds = lazy(() => import("@/pages/AngryBirds"));
+const DoubleBarrelSniper = lazy(() => import("@/pages/DoubleBarrelSniper"));
+const SolarSmash = lazy(() => import("@/pages/SolarSmash"));
+const SkibidiShooter = lazy(() => import("@/pages/SkibidiShooter"));
 const Chat = lazy(() => import("@/pages/Chat"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -82,6 +91,15 @@ function Router() {
         <Route path="/pvz2-gardenless" component={Pvz2Gardenless} />
         <Route path="/basketball-stars" component={BasketballStars} />
         <Route path="/subway-surfers-houston" component={SubwaySurfersHouston} />
+        <Route path="/russian-buckshot" component={RussianBuckshot} />
+        <Route path="/rooftop-snipers" component={RooftopSnipers} />
+        <Route path="/nz-portable" component={NzPortable} />
+        <Route path="/jetpack-joyride" component={JetpackJoyride} />
+        <Route path="/google-baseball" component={GoogleBaseball} />
+        <Route path="/angry-birds" component={AngryBirds} />
+        <Route path="/double-barrel-sniper" component={DoubleBarrelSniper} />
+        <Route path="/solar-smash" component={SolarSmash} />
+        <Route path="/skibidi-shooter" component={SkibidiShooter} />
         <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
         <Route path="/rocket-soccer" component={RocketSoccer} />
         <Route path="/retro-bowl" component={RetroBowl} />

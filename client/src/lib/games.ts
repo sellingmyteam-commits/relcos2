@@ -2,6 +2,7 @@ import {
   MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg,
   Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route,
   Flame, Crown, Gauge, Bomb, Layers, Snowflake, Clock, Sprout, Dribbble, Train,
+  Skull as SkullIcon, Building2, Ghost, Rocket, Baseline, Bird, Telescope, Globe2, Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -20,6 +21,15 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/pvz2-gardenless", label: "PvZ2 Gardenless", icon: Sprout },
   { href: "/basketball-stars", label: "Basketball Stars", icon: Dribbble },
   { href: "/subway-surfers-houston", label: "Subway Surfers: Houston", icon: Train },
+  { href: "/russian-buckshot", label: "Russian Buckshot", icon: Bomb },
+  { href: "/rooftop-snipers", label: "Rooftop Snipers", icon: Building2 },
+  { href: "/nz-portable", label: "NZ: Portable", icon: Ghost },
+  { href: "/jetpack-joyride", label: "Jetpack Joyride", icon: Rocket },
+  { href: "/google-baseball", label: "Google Baseball", icon: Baseline },
+  { href: "/angry-birds", label: "Angry Birds", icon: Bird },
+  { href: "/double-barrel-sniper", label: "Double Barrel Sniper", icon: Telescope },
+  { href: "/solar-smash", label: "Solar Smash", icon: Globe2 },
+  { href: "/skibidi-shooter", label: "Skibidi Shooter", icon: Sparkles },
   { href: "/quake3", label: "Quake 3", icon: Bomb },
   { href: "/super-hot", label: "Super Hot", icon: Flame },
   { href: "/eaglercraft", label: "Eagler Craft X", icon: Cuboid },
