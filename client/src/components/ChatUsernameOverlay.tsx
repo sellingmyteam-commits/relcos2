@@ -1,24 +1,21 @@
 import { useState } from "react";
-import { Lock, Terminal, Eye, EyeOff, UserPlus, LogIn, Database } from "lucide-react";
+import { Lock, Terminal, Eye, EyeOff, KeyRound, Database } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-type Mode = "login" | "register";
-type Status = "idle" | "loading" | "error" | "taken" | "bad_password" | "success" | "syncing";
+type Status = "idle" | "loading" | "error" | "bad_password" | "success" | "syncing";
 
 export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: string, siteUserId: number) => void }) {
-  const [mode, setMode] = useState<Mode>("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [syncStep, setSyncStep] = useState(0);
 
-  const isShaking = status === "error" || status === "taken" || status === "bad_password";
+  const isShaking = status === "error" || status === "bad_password";
 
   const reset = () => {
     setStatus("idle");
@@ -34,7 +31,6 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
   const runSync = async (userId: number, name: string) => {
     setStatus("syncing");
     setSyncStep(0);
-
     await new Promise(r => setTimeout(r, 400));
     setSyncStep(1);
     await new Promise(r => setTimeout(r, 500));
@@ -42,42 +38,61 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
     await new Promise(r => setTimeout(r, 400));
     setSyncStep(3);
     await new Promise(r => setTimeout(r, 400));
-
     onComplete(name, userId);
+  };
+
+  const finish = async (data: { id: number; username: string }, msg: string) => {
+    setSuccessMsg(msg);
+    setStatus("success");
+    localStorage.setItem("chatUsername", data.username);
+    localStorage.setItem("siteUserId", String(data.id));
+    await new Promise(r => setTimeout(r, 400));
+    await runSync(data.id, data.username);
   };
 
   const handleSubmit = async () => {
     const cleanUsername = username.trim();
     if (!cleanUsername) return setError("Enter a username");
     if (!/^[a-zA-Z0-9_]+$/.test(cleanUsername)) return setError("Letters, numbers, underscores only");
-    if (cleanUsername.length < 2 || cleanUsername.length > 20) return setError("2–20 characters");
+    if (cleanUsername.length < 2 || cleanUsername.length > 20) return setError("Username must be 2–20 characters");
     if (!password) return setError("Enter a password");
-
-    if (mode === "register") {
-      if (password.length < 4) return setError("Password must be at least 4 characters");
-      if (password !== confirmPassword) return setError("Passwords don't match");
-    }
+    if (password.length < 4) return setError("Password must be at least 4 characters");
 
     setStatus("loading");
     try {
-      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
-      const res = await fetch(endpoint, {
+      const loginRes = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: cleanUsername, password }),
       });
-      const data = await res.json();
 
-      if (res.status === 409) return setError("Username already taken", "taken");
-      if (res.status === 401) return setError("Wrong username or password", "bad_password");
-      if (!res.ok) return setError(data.message || "Something went wrong");
+      if (loginRes.ok) {
+        const data = await loginRes.json();
+        return finish(data, "Welcome back!");
+      }
 
-      setStatus("success");
-      localStorage.setItem("chatUsername", data.username);
-      localStorage.setItem("siteUserId", String(data.id));
+      if (loginRes.status === 401) {
+        const regRes = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: cleanUsername, password }),
+        });
 
-      await new Promise(r => setTimeout(r, 400));
-      await runSync(data.id, data.username);
+        if (regRes.status === 201) {
+          const data = await regRes.json();
+          return finish(data, "Account created!");
+        }
+
+        if (regRes.status === 409) {
+          return setError("Wrong password for this username", "bad_password");
+        }
+
+        const regData = await regRes.json().catch(() => ({}));
+        return setError(regData.message || "Couldn't create account");
+      }
+
+      const data = await loginRes.json().catch(() => ({}));
+      setError(data.message || "Something went wrong");
     } catch {
       setError("Connection error, try again");
     }
@@ -85,14 +100,6 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleSubmit();
-  };
-
-  const switchMode = (m: Mode) => {
-    setMode(m);
-    setStatus("idle");
-    setErrorMsg("");
-    setPassword("");
-    setConfirmPassword("");
   };
 
   const borderColor =
@@ -175,26 +182,24 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
                 : isShaking ? "text-red-400 border-red-500/30"
                 : "text-secondary border-secondary/30"
               }`}>
-                {mode === "login" ? <LogIn className="w-7 h-7" /> : <UserPlus className="w-7 h-7" />}
+                <KeyRound className="w-7 h-7" />
               </div>
 
               <h1 className="text-2xl font-black tracking-tighter text-white uppercase">
-                {mode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}
+                LOG IN OR SIGN UP
               </h1>
-              <p className="text-[11px] text-muted-foreground leading-relaxed max-w-[240px]">
-                {mode === "login"
-                  ? "Enter your username and password to access the site."
-                  : "Pick a username and password to create your account."}
+              <p className="text-[11px] text-muted-foreground leading-relaxed max-w-[260px]">
+                Type a username and password. We'll sign you in if the account exists, or create one if it doesn't.
               </p>
 
               {errorMsg && (
-                <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider animate-pulse">
+                <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider animate-pulse" data-testid="text-auth-error">
                   ⚠ {errorMsg}
                 </p>
               )}
               {status === "success" && (
-                <p className="text-[10px] text-green-400 font-bold uppercase tracking-wider">
-                  ✓ {mode === "login" ? "Welcome back!" : "Account created!"}
+                <p className="text-[10px] text-green-400 font-bold uppercase tracking-wider" data-testid="text-auth-success">
+                  ✓ {successMsg}
                 </p>
               )}
             </div>
@@ -233,40 +238,15 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
                   type="button"
                   onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  data-testid="button-toggle-password"
                 >
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
 
-              {mode === "register" && (
-                <div className="relative group">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-secondary transition-colors">
-                    <Lock className="w-4 h-4" />
-                  </div>
-                  <Input
-                    type={showConfirm ? "text" : "password"}
-                    placeholder="Confirm password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    data-testid="input-confirm-password"
-                    className="w-full h-11 bg-white/5 border-white/10 pl-10 pr-10 font-mono focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                  >
-                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              )}
-
-              {mode === "register" && (
-                <p className="text-[9px] text-center text-muted-foreground/50 font-mono">
-                  Letters, numbers, underscores · 2–20 chars · Password min 4 chars
-                </p>
-              )}
+              <p className="text-[9px] text-center text-muted-foreground/50 font-mono">
+                Letters, numbers, underscores · 2–20 chars · Password min 4 chars
+              </p>
 
               <Button
                 onClick={handleSubmit}
@@ -281,27 +261,14 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
                 <span className="relative z-10">
                   {status === "loading" ? "PLEASE WAIT..."
                    : status === "success" ? "WELCOME!"
-                   : mode === "login" ? "LOG IN"
-                   : "CREATE ACCOUNT"}
+                   : "CONTINUE"}
                 </span>
                 <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               </Button>
 
-              <div className="flex items-center gap-3 pt-1">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-[9px] text-muted-foreground/40 font-mono uppercase tracking-wider">
-                  {mode === "login" ? "New here?" : "Already have an account?"}
-                </span>
-                <div className="flex-1 h-px bg-white/10" />
-              </div>
-
-              <button
-                onClick={() => switchMode(mode === "login" ? "register" : "login")}
-                data-testid="button-switch-auth-mode"
-                className="w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-xs font-bold text-muted-foreground hover:text-white hover:bg-white/10 hover:border-white/20 transition-all tracking-wider uppercase"
-              >
-                {mode === "login" ? "Create an Account" : "Back to Login"}
-              </button>
+              <p className="text-[9px] text-center text-muted-foreground/40 font-mono uppercase tracking-wider pt-1">
+                One form for new and returning users
+              </p>
             </div>
           </motion.div>
         )}
