@@ -8,9 +8,14 @@ import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
+import { PINNED_HREFS } from "@/lib/games";
 
 const GAMES = [
-  { href: "/pixel-shooter", label: "Pixel Shooter", desc: "Pixel-art FPS with arcade chaos.", icon: Crosshair, color: "primary" },
+  { href: "/eaglercraft", label: "Eagler Craft X", desc: "Minecraft in your browser.", icon: Cuboid, color: "primary" },
+  { href: "/shellshockers", label: "Shellshockers", desc: "The world's top egg-based shooter.", icon: Egg, color: "purple" },
+  { href: "/geometry-dash", label: "Geometry Dash", desc: "Jump and fly your way through danger!", icon: Zap, color: "pink" },
+  { href: "/slope", label: "Slope", desc: "Roll down the slope as fast as you can.", icon: Circle, color: "primary" },
+  { href: "/pixel-shooter", label: "Pixel Shooter", desc: "Pixel-art FPS with arcade chaos.", icon: Crosshair, color: "purple" },
   { href: "/pvz2-gardenless", label: "PvZ2 Gardenless", desc: "Plants vs Zombies 2 reborn online.", icon: Sprout, color: "purple" },
   { href: "/basketball-stars", label: "Basketball Stars", desc: "Fast-paced 1v1 basketball duels.", icon: Dribbble, color: "pink" },
   { href: "/subway-surfers-houston", label: "Subway Surfers: Houston", desc: "Surf the Houston subway. Don't get caught.", icon: Train, color: "primary" },
@@ -32,12 +37,8 @@ const GAMES = [
   { href: "/snowball-io", label: "Snowball.io", desc: "Throw snowballs and knock out opponents.", icon: Snowflake, color: "pink" },
   { href: "/quake3", label: "Quake 3", desc: "Classic FPS arena combat.", icon: Bomb, color: "purple" },
   { href: "/super-hot", label: "Super Hot", desc: "Time moves only when you move.", icon: Flame, color: "pink" },
-  { href: "/eaglercraft", label: "Eagler Craft X", desc: "Minecraft in your browser.", icon: Cuboid, color: "primary" },
-  { href: "/shellshockers", label: "Shellshockers", desc: "The world's top egg-based shooter.", icon: Egg, color: "purple" },
-  { href: "/geometry-dash", label: "Geometry Dash", desc: "Jump and fly your way through danger!", icon: Zap, color: "pink" },
   { href: "/motox3m", label: "Moto X3M", desc: "The best bike racing game.", icon: Bike, color: "primary" },
   { href: "/five-nights-at-winstons", label: "Five Nights At Winston's", desc: "Survive the night with Winston.", icon: Cctv, color: "purple" },
-  { href: "/slope", label: "Slope", desc: "Roll down the slope as fast as you can.", icon: Circle, color: "pink" },
   { href: "/retro-bowl", label: "Retro Bowl", desc: "Classic retro football action.", icon: Goal, color: "primary" },
   { href: "/rocket-soccer", label: "Rocket Soccer", desc: "High-octane car soccer action.", icon: Trophy, color: "purple" },
   { href: "/drift-hunters", label: "Drift Hunters", desc: "3D car drifting on epic tracks.", icon: Car, color: "pink" },
@@ -181,8 +182,15 @@ export default function Home() {
     ? GAMES.filter(g => g.label.toLowerCase().includes(searchQuery.toLowerCase()))
     : GAMES;
 
-  const favouriteGames = filteredGames.filter(g => favourites.includes(g.href));
-  const otherGames = filteredGames.filter(g => !favourites.includes(g.href));
+  const pinnedSet = new Set(PINNED_HREFS);
+  const pinnedGames = PINNED_HREFS
+    .map(href => filteredGames.find(g => g.href === href))
+    .filter((g): g is typeof GAMES[number] => !!g);
+  const favouriteGames = filteredGames.filter(g => favourites.includes(g.href) && !pinnedSet.has(g.href));
+  const otherGames = [
+    ...pinnedGames,
+    ...filteredGames.filter(g => !favourites.includes(g.href) && !pinnedSet.has(g.href)),
+  ];
 
   const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.045, delayChildren: 0.05 } } };
   const item = {

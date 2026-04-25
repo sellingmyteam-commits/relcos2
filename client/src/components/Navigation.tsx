@@ -6,7 +6,7 @@ import { getSharedSocket } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
 import { AdminPanel } from "@/components/AdminPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { ALL_GAMES } from "@/lib/games";
+import { ALL_GAMES, PINNED_HREFS } from "@/lib/games";
 import { useGameLocks } from "@/hooks/useGameLocks";
 
 export function Navigation() {
@@ -92,11 +92,16 @@ export function Navigation() {
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const favSet = new Set(favourites);
+  const pinnedSet = new Set(PINNED_HREFS);
+  const pinned = PINNED_HREFS
+    .map(href => filtered.find(g => g.href === href))
+    .filter((g): g is typeof ALL_GAMES[number] => !!g);
   const sorted = [
+    ...pinned,
     ...favourites
       .map(href => filtered.find(g => g.href === href))
-      .filter((g): g is typeof ALL_GAMES[number] => !!g),
-    ...filtered.filter(g => !favSet.has(g.href)),
+      .filter((g): g is typeof ALL_GAMES[number] => !!g && !pinnedSet.has(g.href)),
+    ...filtered.filter(g => !favSet.has(g.href) && !pinnedSet.has(g.href)),
   ];
 
   return (

@@ -8,7 +8,18 @@ import type { LucideIcon } from "lucide-react";
 
 export type GameEntry = { href: string; label: string; icon: LucideIcon };
 
+export const PINNED_HREFS: string[] = [
+  "/eaglercraft",
+  "/shellshockers",
+  "/geometry-dash",
+  "/slope",
+];
+
 export const ALL_GAMES: GameEntry[] = [
+  { href: "/eaglercraft", label: "Eagler Craft X", icon: Cuboid },
+  { href: "/shellshockers", label: "Shellshockers", icon: Egg },
+  { href: "/geometry-dash", label: "Geometry Dash", icon: Zap },
+  { href: "/slope", label: "Slope", icon: Circle },
   { href: "/1v1-lol", label: "1v1.lol", icon: Crosshair },
   { href: "/counter-strike", label: "Counter Strike", icon: Target },
   { href: "/bikers-republic", label: "Bikers Republic", icon: Skull },
@@ -31,12 +42,8 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/skibidi-shooter", label: "Skibidi Shooter", icon: Sparkles },
   { href: "/quake3", label: "Quake 3", icon: Bomb },
   { href: "/super-hot", label: "Super Hot", icon: Flame },
-  { href: "/eaglercraft", label: "Eagler Craft X", icon: Cuboid },
-  { href: "/shellshockers", label: "Shellshockers", icon: Egg },
-  { href: "/geometry-dash", label: "Geometry Dash", icon: Zap },
   { href: "/motox3m", label: "Moto X3M", icon: Bike },
   { href: "/five-nights-at-winstons", label: "Five Nights At Winston's", icon: Cctv },
-  { href: "/slope", label: "Slope", icon: Circle },
   { href: "/retro-bowl", label: "Retro Bowl", icon: Goal },
   { href: "/rocket-soccer", label: "Rocket Soccer", icon: Trophy },
   { href: "/drift-hunters", label: "Drift Hunters", icon: Car },
