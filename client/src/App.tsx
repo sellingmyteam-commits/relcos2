@@ -52,6 +52,12 @@ const AngryBirds = lazy(() => import("@/pages/AngryBirds"));
 const DoubleBarrelSniper = lazy(() => import("@/pages/DoubleBarrelSniper"));
 const SolarSmash = lazy(() => import("@/pages/SolarSmash"));
 const SkibidiShooter = lazy(() => import("@/pages/SkibidiShooter"));
+const Bowmasters = lazy(() => import("@/pages/Bowmasters"));
+const Build = lazy(() => import("@/pages/Build"));
+const GunSpin = lazy(() => import("@/pages/GunSpin"));
+const HoleIo = lazy(() => import("@/pages/HoleIo"));
+const CookieClicker = lazy(() => import("@/pages/CookieClicker"));
+const IdleMinerTycoon = lazy(() => import("@/pages/IdleMinerTycoon"));
 const Chat = lazy(() => import("@/pages/Chat"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -98,6 +104,12 @@ function Router() {
         <Route path="/double-barrel-sniper" component={DoubleBarrelSniper} />
         <Route path="/solar-smash" component={SolarSmash} />
         <Route path="/skibidi-shooter" component={SkibidiShooter} />
+        <Route path="/bowmasters" component={Bowmasters} />
+        <Route path="/build" component={Build} />
+        <Route path="/gun-spin" component={GunSpin} />
+        <Route path="/hole-io" component={HoleIo} />
+        <Route path="/cookie-clicker" component={CookieClicker} />
+        <Route path="/idle-miner-tycoon" component={IdleMinerTycoon} />
         <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
         <Route path="/rocket-soccer" component={RocketSoccer} />
         <Route path="/retro-bowl" component={RetroBowl} />
