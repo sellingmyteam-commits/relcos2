@@ -30,7 +30,7 @@ export function GroupInviteNotification() {
 
   useEffect(() => {
     fetchInvites();
-    const id = setInterval(fetchInvites, 5000);
+    const id = setInterval(fetchInvites, 15000);
     return () => clearInterval(id);
   }, []);
 

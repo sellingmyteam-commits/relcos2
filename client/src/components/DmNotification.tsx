@@ -59,7 +59,7 @@ export function DmNotification() {
     };
 
     poll();
-    const id = setInterval(poll, 3000);
+    const id = setInterval(poll, 8000);
     return () => clearInterval(id);
   }, []);
 

@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
-import { useGroups, useGroupMessages, useCreateGroup, useSendGroupMessage, useLeaveGroup, type GroupWithMembers } from "@/hooks/use-groups";
+import { useGroups, useGroupMessages, useCreateGroup, useSendGroupMessage, useLeaveGroup, useAddGroupMembers, type GroupWithMembers } from "@/hooks/use-groups";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Send, Loader2, Plus, X,
-  Shield, UsersRound, LogOut, Check, RefreshCw
+  Shield, UsersRound, LogOut, Check, RefreshCw, UserPlus
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -273,6 +273,170 @@ function CreateGroupModal({ open, onClose, allUsers, currentUser, onRefresh, isR
   );
 }
 
+function AddMemberModal({ open, onClose, group, allUsers, currentUser, onRefresh, isRefreshing }: {
+  open: boolean;
+  onClose: () => void;
+  group: GroupWithMembers;
+  allUsers: string[];
+  currentUser: string;
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const { mutate: addMembers, isPending, error } = useAddGroupMembers();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!open) { setSelected(new Set()); setSearch(""); }
+  }, [open]);
+
+  if (!open) return null;
+
+  const existing = new Set(group.members);
+  const candidates = allUsers
+    .filter(u => !existing.has(u) && u !== currentUser && u.toLowerCase().includes(search.toLowerCase()))
+    .slice(0, 100);
+
+  const toggle = (u: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(u)) next.delete(u); else next.add(u);
+      return next;
+    });
+  };
+
+  const handleAdd = () => {
+    if (selected.size === 0) return;
+    addMembers(
+      { groupId: group.id, usernames: Array.from(selected), addedBy: currentUser },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["/api/groups/user", currentUser] });
+          onClose();
+        },
+      }
+    );
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      onClick={onClose}
+      data-testid="modal-add-member"
+    >
+      <div
+        className="bg-[#0d0d18] border border-white/15 rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 py-4 border-b border-white/10 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center">
+            <UserPlus className="w-4 h-4 text-accent" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Add Members</h2>
+            <p className="text-[10px] text-muted-foreground/60 font-mono truncate">to {group.name}</p>
+          </div>
+          <button
+            onClick={onClose}
+            data-testid="button-close-add-member"
+            className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-5 py-3 border-b border-white/10 space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search users..."
+              data-testid="input-add-member-search"
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-accent/50 placeholder:text-muted-foreground/40"
+            />
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              data-testid="button-refresh-users-add"
+              title="Refresh user list"
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:text-white hover:bg-white/10 disabled:opacity-40 transition-all"
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
+            </button>
+          </div>
+          {selected.size > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {Array.from(selected).map(u => (
+                <span
+                  key={u}
+                  data-testid={`chip-add-selected-${u}`}
+                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-accent/15 border border-accent/30 text-[10px] text-accent"
+                >
+                  {u}
+                  <button onClick={() => toggle(u)} className="hover:text-white" data-testid={`button-remove-add-selected-${u}`}>
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          {error && (
+            <p className="text-[10px] text-red-400 font-mono">{(error as Error).message}</p>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto min-h-0 p-2">
+          {candidates.length === 0 ? (
+            <div className="text-center py-8 text-xs text-muted-foreground/50 font-mono">No users to add</div>
+          ) : (
+            candidates.map(u => {
+              const isSelected = selected.has(u);
+              return (
+                <button
+                  key={u}
+                  onClick={() => toggle(u)}
+                  data-testid={`button-toggle-add-user-${u}`}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors",
+                    isSelected ? "bg-accent/10 hover:bg-accent/15" : "hover:bg-white/5"
+                  )}
+                >
+                  <Avatar name={u} size="sm" />
+                  <span className="flex-1 text-xs font-medium text-white truncate">{u}</span>
+                  <div className={cn(
+                    "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                    isSelected ? "bg-accent border-accent" : "border-white/25"
+                  )}>
+                    {isSelected && <Check className="w-3 h-3 text-black" />}
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        <div className="px-5 py-3 border-t border-white/10 bg-black/30 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground/60 font-mono">
+            {selected.size} {selected.size === 1 ? "user" : "users"} selected
+          </span>
+          <button
+            onClick={handleAdd}
+            disabled={selected.size === 0 || isPending}
+            data-testid="button-confirm-add-members"
+            className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+            Add
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Chat() {
   const queryClient = useQueryClient();
   const username = localStorage.getItem("chatUsername") || "";
@@ -283,6 +447,7 @@ export default function Chat() {
   );
   const [input, setInput] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState<number | null>(null);
 
   const messagesScrollRef = useRef<HTMLDivElement>(null);
@@ -294,9 +459,9 @@ export default function Chat() {
   const { mutate: leaveGroup } = useLeaveGroup();
   const { data: allUsers, refetch: refetchUsers, isFetching: isFetchingUsers } = useQuery<string[]>({
     queryKey: ["/api/users"],
-    refetchInterval: 10000,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
+    staleTime: 30000,
   });
 
   const activeGroup: GroupWithMembers | undefined =
@@ -431,6 +596,15 @@ export default function Chat() {
                   </p>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAddMember(true)}
+                    data-testid="button-add-member"
+                    title="Add members"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent/10 border border-accent/25 text-accent text-[10px] font-bold uppercase tracking-wider hover:bg-accent/20 transition-all"
+                  >
+                    <UserPlus className="w-3 h-3" />
+                    Add
+                  </button>
                   <span className="text-[9px] font-mono text-secondary/60 uppercase tracking-wider border border-secondary/25 px-2 py-0.5 rounded-full">
                     GROUP
                   </span>
@@ -550,6 +724,17 @@ export default function Chat() {
         onRefresh={() => refetchUsers()}
         isRefreshing={isFetchingUsers}
       />
+      {activeGroup && (
+        <AddMemberModal
+          open={showAddMember}
+          onClose={() => setShowAddMember(false)}
+          group={activeGroup}
+          allUsers={allUsers ?? []}
+          currentUser={username}
+          onRefresh={() => refetchUsers()}
+          isRefreshing={isFetchingUsers}
+        />
+      )}
     </Layout>
   );
 }

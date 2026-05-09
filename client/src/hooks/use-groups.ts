@@ -13,7 +13,7 @@ export function useGroups(username: string) {
       return res.json();
     },
     enabled: !!username,
-    refetchInterval: 4000,
+    refetchInterval: 12000,
   });
 }
 
@@ -27,7 +27,7 @@ export function useGroupMessages(groupId: number | null, username: string) {
       return res.json();
     },
     enabled: !!groupId && !!username,
-    refetchInterval: 1500,
+    refetchInterval: 4000,
   });
 }
 
@@ -82,6 +82,28 @@ export function useLeaveGroup() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/groups/user", variables.username] });
+    },
+  });
+}
+
+export function useAddGroupMembers() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ groupId, usernames, addedBy }: { groupId: number; usernames: string[]; addedBy: string }) => {
+      for (const username of usernames) {
+        const res = await fetch(`/api/groups/${groupId}/members`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, addedBy }),
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j.message || "Failed to add member");
+        }
+      }
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/groups/user", variables.addedBy] });
     },
   });
 }
