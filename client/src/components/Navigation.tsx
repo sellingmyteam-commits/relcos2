@@ -97,9 +97,14 @@ export function Navigation() {
       <aside
         className={cn(
           "fixed left-0 top-0 bottom-0 z-50 flex flex-col transition-all duration-300 ease-in-out",
-          "bg-background/95 backdrop-blur-md border-r border-white/10",
           collapsed ? "w-14" : "w-56"
         )}
+        style={{
+          background: "rgba(2, 5, 18, 0.82)",
+          backdropFilter: "blur(28px) saturate(1.4)",
+          borderRight: "1px solid rgba(0, 255, 249, 0.1)",
+          boxShadow: "2px 0 32px rgba(0,0,0,0.4)"
+        }}
       >
         {/* Logo */}
         <div className={cn("flex items-center h-14 border-b border-white/10 px-3 shrink-0", collapsed ? "justify-center" : "justify-between gap-2")}>

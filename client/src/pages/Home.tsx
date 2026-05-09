@@ -80,26 +80,46 @@ function GameCard({
   color: string; isFavourite: boolean; onToggleFavourite: (e: React.MouseEvent) => void;
   locked?: boolean; onLaunch: (href: string, label: string) => void;
 }) {
+  const glowColor = color === "purple" ? "rgba(140,60,255,0.55)" : color === "pink" ? "rgba(255,0,193,0.55)" : "rgba(0,255,249,0.55)";
+  const hoverBorder = color === "purple" ? "rgba(140,60,255,0.45)" : color === "pink" ? "rgba(255,0,193,0.45)" : "rgba(0,255,249,0.45)";
+  const hoverBg = color === "purple" ? "rgba(140,60,255,0.12)" : color === "pink" ? "rgba(255,0,193,0.12)" : "rgba(0,255,249,0.12)";
+
   const cardInner = (
     <div
       className={cn(
-        "p-5 rounded-2xl bg-card/50 border border-white/5 transition-all duration-300 h-full relative overflow-hidden",
+        "p-5 rounded-2xl border transition-all duration-300 h-full relative overflow-hidden group/card",
         locked
-          ? "locked-glitch cursor-not-allowed border-red-500/40 bg-red-950/10"
-          : cn(
-              "cursor-pointer hover:-translate-y-1 hover:shadow-xl",
-              color === "purple" ? "hover:shadow-purple-500/20 hover:bg-purple-500/10 hover:border-purple-500/50"
-                : color === "pink" ? "hover:shadow-pink-500/20 hover:bg-pink-500/10 hover:border-pink-500/50"
-                : "hover:shadow-secondary/20 hover:bg-secondary/10 hover:border-secondary/50"
-            )
+          ? "locked-glitch cursor-not-allowed border-red-500/40"
+          : "cursor-pointer hover:-translate-y-1"
       )}
+      style={locked ? {
+        background: "rgba(60,0,0,0.55)",
+        backdropFilter: "blur(12px)",
+      } : {
+        background: "rgba(5,8,25,0.55)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+      }}
+      onMouseEnter={e => {
+        if (!locked) {
+          (e.currentTarget as HTMLElement).style.background = hoverBg;
+          (e.currentTarget as HTMLElement).style.borderColor = hoverBorder;
+          (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 32px ${glowColor.replace("0.55", "0.2")}, 0 0 0 1px ${hoverBorder}`;
+        }
+      }}
+      onMouseLeave={e => {
+        if (!locked) {
+          (e.currentTarget as HTMLElement).style.background = "rgba(5,8,25,0.55)";
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "";
+        }
+      }}
       data-testid={`card-game-${href.slice(1)}`}
     >
       <Icon className={cn(
-        "w-10 h-10 mb-3 mx-auto transition-transform",
-        !locked && "group-hover:scale-110",
+        "w-10 h-10 mb-3 mx-auto transition-transform group-hover/card:scale-110",
         locked && "locked-icon text-red-400",
-        !locked && (color === "purple" ? "text-purple-500" : color === "pink" ? "text-pink-500" : "text-secondary")
+        !locked && (color === "purple" ? "text-purple-400" : color === "pink" ? "text-pink-400" : "text-cyan-400")
       )} />
       <h3
         className={cn(
@@ -110,7 +130,7 @@ function GameCard({
       >
         {label}
       </h3>
-      <p className={cn("text-xs text-center leading-relaxed", locked ? "text-red-300/70" : "text-muted-foreground")}>{desc}</p>
+      <p className={cn("text-xs text-center leading-relaxed", locked ? "text-red-300/70" : "text-white/45")}>{desc}</p>
 
       {locked && (
         <>
@@ -217,8 +237,8 @@ export default function Home() {
               </button>
             </Link>
 
-            <div className="bg-card/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-xl">
-              <div className="px-3 py-2 border-b border-white/10 bg-green-500/5 flex items-center gap-2">
+            <div className="rounded-xl overflow-hidden shadow-xl" style={{ background: "rgba(2,8,20,0.72)", backdropFilter: "blur(20px)", border: "1px solid rgba(0,255,249,0.1)" }}>
+              <div className="px-3 py-2 border-b flex items-center gap-2" style={{ borderColor: "rgba(0,255,249,0.1)", background: "rgba(0,255,249,0.04)" }}>
                 <Wifi className="w-3 h-3 text-green-400" />
                 <span className="text-[10px] font-display font-bold text-green-400 uppercase tracking-wider">Online</span>
                 <span className="ml-auto text-[10px] font-mono text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full border border-green-500/20">
