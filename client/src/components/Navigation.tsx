@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
+
 import { AdminPanel } from "@/components/AdminPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { ALL_GAMES } from "@/lib/games";
@@ -11,7 +12,6 @@ import { useGameLocks } from "@/hooks/useGameLocks";
 
 export function Navigation() {
   const [location, setLocation] = useLocation();
-  const [onlineCount, setOnlineCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -57,14 +57,7 @@ export function Navigation() {
 
   useEffect(() => {
     const socket = getSharedSocket();
-    const handleOnlineUsers = (users: string[]) => {
-      setOnlineCount(users.length);
-    };
-    socket.on("online_users", handleOnlineUsers);
     socket.emit("join_page", location);
-    return () => {
-      socket.off("online_users", handleOnlineUsers);
-    };
   }, [location]);
 
   useEffect(() => {
@@ -233,31 +226,6 @@ export function Navigation() {
 
         {/* Bottom actions */}
         <div className={cn("border-t border-white/10 p-2 flex flex-col gap-1 shrink-0", collapsed ? "items-center" : "")}>
-          {/* Online count */}
-          <div
-            className={cn(
-              "flex items-center gap-2 rounded-lg bg-white/5 border border-white/10",
-              collapsed ? "justify-center w-9 h-9 px-0 py-0 flex-col gap-0.5" : "px-2.5 py-1.5"
-            )}
-            title={collapsed ? `${onlineCount} online` : undefined}
-          >
-            {collapsed ? (
-              <>
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
-                <span className="font-mono text-[10px] font-bold text-secondary leading-none" data-testid="text-online-count-collapsed">
-                  {onlineCount}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
-                <span className="font-mono text-[10px] font-bold text-secondary whitespace-nowrap" data-testid="text-online-count">
-                  {onlineCount} ONLINE
-                </span>
-              </>
-            )}
-          </div>
-
           {/* Fullscreen (game pages only) */}
           {isGamePage && (
             <Button

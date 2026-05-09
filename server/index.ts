@@ -76,21 +76,10 @@ app.use((req, res, next) => {
     pages: {} as Record<string, number>
   };
 
-  const onlineUsers = new Map<string, string>(); // socketId -> username
-
-  const broadcastOnlineUsers = () => {
-    const all = Array.from(onlineUsers.values()).filter(u => u && u !== "System" && !u.toLowerCase().startsWith("guest"));
-    const users = [...new Set(all)];
-    io.emit("online_users", users);
-  };
-
-  // Broadcast online users every 2 seconds
-  setInterval(broadcastOnlineUsers, 2000);
-
   io.on("connection", (socket) => {
     userStats.total++;
     let currentPath = "/";
-    
+
     socket.on("join_page", (path: string) => {
       if (userStats.pages[currentPath]) {
         userStats.pages[currentPath]--;
@@ -100,26 +89,15 @@ app.use((req, res, next) => {
       io.emit("stats_update", userStats);
     });
 
-    socket.on("user_online", (username: string) => {
-      if (username && username.trim()) {
-        onlineUsers.set(socket.id, username.trim());
-        broadcastOnlineUsers();
-      }
-    });
-
     socket.on("disconnect", () => {
       userStats.total--;
       if (userStats.pages[currentPath]) {
         userStats.pages[currentPath]--;
       }
-      onlineUsers.delete(socket.id);
       io.emit("stats_update", userStats);
-      broadcastOnlineUsers();
     });
 
-    // Initial sync
     socket.emit("stats_update", userStats);
-    socket.emit("online_users", Array.from(onlineUsers.values()).filter(u => u && u !== "System" && !u.toLowerCase().startsWith("guest")));
   });
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
