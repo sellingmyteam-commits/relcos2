@@ -1,10 +1,9 @@
 import { Layout } from "@/components/Layout";
 import { Link, useLocation } from "wouter";
-import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Snowflake, Clock, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Building2, Ghost, Rocket, Baseline, Bird, Telescope, Globe2, Sparkles } from "lucide-react";
+import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, Snowflake, Clock, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Building2, Ghost, Rocket, Baseline, Bird, Telescope, Globe2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
@@ -186,7 +185,6 @@ function GameCard({
 
 export default function Home() {
   const username = localStorage.getItem("chatUsername") || "";
-  const onlineUsers = useOnlineUsers();
   const { favourites, toggle } = useFavourites();
   const [searchQuery, setSearchQuery] = useState("");
   const { isLocked } = useGameLocks();
@@ -225,50 +223,6 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Right side: Live Comms + online users */}
-          <div className="flex flex-col gap-2 shrink-0 w-44">
-            <Link href="/chat">
-              <button
-                data-testid="button-live-comms"
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-secondary/10 border border-secondary/30 text-secondary text-xs font-display font-bold uppercase tracking-widest hover:bg-secondary/20 hover:border-secondary/60 transition-all duration-200 hover:scale-105 active:scale-95"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                Live Comms
-              </button>
-            </Link>
-
-            <div className="rounded-xl overflow-hidden shadow-xl" style={{ background: "rgba(2,8,20,0.72)", backdropFilter: "blur(20px)", border: "1px solid rgba(0,255,249,0.1)" }}>
-              <div className="px-3 py-2 border-b flex items-center gap-2" style={{ borderColor: "rgba(0,255,249,0.1)", background: "rgba(0,255,249,0.04)" }}>
-                <Wifi className="w-3 h-3 text-green-400" />
-                <span className="text-[10px] font-display font-bold text-green-400 uppercase tracking-wider">Online</span>
-                <span className="ml-auto text-[10px] font-mono text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full border border-green-500/20">
-                  {onlineUsers.length}
-                </span>
-              </div>
-              <div className="overflow-y-auto p-1.5 max-h-28">
-                {onlineUsers.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-4 text-muted-foreground/40 gap-1">
-                    <Users className="w-4 h-4 opacity-20" />
-                    <p className="text-[9px] font-mono text-center">No one online yet</p>
-                  </div>
-                ) : (
-                  onlineUsers.map((user, idx) => (
-                    <div key={`${user}-${idx}`} className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg hover:bg-white/5 transition-colors group">
-                      <div className="relative shrink-0">
-                        <div className="w-4 h-4 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                          <User className="w-2 h-2 text-green-400" />
-                        </div>
-                        <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-green-400 border border-card animate-pulse" />
-                      </div>
-                      <span className={cn("text-[10px] font-medium truncate flex-1", user === username ? "text-secondary" : "text-white")}>
-                        {user === username ? `${user} (you)` : user}
-                      </span>
-                              </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Search bar */}
