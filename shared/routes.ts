@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { insertMessageSchema, insertDirectMessageSchema, messages, directMessages } from "./schema";
 
 export const errorSchemas = {
   validation: z.object({
@@ -20,15 +19,15 @@ export const api = {
       method: "GET" as const,
       path: "/api/messages",
       responses: {
-        200: z.array(z.custom<typeof messages.$inferSelect>()),
+        200: z.array(z.unknown()),
       },
     },
     create: {
       method: "POST" as const,
       path: "/api/messages",
-      input: insertMessageSchema,
+      input: z.object({ content: z.string(), fromUser: z.string() }),
       responses: {
-        201: z.custom<typeof messages.$inferSelect>(),
+        201: z.unknown(),
         400: errorSchemas.validation,
       },
     },
@@ -38,15 +37,15 @@ export const api = {
       method: "GET" as const,
       path: "/api/dm/:user1/:user2",
       responses: {
-        200: z.array(z.custom<typeof directMessages.$inferSelect>()),
+        200: z.array(z.unknown()),
       },
     },
     create: {
       method: "POST" as const,
       path: "/api/dm",
-      input: insertDirectMessageSchema,
+      input: z.object({ fromUser: z.string(), toUser: z.string(), content: z.string() }),
       responses: {
-        201: z.custom<typeof directMessages.$inferSelect>(),
+        201: z.unknown(),
         400: errorSchemas.validation,
       },
     },
