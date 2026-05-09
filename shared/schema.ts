@@ -2,23 +2,6 @@ import { pgTable, text, serial, timestamp, integer, boolean, jsonb } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const directMessages = pgTable("direct_messages", {
-  id: serial("id").primaryKey(),
-  fromUser: text("from_user").notNull(),
-  toUser: text("to_user").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  isRead: boolean("is_read").default(false),
-  readAt: timestamp("read_at"),
-});
-
 export const siteUsers = pgTable("site_users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -33,13 +16,6 @@ export const gameSaves = pgTable("game_saves", {
   userId: integer("user_id").notNull().unique().references(() => siteUsers.id),
   saveData: jsonb("save_data").notNull().default({}),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const dmConversationHidden = pgTable("dm_conversation_hidden", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull(),
-  otherUser: text("other_user").notNull(),
-  hiddenBefore: timestamp("hidden_before").defaultNow(),
 });
 
 export const chatGroups = pgTable("chat_groups", {
@@ -88,30 +64,10 @@ export const userWarnings = pgTable("user_warnings", {
   acknowledged: boolean("acknowledged").default(false),
 });
 
-export const insertMessageSchema = createInsertSchema(messages).pick({
-  username: true,
-  content: true,
-});
-
-export const insertDirectMessageSchema = createInsertSchema(directMessages).pick({
-  fromUser: true,
-  toUser: true,
-  content: true,
-});
-
 export const insertSiteUserSchema = createInsertSchema(siteUsers).pick({
   username: true,
   passwordHash: true,
 });
-
-export type Message = typeof messages.$inferSelect;
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type DirectMessage = typeof directMessages.$inferSelect;
-export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
-export type SiteUser = typeof siteUsers.$inferSelect;
-export type InsertSiteUser = z.infer<typeof insertSiteUserSchema>;
-export type DmConversationHidden = typeof dmConversationHidden.$inferSelect;
-export type GameSave = typeof gameSaves.$inferSelect;
 
 export const insertChatGroupSchema = createInsertSchema(chatGroups).pick({
   name: true,
@@ -123,6 +79,9 @@ export const insertGroupMessageSchema = createInsertSchema(groupMessages).pick({
   content: true,
 });
 
+export type SiteUser = typeof siteUsers.$inferSelect;
+export type InsertSiteUser = z.infer<typeof insertSiteUserSchema>;
+export type GameSave = typeof gameSaves.$inferSelect;
 export type ChatGroup = typeof chatGroups.$inferSelect;
 export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;
 export type GroupMessage = typeof groupMessages.$inferSelect;

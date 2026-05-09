@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { Link, useLocation } from "wouter";
-import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Mail, Snowflake, Clock, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Building2, Ghost, Rocket, Baseline, Bird, Telescope, Globe2, Sparkles } from "lucide-react";
+import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, User, Wifi, Snowflake, Clock, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Building2, Ghost, Rocket, Baseline, Bird, Telescope, Globe2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -243,19 +243,7 @@ export default function Home() {
                       <span className={cn("text-[10px] font-medium truncate flex-1", user === username ? "text-secondary" : "text-white")}>
                         {user === username ? `${user} (you)` : user}
                       </span>
-                      {user !== username && (
-                        <Link href={`/chat?dm=${encodeURIComponent(user)}`}>
-                          <button
-                            data-testid={`button-dm-${user}`}
-                            title={`DM ${user}`}
-                            className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-accent/10 border border-accent/20 text-accent hover:bg-accent/25 transition-colors"
-                          >
-                            <Mail className="w-2 h-2" />
-                            DM
-                          </button>
-                        </Link>
-                      )}
-                    </div>
+                              </div>
                   ))
                 )}
               </div>

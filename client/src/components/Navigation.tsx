@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Radio, Gamepad2, Star, Lock } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Gamepad2, Star, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
@@ -128,27 +128,6 @@ export function Navigation() {
           </button>
         </div>
 
-        {/* Live Comms */}
-        <div className={cn("px-2 pt-2 shrink-0", collapsed ? "flex justify-center" : "")}>
-          <button
-            onClick={() => setLocation("/chat")}
-            data-testid="button-live-comms"
-            title={collapsed ? "Live Comms" : undefined}
-            className={cn(
-              "flex items-center gap-2 rounded-lg border transition-all duration-200",
-              "bg-gradient-to-r from-pink-500/15 to-cyan-500/15 border-pink-500/30 hover:border-pink-400/60 hover:from-pink-500/25 hover:to-cyan-500/25",
-              "text-pink-300 hover:text-white",
-              collapsed ? "w-9 h-9 justify-center" : "w-full px-2.5 py-2",
-              location === "/chat" && "border-pink-400/70 from-pink-500/30 to-cyan-500/30 text-white"
-            )}
-          >
-            <Radio className="w-4 h-4 shrink-0 animate-pulse" />
-            {!collapsed && (
-              <span className="text-[10px] font-bold font-mono tracking-widest uppercase">Live Comms</span>
-            )}
-          </button>
-        </div>
-
         {/* Search */}
         {!collapsed && (
           <div className="px-3 py-2 border-b border-white/10 shrink-0">
@@ -242,6 +221,21 @@ export function Navigation() {
               {!collapsed && <span>FULLSCREEN</span>}
             </Button>
           )}
+
+          {/* Live Comms */}
+          <button
+            onClick={() => setLocation("/chat")}
+            data-testid="button-live-comms"
+            title={collapsed ? "Live Comms" : undefined}
+            className={cn(
+              "flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-muted-foreground text-[10px] font-bold font-mono tracking-widest uppercase hover:bg-white/10 hover:text-white hover:border-white/20 transition-all",
+              collapsed ? "justify-center w-full" : "w-full",
+              location === "/chat" && "bg-secondary/10 border-secondary/30 text-secondary"
+            )}
+          >
+            <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+            {!collapsed && <span>LIVE COMMS</span>}
+          </button>
 
           {/* Settings */}
           <button
