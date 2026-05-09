@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
-import { useGroups, useGroupMessages, useCreateGroup, useSendGroupMessage, useLeaveGroup, useAddGroupMembers, type GroupWithMembers } from "@/hooks/use-groups";
+import { useGroups, useGroupMessages, useCreateGroup, useSendGroupMessage, useLeaveGroup, useInviteGroupMembers, useGroupInvites, useAcceptGroupInvite, useDeclineGroupInvite, type GroupWithMembers } from "@/hooks/use-groups";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Send, Loader2, Plus, X,
-  Shield, UsersRound, LogOut, Check, RefreshCw, UserPlus, Zap, MessageSquare, Radio
+  UsersRound, LogOut, Check, RefreshCw, UserPlus, Zap, MessageSquare, Radio, Bell
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 function formatDay(date: Date) {
   if (isToday(date)) return "Today";
@@ -96,7 +97,7 @@ function GroupMessage({ msg, isMe, prevMsg }: {
   );
 }
 
-function UserPickerModal({ open, onClose, title, subtitle, existingMembers = [], allUsers, currentUser, onRefresh, isRefreshing, confirmLabel, onConfirm, isPending, confirmColor = "secondary" }: {
+function UserPickerModal({ open, onClose, title, subtitle, existingMembers = [], allUsers, currentUser, onRefresh, isRefreshing, confirmLabel, onConfirm, isPending, confirmColor = "cyan" }: {
   open: boolean; onClose: () => void; title: string; subtitle: string;
   existingMembers?: string[]; allUsers: string[]; currentUser: string;
   onRefresh: () => void; isRefreshing: boolean; confirmLabel: string;
@@ -154,7 +155,7 @@ function UserPickerModal({ open, onClose, title, subtitle, existingMembers = [],
           {needsName && (
             <input type="text" value={groupName} onChange={e => setGroupName(e.target.value)} placeholder="Group name..." data-testid="input-group-name" maxLength={40}
               className="w-full rounded-lg px-3 py-2.5 text-sm text-white outline-none font-mono placeholder:text-white/20 transition-all"
-              style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${color}30`, }}
+              style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${color}30` }}
             />
           )}
           <div className="flex gap-2">
@@ -219,6 +220,7 @@ function UserPickerModal({ open, onClose, title, subtitle, existingMembers = [],
 
 export default function Chat() {
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const username = localStorage.getItem("chatUsername") || "";
   const groupParam = new URLSearchParams(window.location.search).get("group");
 
@@ -227,6 +229,8 @@ export default function Chat() {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState<number | null>(null);
+  const [showInvites, setShowInvites] = useState(false);
+  const [inviteSentMsg, setInviteSentMsg] = useState<string | null>(null);
 
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -236,7 +240,10 @@ export default function Chat() {
   const { mutate: sendGroupMsg, isPending: sendingGroup } = useSendGroupMessage();
   const { mutate: leaveGroup } = useLeaveGroup();
   const { mutate: createGroup, isPending: creatingGroup } = useCreateGroup();
-  const { mutate: addMembers, isPending: addingMembers } = useAddGroupMembers();
+  const { mutate: inviteMembers, isPending: invitingMembers } = useInviteGroupMembers();
+  const { data: pendingInvites, refetch: refetchInvites } = useGroupInvites(username);
+  const { mutate: acceptInvite } = useAcceptGroupInvite();
+  const { mutate: declineInvite } = useDeclineGroupInvite();
   const { data: allUsers, refetch: refetchUsers, isFetching: isFetchingUsers } = useQuery<string[]>({
     queryKey: ["/api/users"],
     refetchInterval: 60000,
@@ -245,6 +252,7 @@ export default function Chat() {
   });
 
   const activeGroup: GroupWithMembers | undefined = groups?.find(g => g.id === activeGroupId);
+  const inviteCount = pendingInvites?.length ?? 0;
 
   useEffect(() => {
     if (messagesScrollRef.current) {
@@ -271,14 +279,31 @@ export default function Chat() {
     createGroup({ name, createdBy: username, members }, { onSuccess: () => setShowCreateGroup(false) });
   };
 
-  const handleAddMembers = (usernames: string[]) => {
+  const handleInviteMembers = (usernames: string[]) => {
     if (!activeGroupId) return;
-    addMembers({ groupId: activeGroupId, usernames, addedBy: username }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/groups/user", username] });
+    inviteMembers({ groupId: activeGroupId, usernames, invitedBy: username }, {
+      onSuccess: (data) => {
         setShowAddMember(false);
+        const count = data?.invited ?? usernames.length;
+        setInviteSentMsg(`Invite sent to ${count} ${count === 1 ? "user" : "users"}`);
+        setTimeout(() => setInviteSentMsg(null), 3500);
       }
     });
+  };
+
+  const handleAccept = (inviteId: number, groupId: number) => {
+    acceptInvite({ inviteId, username }, {
+      onSuccess: () => {
+        setActiveGroupId(groupId);
+        setShowInvites(false);
+        refetchInvites();
+        queryClient.invalidateQueries({ queryKey: ["/api/groups/user", username] });
+      }
+    });
+  };
+
+  const handleDecline = (inviteId: number) => {
+    declineInvite({ inviteId, username }, { onSuccess: () => refetchInvites() });
   };
 
   return (
@@ -299,11 +324,114 @@ export default function Chat() {
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(0,255,249,0.12)", border: "1px solid rgba(0,255,249,0.3)", boxShadow: "0 0 12px rgba(0,255,249,0.2)" }}>
               <Radio className="w-4 h-4 text-cyan-400" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-xs font-display font-black text-white uppercase tracking-widest leading-none">COMMS</p>
               <p className="text-[8px] font-mono text-cyan-400/50 uppercase tracking-[0.2em] mt-0.5">SECURE CHANNEL</p>
             </div>
+
+            {/* Notifications bell icon */}
+            <button
+              onClick={() => setShowInvites(v => !v)}
+              data-testid="button-notifications-bell"
+              title="Group invites"
+              className="relative p-1.5 rounded-lg transition-all"
+              style={showInvites
+                ? { background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.35)" }
+                : { border: "1px solid transparent" }
+              }
+            >
+              <Bell className={cn("w-4 h-4 transition-colors", inviteCount > 0 ? "text-purple-400" : "text-white/25 hover:text-white/50")} />
+              {inviteCount > 0 && (
+                <span
+                  data-testid="badge-invite-count"
+                  className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full text-[9px] font-black text-black flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)", boxShadow: "0 0 8px rgba(168,85,247,0.7)" }}
+                >
+                  {inviteCount > 9 ? "9+" : inviteCount}
+                </span>
+              )}
+            </button>
           </div>
+
+          {/* Inline invite panel — slides in below header */}
+          <AnimatePresence>
+            {showInvites && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="overflow-hidden flex-shrink-0"
+                style={{ borderBottom: "1px solid rgba(168,85,247,0.2)" }}
+              >
+                <div className="px-3 pt-3 pb-3 space-y-2" style={{ background: "rgba(168,85,247,0.06)" }}>
+                  <div className="flex items-center gap-2">
+                    <UsersRound className="w-3 h-3 text-purple-400/60" />
+                    <span className="text-[9px] font-display font-bold text-purple-400/60 uppercase tracking-[0.18em]">Group Invites</span>
+                    {inviteCount > 0 && (
+                      <span className="ml-auto text-[8px] font-mono text-purple-400/40">{inviteCount} pending</span>
+                    )}
+                  </div>
+
+                  {!pendingInvites || inviteCount === 0 ? (
+                    <div className="py-4 flex flex-col items-center gap-2">
+                      <Bell className="w-5 h-5 text-white/10" />
+                      <p className="text-[9px] font-mono text-white/20 text-center">No pending invites</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
+                      <AnimatePresence>
+                        {pendingInvites.map(invite => (
+                          <motion.div
+                            key={invite.id}
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, height: 0 }}
+                            data-testid={`invite-item-${invite.id}`}
+                            className="rounded-xl p-2.5 space-y-2"
+                            style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.2)" }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 font-black text-[9px] text-black"
+                                style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)" }}
+                              >
+                                {invite.groupName.slice(0, 1).toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-bold text-white truncate leading-tight">{invite.groupName}</p>
+                                <p className="text-[9px] text-purple-300/50 font-mono truncate">from {invite.invitedBy}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-1.5">
+                              <button
+                                onClick={() => handleAccept(invite.id, invite.groupId)}
+                                data-testid={`button-accept-invite-panel-${invite.id}`}
+                                className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[9px] font-black text-green-400 transition-colors hover:bg-green-500/20"
+                                style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}
+                              >
+                                <Check className="w-3 h-3" />
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => handleDecline(invite.id)}
+                                data-testid={`button-decline-invite-panel-${invite.id}`}
+                                className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[9px] font-black text-white/35 transition-colors hover:text-red-400 hover:bg-red-500/10"
+                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                              >
+                                <X className="w-3 h-3" />
+                                Decline
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Groups list */}
           <div className="flex-1 overflow-y-auto min-h-0 py-3 px-2 space-y-0.5">
@@ -404,7 +532,6 @@ export default function Chat() {
               boxShadow: "0 1px 0 rgba(0,255,249,0.06)"
             }}
           >
-            {/* scanline overlay */}
             <div className="absolute inset-0 pointer-events-none opacity-[0.025]"
               style={{ backgroundImage: "repeating-linear-gradient(0deg, #fff 0, #fff 1px, transparent 1px, transparent 3px)" }} />
 
@@ -422,15 +549,30 @@ export default function Chat() {
                     <span style={{ color: "#00fff9" }}>●</span> {activeGroup.members.length} {activeGroup.members.length === 1 ? "member" : "members"} — {activeGroup.members.join(", ")}
                   </p>
                 </div>
-                <button
-                  onClick={() => setShowAddMember(true)}
-                  data-testid="button-add-member"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
-                  style={{ background: "rgba(255,0,193,0.12)", border: "1px solid rgba(255,0,193,0.3)", color: "#ff00c1", boxShadow: "0 0 12px rgba(255,0,193,0.1)" }}
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  Add
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <AnimatePresence>
+                    {inviteSentMsg && (
+                      <motion.span
+                        initial={{ opacity: 0, x: 8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-[10px] font-mono text-green-400 whitespace-nowrap"
+                        data-testid="text-invite-sent"
+                      >
+                        ✓ {inviteSentMsg}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  <button
+                    onClick={() => setShowAddMember(true)}
+                    data-testid="button-add-member"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                    style={{ background: "rgba(255,0,193,0.12)", border: "1px solid rgba(255,0,193,0.3)", color: "#ff00c1", boxShadow: "0 0 12px rgba(255,0,193,0.1)" }}
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    Invite
+                  </button>
+                </div>
               </>
             ) : (
               <>
@@ -513,7 +655,6 @@ export default function Chat() {
               <div
                 className="flex-1 flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200"
                 style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,255,249,0.18)" }}
-                onFocus={() => {}} // handled via CSS focus-within on parent
               >
                 <input
                   ref={inputRef}
@@ -559,12 +700,12 @@ export default function Chat() {
         {showAddMember && activeGroup && (
           <UserPickerModal
             open={showAddMember} onClose={() => setShowAddMember(false)}
-            title="Add Members" subtitle={`to ${activeGroup.name}`}
+            title="Invite Members" subtitle={`to ${activeGroup.name}`}
             existingMembers={activeGroup.members}
             allUsers={allUsers ?? []} currentUser={username}
             onRefresh={() => refetchUsers()} isRefreshing={isFetchingUsers}
-            confirmLabel="Add" onConfirm={handleAddMembers}
-            isPending={addingMembers} confirmColor="pink"
+            confirmLabel="Send Invites" onConfirm={handleInviteMembers}
+            isPending={invitingMembers} confirmColor="pink"
           />
         )}
       </AnimatePresence>

@@ -326,6 +326,26 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/groups/:groupId/invite", async (req, res) => {
+    try {
+      const groupId = parseInt(req.params.groupId, 10);
+      if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
+      const { usernames, invitedBy } = z.object({
+        usernames: z.array(z.string().min(1).max(20)).min(1).max(50),
+        invitedBy: z.string().min(1).max(20),
+      }).parse(req.body);
+      const isMember = await storage.isGroupMember(groupId, invitedBy);
+      if (!isMember) return res.status(403).json({ message: "Only members can invite others" });
+      for (const username of usernames) {
+        await storage.sendGroupInvite(groupId, username, invitedBy);
+      }
+      res.json({ ok: true, invited: usernames.length });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.delete("/api/groups/:groupId/members/:username", async (req, res) => {
     const groupId = parseInt(req.params.groupId, 10);
     if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });

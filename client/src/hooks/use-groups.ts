@@ -3,6 +3,14 @@ import type { ChatGroup, GroupMessage } from "@shared/schema";
 
 export type GroupWithMembers = ChatGroup & { members: string[] };
 
+export type GroupInvite = {
+  id: number;
+  groupId: number;
+  groupName: string;
+  invitedBy: string;
+  createdAt: string | null;
+};
+
 export function useGroups(username: string) {
   return useQuery<GroupWithMembers[]>({
     queryKey: ["/api/groups/user", username],
@@ -104,6 +112,74 @@ export function useAddGroupMembers() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/groups/user", variables.addedBy] });
+    },
+  });
+}
+
+export function useInviteGroupMembers() {
+  return useMutation({
+    mutationFn: async ({ groupId, usernames, invitedBy }: { groupId: number; usernames: string[]; invitedBy: string }) => {
+      const res = await fetch(`/api/groups/${groupId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usernames, invitedBy }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.message || "Failed to send invites");
+      }
+      return res.json() as Promise<{ ok: boolean; invited: number }>;
+    },
+  });
+}
+
+export function useGroupInvites(username: string) {
+  return useQuery<GroupInvite[]>({
+    queryKey: ["/api/groups/invites", username],
+    queryFn: async () => {
+      if (!username) return [];
+      const res = await fetch(`/api/groups/invites/${encodeURIComponent(username)}`);
+      if (!res.ok) throw new Error("Failed to fetch invites");
+      return res.json();
+    },
+    enabled: !!username,
+    refetchInterval: 8000,
+  });
+}
+
+export function useAcceptGroupInvite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ inviteId, username }: { inviteId: number; username: string }) => {
+      const res = await fetch(`/api/groups/invites/${inviteId}/accept`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+      if (!res.ok) throw new Error("Failed to accept invite");
+      return res.json() as Promise<{ ok: boolean; groupId: number }>;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/groups/invites", variables.username] });
+      queryClient.invalidateQueries({ queryKey: ["/api/groups/user", variables.username] });
+    },
+  });
+}
+
+export function useDeclineGroupInvite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ inviteId, username }: { inviteId: number; username: string }) => {
+      const res = await fetch(`/api/groups/invites/${inviteId}/decline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+      if (!res.ok) throw new Error("Failed to decline invite");
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/groups/invites", variables.username] });
     },
   });
 }

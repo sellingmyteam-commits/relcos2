@@ -27,6 +27,7 @@ export interface IStorage {
   createGroupMessage(msg: InsertGroupMessage): Promise<GroupMessage>;
   addGroupMember(groupId: number, username: string): Promise<void>;
   leaveGroup(groupId: number, username: string): Promise<void>;
+  sendGroupInvite(groupId: number, username: string, invitedBy: string): Promise<void>;
   getPendingInvitesForUser(username: string): Promise<{ id: number; groupId: number; groupName: string; invitedBy: string; createdAt: Date | null }[]>;
   acceptGroupInvite(inviteId: number, username: string): Promise<{ groupId: number } | null>;
   declineGroupInvite(inviteId: number, username: string): Promise<boolean>;
@@ -248,6 +249,15 @@ export class DatabaseStorage implements IStorage {
 
   async leaveGroup(groupId: number, username: string): Promise<void> {
     await db.delete(chatGroupMembers).where(and(eq(chatGroupMembers.groupId, groupId), eq(chatGroupMembers.username, username)));
+  }
+
+  async sendGroupInvite(groupId: number, username: string, invitedBy: string): Promise<void> {
+    const alreadyMember = await this.isGroupMember(groupId, username);
+    if (alreadyMember) return;
+    const existing = await db.select({ id: groupInvites.id }).from(groupInvites)
+      .where(and(eq(groupInvites.groupId, groupId), eq(groupInvites.username, username))).limit(1);
+    if (existing.length > 0) return;
+    await db.insert(groupInvites).values({ groupId, username, invitedBy });
   }
 }
 
