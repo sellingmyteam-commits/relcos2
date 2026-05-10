@@ -35,7 +35,7 @@ export function useGroupMessages(groupId: number | null, username: string) {
       return res.json();
     },
     enabled: !!groupId && !!username,
-    refetchInterval: 10000,
+    refetchInterval: 6000,
   });
 }
 

@@ -213,6 +213,16 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
+  async getLatestGroupMessageForUser(username: string): Promise<(GroupMessage & { groupName: string }) | null> {
+    const memberships = await db.select({ groupId: chatGroupMembers.groupId }).from(chatGroupMembers).where(eq(chatGroupMembers.username, username));
+    const groupIds = memberships.map(m => m.groupId);
+    if (groupIds.length === 0) return null;
+    const [latest] = await db.select().from(groupMessages).where(inArray(groupMessages.groupId, groupIds)).orderBy(desc(groupMessages.createdAt)).limit(1);
+    if (!latest) return null;
+    const [group] = await db.select({ name: chatGroups.name }).from(chatGroups).where(eq(chatGroups.id, latest.groupId)).limit(1);
+    return { ...latest, groupName: group?.name ?? "Group" };
+  }
+
   async addGroupMember(groupId: number, username: string): Promise<void> {
     const exists = await this.isGroupMember(groupId, username);
     if (exists) return;

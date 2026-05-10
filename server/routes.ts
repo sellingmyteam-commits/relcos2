@@ -253,6 +253,11 @@ export async function registerRoutes(
     res.json(groups);
   });
 
+  app.get("/api/groups/latest/:username", async (req, res) => {
+    const latest = await storage.getLatestGroupMessageForUser(req.params.username);
+    res.json(latest);
+  });
+
   app.get("/api/groups/:groupId", async (req, res) => {
     const groupId = parseInt(req.params.groupId, 10);
     if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });

@@ -7,6 +7,7 @@ import { SecurityBlock } from "@/components/SecurityBlock";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { GroupInviteNotification } from "@/components/GroupInviteNotification";
+import { GroupMessageNotification } from "@/components/GroupMessageNotification";
 import { WarningModal } from "@/components/WarningModal";
 import { GameLockGuard } from "@/components/GameLockGuard";
 import { DoorProvider } from "@/components/DoorTransition";
@@ -427,6 +428,7 @@ function App() {
         )}
 
         {allReady && <WelcomeNotification />}
+        {allReady && <GroupMessageNotification />}
         {allReady && <GroupInviteNotification />}
         {allReady && <WarningModal />}
         {allReady && <GameLockGuard />}
