@@ -2,7 +2,7 @@ import {
   MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg,
   Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route,
   Flame, Crown, Gauge, Bomb, Layers, Snowflake, Clock, Sprout, Dribbble, Train,
-  Skull as SkullIcon, Building2, Ghost, Rocket, Baseline, Bird, Telescope, Globe2, Sparkles,
+  Building2, Ghost, Rocket, Baseline, Bird, Telescope, Globe2, Sparkles, Star,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -48,6 +48,12 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/car-king", label: "Car King", icon: Crown },
   { href: "/drift-boss", label: "Drift Boss", icon: Gauge },
   { href: "/tomb-of-the-mask", label: "Tomb of the Mask", icon: Layers },
+  { href: "/build", label: "MC Girlfriend Defence", icon: Box },
+  { href: "/cookie-clicker", label: "Cookie Clicker", icon: Star },
+  { href: "/hole-io", label: "Hole.io", icon: Circle },
+  { href: "/bowmasters", label: "Bowmasters", icon: Target },
+  { href: "/gun-spin", label: "Gun Spin", icon: Gauge },
+  { href: "/idle-miner-tycoon", label: "Idle Miner Tycoon", icon: Layers },
   { href: "/chat", label: "Live Comms", icon: MessageSquare },
 ];
 
