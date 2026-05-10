@@ -428,7 +428,7 @@ function App() {
         )}
 
         {allReady && <WelcomeNotification />}
-        {allReady && <GroupMessageNotification />}
+        {allReady && <GroupMessageNotification username={username} />}
         {allReady && <GroupInviteNotification />}
         {allReady && <WarningModal />}
         {allReady && <GameLockGuard />}

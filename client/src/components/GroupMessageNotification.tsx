@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, UsersRound } from "lucide-react";
 import { useLocation } from "wouter";
 import type { GroupMessage } from "@shared/schema";
-import { getSettings } from "@/lib/saveSystem";
+import { getDoNotDisturb } from "@/lib/saveSystem";
 
 type ToastItem = { id: number; from: string; content: string; groupId: number; groupName: string };
 
@@ -13,12 +13,22 @@ function truncateToWords(text: string, wordCount: number): string {
   return words.slice(0, wordCount).join(" ") + "…";
 }
 
-export function GroupMessageNotification() {
+interface Props {
+  username: string;
+}
+
+export function GroupMessageNotification({ username }: Props) {
   const [, navigate] = useLocation();
   const [toast, setToast] = useState<ToastItem | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initializedRef = useRef(false);
   const lastSeenRef = useRef<number>(0);
+  const usernameRef = useRef(username);
+
+  // Keep usernameRef in sync without restarting the poll loop
+  useEffect(() => {
+    usernameRef.current = username;
+  }, [username]);
 
   const dismiss = useCallback(() => {
     setToast(null);
@@ -26,11 +36,13 @@ export function GroupMessageNotification() {
   }, []);
 
   useEffect(() => {
+    if (!username) return;
+
     const poll = async () => {
-      const username = localStorage.getItem("chatUsername") || "";
-      if (!username) return;
+      const user = usernameRef.current;
+      if (!user) return;
       try {
-        const res = await fetch(`/api/groups/latest/${encodeURIComponent(username)}`);
+        const res = await fetch(`/api/groups/latest/${encodeURIComponent(user)}`);
         if (!res.ok) return;
         const latest: (GroupMessage & { groupName: string }) | null = await res.json();
 
@@ -38,6 +50,7 @@ export function GroupMessageNotification() {
           // First poll: silently mark whatever exists as already seen
           lastSeenRef.current = latest ? latest.id : 0;
           initializedRef.current = true;
+          console.log("[GroupNotif] initialized, baseline msg id =", lastSeenRef.current);
           return;
         }
 
@@ -45,10 +58,10 @@ export function GroupMessageNotification() {
         if (latest.id <= lastSeenRef.current) return;
 
         // New message arrived
+        console.log("[GroupNotif] new msg from", latest.fromUser, "id=", latest.id, "user=", user);
         lastSeenRef.current = latest.id;
 
-        const settings = getSettings();
-        if (latest.fromUser !== username && !settings.doNotDisturb) {
+        if (latest.fromUser !== user && !getDoNotDisturb()) {
           setToast({
             id: latest.id,
             from: latest.fromUser,
@@ -57,13 +70,19 @@ export function GroupMessageNotification() {
             groupName: latest.groupName,
           });
         }
-      } catch {}
+      } catch (e) {
+        console.error("[GroupNotif] poll error", e);
+      }
     };
+
+    // Reset state when username changes (new login)
+    initializedRef.current = false;
+    lastSeenRef.current = 0;
 
     poll();
     const id = setInterval(poll, 6000);
     return () => clearInterval(id);
-  }, []);
+  }, [username]);
 
   useEffect(() => {
     if (!toast) return;
