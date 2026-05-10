@@ -28,6 +28,7 @@ export interface IStorage {
   getPendingInvitesForUser(username: string): Promise<{ id: number; groupId: number; groupName: string; invitedBy: string; createdAt: Date | null }[]>;
   acceptGroupInvite(inviteId: number, username: string): Promise<{ groupId: number } | null>;
   declineGroupInvite(inviteId: number, username: string): Promise<boolean>;
+  getLatestGroupMessageForUser(username: string): Promise<(GroupMessage & { groupName: string }) | null>;
   createWarning(userId: number, message: string, fromAdmin: string): Promise<void>;
   getActiveWarningsForUser(userId: number): Promise<{ id: number; message: string; fromAdmin: string; createdAt: Date | null }[]>;
   acknowledgeWarning(warningId: number, userId: number): Promise<boolean>;

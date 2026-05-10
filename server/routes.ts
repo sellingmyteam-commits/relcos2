@@ -51,6 +51,16 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  app.get("/api/group-latest/:username", async (req, res) => {
+    try {
+      const latest = await storage.getLatestGroupMessageForUser(req.params.username);
+      res.json(latest);
+    } catch (err) {
+      console.error("group-latest error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/users", async (req, res) => {
     const users = await storage.getAllUsers();
     res.json(users);
@@ -253,10 +263,6 @@ export async function registerRoutes(
     res.json(groups);
   });
 
-  app.get("/api/groups/latest/:username", async (req, res) => {
-    const latest = await storage.getLatestGroupMessageForUser(req.params.username);
-    res.json(latest);
-  });
 
   app.get("/api/groups/:groupId", async (req, res) => {
     const groupId = parseInt(req.params.groupId, 10);

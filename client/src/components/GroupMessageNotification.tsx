@@ -42,7 +42,7 @@ export function GroupMessageNotification({ username }: Props) {
       const user = usernameRef.current;
       if (!user) return;
       try {
-        const res = await fetch(`/api/groups/latest/${encodeURIComponent(user)}`);
+        const res = await fetch(`/api/group-latest/${encodeURIComponent(user)}`);
         if (!res.ok) return;
         const latest: (GroupMessage & { groupName: string }) | null = await res.json();
 
