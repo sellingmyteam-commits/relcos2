@@ -632,11 +632,10 @@ export default function Chat() {
                   <button
                     onClick={e => { e.stopPropagation(); setLeaveConfirm(leaveConfirm === g.id ? null : g.id); }}
                     data-testid={`button-leave-group-${g.id}`}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all hover:scale-110 active:scale-95"
-                    style={{ background: "rgba(255,60,60,0.15)", border: "1px solid rgba(255,60,60,0.35)", color: "rgba(255,80,80,0.85)" }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
                     title="Leave group"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    <LogOut className="w-3 h-3" />
                   </button>
                   {leaveConfirm === g.id && (
                     <div className="absolute left-2 right-2 top-full z-50 mt-1 p-2.5 rounded-xl border flex items-center gap-2"
