@@ -25,7 +25,7 @@ export function WarningModal() {
 
   useEffect(() => {
     fetchWarnings();
-    const id = setInterval(fetchWarnings, 6000);
+    const id = setInterval(fetchWarnings, 20000);
     return () => clearInterval(id);
   }, []);
 

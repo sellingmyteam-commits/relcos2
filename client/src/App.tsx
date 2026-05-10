@@ -392,7 +392,7 @@ function App() {
     const ensureRegistered = async () => {
       if (siteUserId && siteUserId > 0) {
         await checkStatus(siteUserId);
-        pollRef.current = setInterval(() => checkStatus(siteUserId), 10000);
+        pollRef.current = setInterval(() => checkStatus(siteUserId), 30000);
         return;
       }
       try {
@@ -406,7 +406,7 @@ function App() {
           setSiteUserId(data.id);
           localStorage.setItem("siteUserId", String(data.id));
           await checkStatus(data.id);
-          pollRef.current = setInterval(() => checkStatus(data.id), 10000);
+          pollRef.current = setInterval(() => checkStatus(data.id), 30000);
         }
       } catch {}
     };

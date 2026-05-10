@@ -73,7 +73,7 @@ export function Navigation() {
       } catch {}
     };
     checkAdmin();
-    const interval = setInterval(checkAdmin, 10000);
+    const interval = setInterval(checkAdmin, 60000);
     return () => clearInterval(interval);
   }, []);
 

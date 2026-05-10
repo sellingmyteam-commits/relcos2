@@ -377,7 +377,7 @@ export default function Chat() {
       return res.json();
     },
     enabled: !!userId,
-    refetchInterval: 5000,
+    refetchInterval: 20000,
   });
 
   useEffect(() => {

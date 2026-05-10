@@ -9,8 +9,7 @@ export function useMessages() {
       if (!res.ok) throw new Error("Failed to fetch messages");
       return api.messages.list.responses[200].parse(await res.json());
     },
-    // Poll every 1 second for live chat feel
-    refetchInterval: 1000,
+    refetchInterval: 3000,
   });
 }
 

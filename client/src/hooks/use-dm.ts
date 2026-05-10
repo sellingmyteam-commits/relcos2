@@ -12,7 +12,7 @@ export function useDirectMessages(user1: string, user2: string) {
       return res.json();
     },
     enabled: !!user1 && !!user2,
-    refetchInterval: 1500,
+    refetchInterval: 5000,
   });
 }
 
@@ -45,7 +45,7 @@ export function useConversations(username: string) {
       return res.json();
     },
     enabled: !!username,
-    refetchInterval: 3000,
+    refetchInterval: 10000,
   });
 }
 
@@ -59,7 +59,7 @@ export function useUnreadCounts(username: string) {
       return res.json();
     },
     enabled: !!username,
-    refetchInterval: 3000,
+    refetchInterval: 10000,
   });
 }
 

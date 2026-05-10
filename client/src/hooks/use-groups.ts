@@ -21,7 +21,7 @@ export function useGroups(username: string) {
       return res.json();
     },
     enabled: !!username,
-    refetchInterval: 12000,
+    refetchInterval: 45000,
   });
 }
 
@@ -35,7 +35,7 @@ export function useGroupMessages(groupId: number | null, username: string) {
       return res.json();
     },
     enabled: !!groupId && !!username,
-    refetchInterval: 4000,
+    refetchInterval: 10000,
   });
 }
 
@@ -143,7 +143,7 @@ export function useGroupInvites(username: string) {
       return res.json();
     },
     enabled: !!username,
-    refetchInterval: 8000,
+    refetchInterval: 25000,
   });
 }
 
