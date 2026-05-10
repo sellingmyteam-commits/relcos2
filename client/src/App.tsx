@@ -176,31 +176,173 @@ function WelcomeNotification() {
 }
 
 function BanWall() {
+  const [tick, setTick] = useState(0);
+  const [lines, setLines] = useState<{ top: number; height: number; opacity: number; offset: number }[]>([]);
+  const [chromaShift, setChromaShift] = useState({ x: 0, y: 0 });
+  const [bodySkew, setBodySkew] = useState({ x: 0, y: 0, skew: 0 });
+  const [flickerOut, setFlickerOut] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+
+      if (Math.random() < 0.6) {
+        const count = Math.floor(Math.random() * 5) + 1;
+        setLines(Array.from({ length: count }, () => ({
+          top: Math.random() * 100,
+          height: Math.random() * 20 + 1,
+          opacity: Math.random() * 0.55 + 0.05,
+          offset: (Math.random() - 0.5) * 80,
+        })));
+      } else {
+        setLines([]);
+      }
+
+      setChromaShift({
+        x: (Math.random() - 0.5) * 10,
+        y: (Math.random() - 0.5) * 4,
+      });
+
+      if (Math.random() < 0.4) {
+        setBodySkew({
+          x: (Math.random() - 0.5) * 14,
+          y: (Math.random() - 0.5) * 6,
+          skew: (Math.random() - 0.5) * 8,
+        });
+      } else {
+        setBodySkew({ x: 0, y: 0, skew: 0 });
+      }
+
+      setFlickerOut(Math.random() < 0.07);
+    }, 70);
+    return () => clearInterval(interval);
+  }, []);
+
+  const vignette = "radial-gradient(ellipse at center, #1a0000 0%, #000 65%)";
+
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black select-none"
-      style={{ background: "radial-gradient(ellipse at center, #1a0000 0%, #000000 70%)" }}
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center select-none overflow-hidden"
+      style={{ background: vignette }}
       onContextMenu={e => e.preventDefault()}
     >
-      <div className="text-center px-8 max-w-xl">
-        <div
-          className="text-7xl font-black tracking-widest text-red-500 mb-6 font-mono"
-          style={{ textShadow: "0 0 40px rgba(255,0,0,0.8), 0 0 80px rgba(255,0,0,0.4)" }}
-        >
-          ⛔
+      {/* Scanlines */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
+        {Array.from({ length: 30 }).map((_, i) => (
+          <div key={i} className="absolute w-full" style={{ top: `${(i / 30) * 100}%`, height: "1px", background: "rgba(255,0,0,0.06)" }} />
+        ))}
+      </div>
+
+      {/* Glitch horizontal bars */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 2 }}>
+        {lines.map((l, i) => (
+          <div key={i} className="absolute w-full" style={{
+            top: `${l.top}%`,
+            height: `${l.height}px`,
+            background: `rgba(255,0,40,${l.opacity})`,
+            transform: `translateX(${l.offset}px)`,
+            mixBlendMode: "screen",
+          }} />
+        ))}
+      </div>
+
+      {/* RGB split overlay */}
+      {tick % 4 === 0 && (
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 3, background: `rgba(255,0,40,0.07)`, transform: `translate(${chromaShift.x * 2}px, ${chromaShift.y}px)`, mixBlendMode: "screen" }} />
+      )}
+      {tick % 4 === 1 && (
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 3, background: `rgba(0,255,249,0.05)`, transform: `translate(${-chromaShift.x}px, ${chromaShift.y * 0.5}px)`, mixBlendMode: "screen" }} />
+      )}
+
+      {/* Noise */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        style={{ zIndex: 4, opacity: tick % 3 === 0 ? 0.12 : 0.04, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }}
+      />
+
+      {/* Full-frame flicker */}
+      {flickerOut && (
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 5, background: "rgba(255,0,30,0.18)" }} />
+      )}
+
+      {/* Main content */}
+      <div
+        className="relative text-center px-8 max-w-2xl"
+        style={{
+          zIndex: 10,
+          transform: `translate(${bodySkew.x}px, ${bodySkew.y}px) skewX(${bodySkew.skew}deg)`,
+          opacity: flickerOut ? 0.4 : 1,
+          transition: "opacity 0.04s",
+        }}
+      >
+        {/* Title with chroma split */}
+        <div className="relative mb-3">
+          <span className="absolute inset-0 flex items-center justify-center text-5xl sm:text-7xl font-black font-display tracking-[0.12em] uppercase pointer-events-none"
+            style={{ color: "rgba(0,255,249,0.35)", transform: `translate(${chromaShift.x * 1.5}px, ${chromaShift.y}px)`, filter: "blur(1.5px)", WebkitTextStroke: "0px" }}>
+            BANNED
+          </span>
+          <span className="absolute inset-0 flex items-center justify-center text-5xl sm:text-7xl font-black font-display tracking-[0.12em] uppercase pointer-events-none"
+            style={{ color: "rgba(255,0,40,0.45)", transform: `translate(${-chromaShift.x}px, ${chromaShift.y * 0.5}px)`, filter: "blur(1px)" }}>
+            BANNED
+          </span>
+          <motion.h1
+            className="relative text-5xl sm:text-7xl font-black font-display tracking-[0.12em] uppercase"
+            animate={{ opacity: [1, 0.7, 1, 0.85, 1] }}
+            transition={{ duration: 0.35, repeat: Infinity, ease: "linear" }}
+            style={{ color: "#ff0028", textShadow: "0 0 40px #ff002899, 0 0 80px #ff002855, 0 0 4px #fff, 0 0 120px #ff002833" }}
+          >
+            BANNED
+          </motion.h1>
         </div>
-        <h1
-          className="text-3xl sm:text-4xl font-black tracking-widest uppercase text-red-400 mb-4 font-mono leading-tight"
-          style={{ textShadow: "0 0 30px rgba(255,50,50,0.7)" }}
+
+        {/* Error code */}
+        <motion.div
+          className="text-[10px] font-mono tracking-[0.5em] uppercase mb-6"
+          animate={{ opacity: [1, 0.1, 1, 0.6, 1, 0.3, 1] }}
+          transition={{ duration: 0.5, repeat: Infinity }}
+          style={{ color: "rgba(255,0,40,0.6)" }}
         >
-          YOU HAVE BEEN BLOCKED FROM THIS SITE.
-        </h1>
-        <p
-          className="text-xl font-bold tracking-widest uppercase text-red-600 font-mono"
-          style={{ textShadow: "0 0 20px rgba(255,0,0,0.5)" }}
+          ERR_ACCESS_REVOKED // STATUS_0 // NODE_BLOCKED
+        </motion.div>
+
+        {/* Main message */}
+        <div className="relative mb-3">
+          <span className="absolute inset-0 flex items-center justify-center text-xl sm:text-2xl font-black font-display tracking-widest uppercase pointer-events-none"
+            style={{ color: "rgba(0,255,249,0.2)", transform: `translate(${chromaShift.x}px, 0px)`, filter: "blur(1px)" }}>
+            YOU HAVE BEEN BLOCKED FROM THIS SITE.
+          </span>
+          <h2
+            className="relative text-xl sm:text-2xl font-black font-display tracking-widest uppercase"
+            style={{ color: "#ff4455", textShadow: "0 0 20px #ff004488, 0 0 40px #ff002244" }}
+          >
+            YOU HAVE BEEN BLOCKED FROM THIS SITE.
+          </h2>
+        </div>
+
+        {/* Sub message */}
+        <motion.p
+          className="text-base font-black font-mono tracking-[0.4em] uppercase"
+          animate={{ opacity: [1, 0.2, 1, 0.5, 1, 0.8, 1] }}
+          transition={{ duration: 0.6, repeat: Infinity, delay: 0.1 }}
+          style={{ color: "#ff0028", textShadow: "0 0 15px #ff002888" }}
         >
           TOO BAD.
-        </p>
+        </motion.p>
+
+        {/* Corrupted data lines */}
+        <div className="mt-8 space-y-1">
+          {["SYS://ACCESS.DENIED", "RELC.OS >> TERMINATE_SESSION", "USR_STATUS: PERMANENTLY_BANNED"].map((line, i) => (
+            <motion.div
+              key={i}
+              className="text-[9px] font-mono tracking-[0.3em]"
+              animate={{ opacity: [0.15, 0.6, 0.15] }}
+              transition={{ duration: 1.2 + i * 0.3, repeat: Infinity, delay: i * 0.4 }}
+              style={{ color: `rgba(255,${i * 20},40,0.7)` }}
+            >
+              {line}
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
