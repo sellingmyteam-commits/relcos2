@@ -17,6 +17,8 @@ export function GroupMessageNotification() {
   const [, navigate] = useLocation();
   const [toast, setToast] = useState<ToastItem | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initializedRef = useRef(false);
+  const lastSeenRef = useRef<number>(0);
 
   const dismiss = useCallback(() => {
     setToast(null);
@@ -24,8 +26,6 @@ export function GroupMessageNotification() {
   }, []);
 
   useEffect(() => {
-    const SEEN_KEY = "group_last_seen_id";
-
     const poll = async () => {
       const username = localStorage.getItem("chatUsername") || "";
       if (!username) return;
@@ -33,20 +33,29 @@ export function GroupMessageNotification() {
         const res = await fetch(`/api/groups/latest/${encodeURIComponent(username)}`);
         if (!res.ok) return;
         const latest: (GroupMessage & { groupName: string }) | null = await res.json();
+
+        if (!initializedRef.current) {
+          // First poll: silently mark whatever exists as already seen
+          lastSeenRef.current = latest ? latest.id : 0;
+          initializedRef.current = true;
+          return;
+        }
+
         if (!latest) return;
-        const lastSeen = parseInt(localStorage.getItem(SEEN_KEY) || "0", 10);
-        if (latest.id > lastSeen) {
-          localStorage.setItem(SEEN_KEY, String(latest.id));
-          const settings = getSettings();
-          if (lastSeen > 0 && latest.fromUser !== username && !settings.doNotDisturb) {
-            setToast({
-              id: latest.id,
-              from: latest.fromUser,
-              content: latest.content,
-              groupId: latest.groupId,
-              groupName: latest.groupName,
-            });
-          }
+        if (latest.id <= lastSeenRef.current) return;
+
+        // New message arrived
+        lastSeenRef.current = latest.id;
+
+        const settings = getSettings();
+        if (latest.fromUser !== username && !settings.doNotDisturb) {
+          setToast({
+            id: latest.id,
+            from: latest.fromUser,
+            content: latest.content,
+            groupId: latest.groupId,
+            groupName: latest.groupName,
+          });
         }
       } catch {}
     };
