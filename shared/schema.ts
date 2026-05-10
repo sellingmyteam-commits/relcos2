@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,13 +9,6 @@ export const siteUsers = pgTable("site_users", {
   status: integer("status").notNull().default(1),
   isAdmin: boolean("is_admin").default(false),
   isMuted: boolean("is_muted").default(false),
-});
-
-export const gameSaves = pgTable("game_saves", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique().references(() => siteUsers.id),
-  saveData: jsonb("save_data").notNull().default({}),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const chatGroups = pgTable("chat_groups", {
@@ -81,7 +74,6 @@ export const insertGroupMessageSchema = createInsertSchema(groupMessages).pick({
 
 export type SiteUser = typeof siteUsers.$inferSelect;
 export type InsertSiteUser = z.infer<typeof insertSiteUserSchema>;
-export type GameSave = typeof gameSaves.$inferSelect;
 export type ChatGroup = typeof chatGroups.$inferSelect;
 export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;
 export type GroupMessage = typeof groupMessages.$inferSelect;

@@ -253,11 +253,6 @@ export async function registerRoutes(
     res.json(groups);
   });
 
-  app.get("/api/groups/latest/:username", async (req, res) => {
-    const latest = await storage.getLatestGroupMessageForUser(req.params.username);
-    res.json(latest);
-  });
-
   app.get("/api/groups/:groupId", async (req, res) => {
     const groupId = parseInt(req.params.groupId, 10);
     if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
@@ -451,30 +446,6 @@ export async function registerRoutes(
     const ok = await storage.unlockGame(req.params.gameId);
     if (!ok) return res.status(404).json({ message: "Not locked" });
     res.json({ ok: true });
-  });
-
-  app.get("/api/saves/:userId", async (req, res) => {
-    const userId = parseInt(req.params.userId, 10);
-    if (isNaN(userId)) return res.status(400).json({ message: "Invalid userId" });
-    try {
-      const saveData = await storage.getGameSave(userId);
-      res.json({ saveData: saveData ?? null });
-    } catch {
-      res.status(500).json({ message: "Failed to load save" });
-    }
-  });
-
-  app.post("/api/saves/:userId", async (req, res) => {
-    const userId = parseInt(req.params.userId, 10);
-    if (isNaN(userId)) return res.status(400).json({ message: "Invalid userId" });
-    const { saveData } = req.body;
-    if (saveData === undefined) return res.status(400).json({ message: "saveData is required" });
-    try {
-      await storage.upsertGameSave(userId, saveData);
-      res.json({ ok: true });
-    } catch {
-      res.status(500).json({ message: "Failed to save" });
-    }
   });
 
   return httpServer;

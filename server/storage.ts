@@ -1,4 +1,4 @@
-import { siteUsers, gameSaves, chatGroups, chatGroupMembers, groupMessages, groupInvites, userWarnings, lockedGames, type SiteUser, type ChatGroup, type GroupMessage, type InsertGroupMessage } from "@shared/schema";
+import { siteUsers, chatGroups, chatGroupMembers, groupMessages, groupInvites, userWarnings, lockedGames, type SiteUser, type ChatGroup, type GroupMessage, type InsertGroupMessage } from "@shared/schema";
 import { db } from "./db";
 import { desc, eq, and, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -16,14 +16,11 @@ export interface IStorage {
   setSiteUserStatus(id: number, status: number): Promise<SiteUser | null>;
   setSiteUserMuted(id: number, muted: boolean): Promise<SiteUser | null>;
   setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null>;
-  getGameSave(userId: number): Promise<unknown | null>;
-  upsertGameSave(userId: number, saveData: unknown): Promise<void>;
   createGroup(name: string, createdBy: string, invitees: string[]): Promise<ChatGroup>;
   getGroupsForUser(username: string): Promise<(ChatGroup & { members: string[] })[]>;
   getGroupById(groupId: number): Promise<(ChatGroup & { members: string[] }) | null>;
   isGroupMember(groupId: number, username: string): Promise<boolean>;
   getGroupMessages(groupId: number): Promise<GroupMessage[]>;
-  getLatestGroupMessageForUser(username: string): Promise<(GroupMessage & { groupName: string }) | null>;
   createGroupMessage(msg: InsertGroupMessage): Promise<GroupMessage>;
   addGroupMember(groupId: number, username: string): Promise<void>;
   leaveGroup(groupId: number, username: string): Promise<void>;
@@ -111,21 +108,6 @@ export class DatabaseStorage implements IStorage {
   async setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null> {
     const [updated] = await db.update(siteUsers).set({ isAdmin }).where(eq(siteUsers.id, id)).returning();
     return updated || null;
-  }
-
-  async getGameSave(userId: number): Promise<unknown | null> {
-    const [row] = await db.select().from(gameSaves).where(eq(gameSaves.userId, userId)).limit(1);
-    return row ? row.saveData : null;
-  }
-
-  async upsertGameSave(userId: number, saveData: unknown): Promise<void> {
-    const existing = await db.select({ id: gameSaves.id }).from(gameSaves).where(eq(gameSaves.userId, userId)).limit(1);
-    const now = new Date();
-    if (existing.length > 0) {
-      await db.update(gameSaves).set({ saveData: saveData as Record<string, unknown>, updatedAt: now }).where(eq(gameSaves.userId, userId));
-    } else {
-      await db.insert(gameSaves).values({ userId, saveData: saveData as Record<string, unknown>, updatedAt: now });
-    }
   }
 
   async createGroup(name: string, createdBy: string, invitees: string[]): Promise<ChatGroup> {
@@ -229,16 +211,6 @@ export class DatabaseStorage implements IStorage {
   async createGroupMessage(msg: InsertGroupMessage): Promise<GroupMessage> {
     const [created] = await db.insert(groupMessages).values(msg).returning();
     return created;
-  }
-
-  async getLatestGroupMessageForUser(username: string): Promise<(GroupMessage & { groupName: string }) | null> {
-    const memberships = await db.select({ groupId: chatGroupMembers.groupId }).from(chatGroupMembers).where(eq(chatGroupMembers.username, username));
-    const groupIds = memberships.map(m => m.groupId);
-    if (groupIds.length === 0) return null;
-    const [latest] = await db.select().from(groupMessages).where(inArray(groupMessages.groupId, groupIds)).orderBy(desc(groupMessages.createdAt)).limit(1);
-    if (!latest) return null;
-    const [group] = await db.select({ name: chatGroups.name }).from(chatGroups).where(eq(chatGroups.id, latest.groupId)).limit(1);
-    return { ...latest, groupName: group?.name ?? "Group" };
   }
 
   async addGroupMember(groupId: number, username: string): Promise<void> {
