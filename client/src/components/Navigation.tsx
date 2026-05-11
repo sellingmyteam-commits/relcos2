@@ -75,7 +75,7 @@ export function Navigation() {
       } catch {}
     };
     checkAdmin();
-    const interval = setInterval(checkAdmin, 60000);
+    const interval = setInterval(checkAdmin, 120000);
     return () => clearInterval(interval);
   }, []);
 

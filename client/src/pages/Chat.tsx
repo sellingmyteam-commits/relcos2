@@ -377,7 +377,7 @@ export default function Chat() {
       return res.json();
     },
     enabled: !!userId,
-    refetchInterval: 20000,
+    refetchInterval: 60000,
   });
 
   useEffect(() => {
@@ -398,9 +398,9 @@ export default function Chat() {
   const { mutate: declineInvite } = useDeclineGroupInvite();
   const { data: allUsers, refetch: refetchUsers, isFetching: isFetchingUsers } = useQuery<string[]>({
     queryKey: ["/api/users"],
-    refetchInterval: 60000,
+    refetchInterval: 120000,
     refetchOnWindowFocus: false,
-    staleTime: 30000,
+    staleTime: 60000,
   });
 
   const activeGroup: GroupWithMembers | undefined = groups?.find(g => g.id === activeGroupId);

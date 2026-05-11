@@ -80,7 +80,7 @@ export function GroupMessageNotification({ username }: Props) {
     lastSeenRef.current = 0;
 
     poll();
-    const id = setInterval(poll, 6000);
+    const id = setInterval(poll, 15000);
     return () => clearInterval(id);
   }, [username]);
 
