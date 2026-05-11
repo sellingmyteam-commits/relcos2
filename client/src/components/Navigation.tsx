@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Gamepad2, Star, Lock } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Gamepad2, Star, Lock, FileCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 
 import { AdminPanel } from "@/components/AdminPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { HtmlEmulator } from "@/components/HtmlEmulator";
 import { ALL_GAMES } from "@/lib/games";
 import { useGameLocks } from "@/hooks/useGameLocks";
 
@@ -16,6 +17,7 @@ export function Navigation() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showHtmlEmulator, setShowHtmlEmulator] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [favourites, setFavourites] = useState<string[]>(() => {
     try {
@@ -242,6 +244,21 @@ export function Navigation() {
             {!collapsed && <span>LIVE COMMS</span>}
           </button>
 
+          {/* HTML Emulator */}
+          <button
+            onClick={() => setShowHtmlEmulator(true)}
+            data-testid="button-html-emulator"
+            title={collapsed ? "HTML Emulator" : undefined}
+            className={cn(
+              "flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold font-mono tracking-widest uppercase transition-all",
+              "bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-400 hover:bg-fuchsia-500/20 hover:border-fuchsia-500/60 hover:text-fuchsia-300",
+              collapsed ? "justify-center w-full" : "w-full"
+            )}
+          >
+            <FileCode className="w-3.5 h-3.5 shrink-0" />
+            {!collapsed && <span>HTML EMULATOR</span>}
+          </button>
+
           {/* Settings */}
           <button
             onClick={() => setShowSettingsPanel(true)}
@@ -276,6 +293,7 @@ export function Navigation() {
 
       {showSettingsPanel && <SettingsPanel onClose={() => setShowSettingsPanel(false)} />}
       {showAdminPanel && <AdminPanel onClose={() => setShowAdminPanel(false)} />}
+      {showHtmlEmulator && <HtmlEmulator onClose={() => setShowHtmlEmulator(false)} />}
     </>
   );
 }
