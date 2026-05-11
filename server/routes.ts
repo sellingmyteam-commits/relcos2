@@ -206,21 +206,6 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/users/:id/mute", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id, 10);
-      const { muted } = z.object({ muted: z.boolean() }).parse(req.body);
-      const updated = await storage.setSiteUserMuted(id, muted);
-      if (!updated) return res.status(404).json({ message: "User not found" });
-      res.json(updated);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        res.status(400).json({ message: err.errors[0].message });
-      } else {
-        res.status(500).json({ message: "Internal server error" });
-      }
-    }
-  });
 
   app.patch("/api/admin/users/:id/admin", async (req, res) => {
     try {
@@ -293,10 +278,6 @@ export async function registerRoutes(
       }).parse(req.body);
       const member = await storage.isGroupMember(groupId, fromUser);
       if (!member) return res.status(403).json({ message: "Not a member of this group" });
-      const siteUser = await storage.getSiteUserByUsername(fromUser);
-      if (siteUser && siteUser.isMuted) {
-        return res.status(403).json({ message: "You are muted." });
-      }
       const filtered = filterContent(content);
       if (!filtered.trim()) return res.status(400).json({ message: "Message blocked by chat filter" });
       const msg = await storage.createGroupMessage({ groupId, fromUser, content: filtered });

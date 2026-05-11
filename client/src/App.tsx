@@ -356,7 +356,6 @@ function App() {
     return stored ? parseInt(stored, 10) : null;
   });
   const [banned, setBanned] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const allReady = securityFinished && !!username;
 
@@ -392,7 +391,6 @@ function App() {
     const ensureRegistered = async () => {
       if (siteUserId && siteUserId > 0) {
         await checkStatus(siteUserId);
-        pollRef.current = setInterval(() => checkStatus(siteUserId), 60000);
         return;
       }
       try {
@@ -406,15 +404,11 @@ function App() {
           setSiteUserId(data.id);
           localStorage.setItem("siteUserId", String(data.id));
           await checkStatus(data.id);
-          pollRef.current = setInterval(() => checkStatus(data.id), 60000);
         }
       } catch {}
     };
 
     ensureRegistered();
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
   }, [username]);
 
   return (

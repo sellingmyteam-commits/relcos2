@@ -14,7 +14,6 @@ export interface IStorage {
   getSiteUserByUsername(username: string): Promise<SiteUser | null>;
   updateSiteUsername(id: number, newUsername: string): Promise<SiteUser | null>;
   setSiteUserStatus(id: number, status: number): Promise<SiteUser | null>;
-  setSiteUserMuted(id: number, muted: boolean): Promise<SiteUser | null>;
   setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null>;
   createGroup(name: string, createdBy: string, invitees: string[]): Promise<ChatGroup>;
   getGroupsForUser(username: string): Promise<(ChatGroup & { members: string[] })[]>;
@@ -98,11 +97,6 @@ export class DatabaseStorage implements IStorage {
 
   async setSiteUserStatus(id: number, status: number): Promise<SiteUser | null> {
     const [updated] = await db.update(siteUsers).set({ status }).where(eq(siteUsers.id, id)).returning();
-    return updated || null;
-  }
-
-  async setSiteUserMuted(id: number, muted: boolean): Promise<SiteUser | null> {
-    const [updated] = await db.update(siteUsers).set({ isMuted: muted }).where(eq(siteUsers.id, id)).returning();
     return updated || null;
   }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, RefreshCw, Shield, VolumeX, Volume2, Ban, CheckCircle, ChevronDown, AlertTriangle, Send, Lock, Unlock, Gamepad2 } from "lucide-react";
+import { X, RefreshCw, Shield, Ban, CheckCircle, ChevronDown, AlertTriangle, Send, Lock, Unlock, Gamepad2 } from "lucide-react";
 import { ALL_GAMES, gameIdFromPath } from "@/lib/games";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +8,6 @@ interface SiteUser {
   username: string;
   status: number;
   isAdmin: boolean;
-  isMuted: boolean;
 }
 
 interface AdminPanelProps {
@@ -107,9 +106,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const toggleBan = (user: SiteUser) =>
     patch(user.id, "status", { status: user.status === 1 ? 0 : 1 });
 
-  const toggleMute = (user: SiteUser) =>
-    patch(user.id, "mute", { muted: !user.isMuted });
-
   const toggleAdmin = (user: SiteUser) =>
     patch(user.id, "admin", { isAdmin: !user.isAdmin });
 
@@ -186,7 +182,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
         <div className="flex gap-4 px-4 py-2 bg-white/[0.02] border-b border-white/5 text-[10px] font-mono text-white/30 tracking-widest">
           <span>{users.length} USERS</span>
           <span className="text-red-400/60">{users.filter(u => u.status === 0).length} BANNED</span>
-          <span className="text-yellow-400/60">{users.filter(u => u.isMuted).length} MUTED</span>
           <span className="text-cyan-400/60">{users.filter(u => u.isAdmin).length} ADMINS</span>
         </div>
 
@@ -281,11 +276,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                         BANNED
                       </span>
                     )}
-                    {user.isMuted && (
-                      <span className="text-[9px] font-bold text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 px-1.5 py-0.5 rounded font-mono tracking-wider">
-                        MUTED
-                      </span>
-                    )}
                     {user.isAdmin && (
                       <span className="text-[9px] font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-1.5 py-0.5 rounded font-mono tracking-wider">
                         ADMIN
@@ -310,24 +300,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                       {isBanned
                         ? <><CheckCircle className="w-3 h-3" /> UNBAN</>
                         : <><Ban className="w-3 h-3" /> BAN</>
-                      }
-                    </button>
-
-                    {/* Mute/Unmute */}
-                    <button
-                      onClick={() => toggleMute(user)}
-                      disabled={isSaving}
-                      data-testid={`button-admin-mute-${user.id}`}
-                      className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] font-bold font-mono tracking-wider border transition-all disabled:opacity-40",
-                        user.isMuted
-                          ? "border-green-500/30 text-green-400 hover:bg-green-500/10 hover:border-green-500/60"
-                          : "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-500/60"
-                      )}
-                    >
-                      {user.isMuted
-                        ? <><Volume2 className="w-3 h-3" /> UNMUTE</>
-                        : <><VolumeX className="w-3 h-3" /> MUTE</>
                       }
                     </button>
 

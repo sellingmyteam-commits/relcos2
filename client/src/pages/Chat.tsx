@@ -11,140 +11,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 
-function MuteScreen({ onDone }: { onDone: () => void }) {
-  const [phase, setPhase] = useState<"glitch" | "returning">("glitch");
-  const [glitchTick, setGlitchTick] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => setGlitchTick(t => t + 1), 80);
-    const switchTimer = setTimeout(() => setPhase("returning"), 3200);
-    const doneTimer = setTimeout(() => onDone(), 5200);
-    return () => { clearInterval(interval); clearTimeout(switchTimer); clearTimeout(doneTimer); };
-  }, [onDone]);
-
-  const glitchStyle = (): React.CSSProperties => {
-    if (glitchTick % 3 !== 0) return {};
-    const x = (Math.random() - 0.5) * 18;
-    const y = (Math.random() - 0.5) * 8;
-    const skew = (Math.random() - 0.5) * 6;
-    return { transform: `translate(${x}px, ${y}px) skewX(${skew}deg)` };
-  };
-
-  const scanlines = Array.from({ length: 18 });
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-black">
-      {/* Scanlines */}
-      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
-        {scanlines.map((_, i) => (
-          <div key={i} className="absolute w-full" style={{ top: `${(i / 18) * 100}%`, height: "1px", background: "rgba(255,0,60,0.08)" }} />
-        ))}
-      </div>
-
-      {/* Noise overlay */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        style={{ zIndex: 2, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E\")", opacity: glitchTick % 4 === 0 ? 0.18 : 0.06 }}
-      />
-
-      {/* Red flash stripes */}
-      {glitchTick % 5 === 0 && (
-        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 3, background: `linear-gradient(${Math.random() * 360}deg, rgba(255,0,60,0.12), transparent 60%)` }} />
-      )}
-
-      {/* Horizontal glitch bars */}
-      {glitchTick % 3 === 0 && (
-        <div className="absolute pointer-events-none" style={{
-          zIndex: 4,
-          top: `${Math.random() * 80 + 10}%`,
-          left: 0, right: 0,
-          height: `${Math.random() * 12 + 2}px`,
-          background: `rgba(255,0,60,${Math.random() * 0.35 + 0.05})`,
-          transform: `translateX(${(Math.random() - 0.5) * 60}px)`
-        }} />
-      )}
-
-      {/* Main content */}
-      <div className="relative text-center px-8 select-none" style={{ zIndex: 10 }}>
-        <AnimatePresence mode="wait">
-          {phase === "glitch" ? (
-            <motion.div
-              key="muted"
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              style={glitchStyle()}
-            >
-              {/* Pseudo-element glitch layers */}
-              <div className="relative">
-                <span className="absolute inset-0 flex items-center justify-center text-5xl font-black font-display tracking-[0.15em] uppercase"
-                  style={{ color: "rgba(0,255,249,0.4)", transform: `translate(${glitchTick % 2 === 0 ? -4 : 3}px, 0)`, filter: "blur(1px)" }}>
-                  YOU HAVE BEEN MUTED
-                </span>
-                <span className="absolute inset-0 flex items-center justify-center text-5xl font-black font-display tracking-[0.15em] uppercase"
-                  style={{ color: "rgba(255,0,60,0.4)", transform: `translate(${glitchTick % 2 === 0 ? 4 : -3}px, 2px)`, filter: "blur(1px)" }}>
-                  YOU HAVE BEEN MUTED
-                </span>
-                <h1 className="relative text-5xl font-black font-display tracking-[0.15em] uppercase"
-                  style={{ color: "#ff003c", textShadow: "0 0 30px #ff003c, 0 0 60px #ff003c88, 0 0 4px #fff" }}>
-                  YOU HAVE BEEN MUTED
-                </h1>
-              </div>
-
-              <motion.div
-                className="mt-6 text-xs font-mono tracking-[0.4em] uppercase"
-                animate={{ opacity: [1, 0.2, 1, 0.5, 1] }}
-                transition={{ duration: 0.4, repeat: Infinity }}
-                style={{ color: "#ff003c99" }}
-              >
-                ACCESS DENIED // COMMS BLOCKED
-              </motion.div>
-
-              <div className="mt-4 w-64 mx-auto h-0.5 bg-red-600/20 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-red-500 rounded-full"
-                  style={{ boxShadow: "0 0 8px #ff003c" }}
-                  animate={{ width: ["0%", "100%"] }}
-                  transition={{ duration: 3.2, ease: "linear" }}
-                />
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="returning"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <motion.h2
-                className="text-3xl font-black font-display tracking-[0.2em] uppercase"
-                animate={{ opacity: [1, 0.4, 1] }}
-                transition={{ duration: 0.6, repeat: Infinity }}
-                style={{ color: "#00fff9", textShadow: "0 0 20px #00fff9, 0 0 40px #00fff988" }}
-              >
-                RETURNING TO HOME BASE
-              </motion.h2>
-              <div className="mt-5 flex justify-center gap-1.5">
-                {[0, 1, 2, 3, 4].map(i => (
-                  <motion.div
-                    key={i}
-                    className="w-2 h-2 rounded-full bg-cyan-400"
-                    style={{ boxShadow: "0 0 6px #00fff9" }}
-                    animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8] }}
-                    transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.12 }}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
 function formatDay(date: Date) {
   if (isToday(date)) return "Today";
   if (isYesterday(date)) return "Yesterday";
@@ -366,24 +232,6 @@ export default function Chat() {
   const [leaveConfirm, setLeaveConfirm] = useState<number | null>(null);
   const [showInvites, setShowInvites] = useState(false);
   const [inviteSentMsg, setInviteSentMsg] = useState<string | null>(null);
-  const [showMuteScreen, setShowMuteScreen] = useState(false);
-
-  const { data: userStatus } = useQuery<{ isMuted: boolean }>({
-    queryKey: ["/api/user/status/id", userId],
-    queryFn: async () => {
-      if (!userId) return { isMuted: false };
-      const res = await fetch(`/api/user/status/id/${userId}`);
-      if (!res.ok) return { isMuted: false };
-      return res.json();
-    },
-    enabled: !!userId,
-    refetchInterval: 60000,
-  });
-
-  useEffect(() => {
-    if (userStatus?.isMuted) setShowMuteScreen(true);
-  }, [userStatus?.isMuted]);
-
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -457,10 +305,6 @@ export default function Chat() {
   const handleDecline = (inviteId: number) => {
     declineInvite({ inviteId, username }, { onSuccess: () => refetchInvites() });
   };
-
-  if (showMuteScreen) {
-    return <MuteScreen onDone={() => navigate("/")} />;
-  }
 
   return (
     <Layout noContainer>
