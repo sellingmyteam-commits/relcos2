@@ -20,7 +20,7 @@ function MiniAvatar({ name }: { name: string }) {
   const [from, to] = AVATAR_COLORS[idx];
   return (
     <div
-      className="w-5 h-5 rounded-full flex items-center justify-center font-black text-[9px] text-black flex-shrink-0"
+      className="w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] text-black flex-shrink-0 mt-0.5"
       style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
     >
       {name.slice(0, 1).toUpperCase()}
@@ -49,7 +49,7 @@ function GlobalChatView({ username }: { username: string }) {
 
   return (
     <>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2 space-y-1 scroll-smooth min-h-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-2 py-2 space-y-2.5 scroll-smooth min-h-0">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-4 h-4 animate-spin text-cyan-400/40" />
@@ -60,16 +60,16 @@ function GlobalChatView({ username }: { username: string }) {
             const idx = msg.fromUser.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
             const [nameColor] = AVATAR_COLORS[idx];
             return (
-              <div key={msg.id} className="flex gap-1.5 items-start px-1 py-0.5 rounded-lg hover:bg-white/3 transition-colors group">
+              <div key={msg.id} className="flex gap-2 items-start px-1.5 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group">
                 <MiniAvatar name={msg.fromUser} />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[10px] font-bold" style={{ color: nameColor }}>{msg.fromUser}</span>
-                    <span className="text-[8px] text-white/20 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
-                      {format(new Date(msg.createdAt || new Date()), "HH:mm")}
+                  <div className="flex items-baseline gap-2 mb-0.5">
+                    <span className="text-xs font-bold leading-none" style={{ color: nameColor }}>{msg.fromUser}</span>
+                    <span className="text-[10px] text-white/30 font-mono leading-none">
+                      {format(new Date(msg.createdAt || new Date()), "h:mm a")}
                     </span>
                   </div>
-                  <p className={cn("text-[11px] leading-relaxed break-words", isMe ? "text-white/85" : "text-white/65")}>
+                  <p className={cn("text-[12px] leading-relaxed break-words", isMe ? "text-white/90" : "text-white/70")}>
                     {msg.content}
                   </p>
                 </div>
