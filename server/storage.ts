@@ -1,6 +1,6 @@
-import { siteUsers, messages, userWarnings, lockedGames, type SiteUser, type Message, type InsertMessage } from "@shared/schema";
+import { siteUsers, messages, lockedGames, type SiteUser, type Message, type InsertMessage } from "@shared/schema";
 import { db } from "./db";
-import { desc, eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -17,9 +17,6 @@ export interface IStorage {
   setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null>;
   getMessages(): Promise<Message[]>;
   createMessage(msg: InsertMessage): Promise<Message>;
-  createWarning(userId: number, message: string, fromAdmin: string): Promise<void>;
-  getActiveWarningsForUser(userId: number): Promise<{ id: number; message: string; fromAdmin: string; createdAt: Date | null }[]>;
-  acknowledgeWarning(warningId: number, userId: number): Promise<boolean>;
   getLockedGames(): Promise<{ gameId: string; lockedBy: string }[]>;
   lockGame(gameId: string, lockedBy: string): Promise<void>;
   unlockGame(gameId: string): Promise<boolean>;
@@ -104,23 +101,6 @@ export class DatabaseStorage implements IStorage {
   async createMessage(msg: InsertMessage): Promise<Message> {
     const [created] = await db.insert(messages).values(msg).returning();
     return created;
-  }
-
-  async createWarning(userId: number, message: string, fromAdmin: string): Promise<void> {
-    await db.insert(userWarnings).values({ userId, message, fromAdmin });
-  }
-
-  async getActiveWarningsForUser(userId: number): Promise<{ id: number; message: string; fromAdmin: string; createdAt: Date | null }[]> {
-    return await db
-      .select({ id: userWarnings.id, message: userWarnings.message, fromAdmin: userWarnings.fromAdmin, createdAt: userWarnings.createdAt })
-      .from(userWarnings)
-      .where(and(eq(userWarnings.userId, userId), eq(userWarnings.acknowledged, false)))
-      .orderBy(userWarnings.createdAt);
-  }
-
-  async acknowledgeWarning(warningId: number, userId: number): Promise<boolean> {
-    const result = await db.update(userWarnings).set({ acknowledged: true }).where(and(eq(userWarnings.id, warningId), eq(userWarnings.userId, userId))).returning();
-    return result.length > 0;
   }
 
   async getLockedGames(): Promise<{ gameId: string; lockedBy: string }[]> {

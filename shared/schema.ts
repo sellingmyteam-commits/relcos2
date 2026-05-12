@@ -25,14 +25,6 @@ export const lockedGames = pgTable("locked_games", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const userWarnings = pgTable("user_warnings", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => siteUsers.id, { onDelete: "cascade" }),
-  message: text("message").notNull(),
-  fromAdmin: text("from_admin").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  acknowledged: boolean("acknowledged").default(false),
-});
 
 export const insertSiteUserSchema = createInsertSchema(siteUsers).pick({
   username: true,
