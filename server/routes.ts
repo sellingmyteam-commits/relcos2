@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { api } from "@shared/routes";
 import { z } from "zod";
 
 function safeUser(user: Record<string, unknown>) {
@@ -51,16 +50,38 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  app.get("/api/group-latest/:username", async (req, res) => {
+
+  // ── Global chat messages ──
+  app.get("/api/messages", async (_req, res) => {
     try {
-      const latest = await storage.getLatestGroupMessageForUser(req.params.username);
-      res.json(latest);
+      const msgs = await storage.getMessages();
+      res.json(msgs);
     } catch (err) {
-      console.error("group-latest error:", err);
+      console.error("messages get error:", err);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
+  app.post("/api/messages", async (req, res) => {
+    try {
+      const { fromUser, content } = z.object({
+        fromUser: z.string().min(1).max(20),
+        content: z.string().min(1).max(2000),
+      }).parse(req.body);
+      const filtered = filterContent(content);
+      if (!filtered.trim()) return res.status(400).json({ message: "Message blocked by chat filter" });
+      const msg = await storage.createMessage({ fromUser, content: filtered });
+      res.status(201).json(msg);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  // ── Users ──
   app.get("/api/users", async (req, res) => {
     const users = await storage.getAllUsers();
     res.json(users);
@@ -206,7 +227,6 @@ export async function registerRoutes(
     }
   });
 
-
   app.patch("/api/admin/users/:id/admin", async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
@@ -220,157 +240,6 @@ export async function registerRoutes(
       } else {
         res.status(500).json({ message: "Internal server error" });
       }
-    }
-  });
-
-  // ── Group chats ──
-  app.post("/api/groups", async (req, res) => {
-    try {
-      const { name, createdBy, members } = z.object({
-        name: z.string().min(1).max(40),
-        createdBy: z.string().min(1).max(20),
-        members: z.array(z.string().min(1).max(20)).min(1).max(50),
-      }).parse(req.body);
-      const group = await storage.createGroup(name, createdBy, members);
-      const full = await storage.getGroupById(group.id);
-      res.status(201).json(full);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        res.status(400).json({ message: err.errors[0].message });
-      } else {
-        res.status(500).json({ message: "Internal server error" });
-      }
-    }
-  });
-
-  app.get("/api/groups/user/:username", async (req, res) => {
-    const groups = await storage.getGroupsForUser(req.params.username);
-    res.json(groups);
-  });
-
-
-  app.get("/api/groups/:groupId", async (req, res) => {
-    const groupId = parseInt(req.params.groupId, 10);
-    if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
-    const group = await storage.getGroupById(groupId);
-    if (!group) return res.status(404).json({ message: "Group not found" });
-    res.json(group);
-  });
-
-  app.get("/api/groups/:groupId/messages", async (req, res) => {
-    const groupId = parseInt(req.params.groupId, 10);
-    if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
-    const username = String(req.query.username || "");
-    if (!username) return res.status(400).json({ message: "username required" });
-    const member = await storage.isGroupMember(groupId, username);
-    if (!member) return res.status(403).json({ message: "Not a member of this group" });
-    const msgs = await storage.getGroupMessages(groupId);
-    res.json(msgs);
-  });
-
-  app.post("/api/groups/:groupId/messages", async (req, res) => {
-    try {
-      const groupId = parseInt(req.params.groupId, 10);
-      if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
-      const { fromUser, content } = z.object({
-        fromUser: z.string().min(1).max(20),
-        content: z.string().min(1).max(2000),
-      }).parse(req.body);
-      const member = await storage.isGroupMember(groupId, fromUser);
-      if (!member) return res.status(403).json({ message: "Not a member of this group" });
-      const filtered = filterContent(content);
-      if (!filtered.trim()) return res.status(400).json({ message: "Message blocked by chat filter" });
-      const msg = await storage.createGroupMessage({ groupId, fromUser, content: filtered });
-      res.status(201).json(msg);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        res.status(400).json({ message: err.errors[0].message });
-      } else {
-        res.status(500).json({ message: "Internal server error" });
-      }
-    }
-  });
-
-  app.post("/api/groups/:groupId/members", async (req, res) => {
-    try {
-      const groupId = parseInt(req.params.groupId, 10);
-      if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
-      const { username, addedBy } = z.object({
-        username: z.string().min(1).max(20),
-        addedBy: z.string().min(1).max(20),
-      }).parse(req.body);
-      const isMember = await storage.isGroupMember(groupId, addedBy);
-      if (!isMember) return res.status(403).json({ message: "Only members can add others" });
-      await storage.addGroupMember(groupId, username);
-      const full = await storage.getGroupById(groupId);
-      res.json(full);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        res.status(400).json({ message: err.errors[0].message });
-      } else {
-        res.status(500).json({ message: "Internal server error" });
-      }
-    }
-  });
-
-  app.post("/api/groups/:groupId/invite", async (req, res) => {
-    try {
-      const groupId = parseInt(req.params.groupId, 10);
-      if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
-      const { usernames, invitedBy } = z.object({
-        usernames: z.array(z.string().min(1).max(20)).min(1).max(50),
-        invitedBy: z.string().min(1).max(20),
-      }).parse(req.body);
-      const isMember = await storage.isGroupMember(groupId, invitedBy);
-      if (!isMember) return res.status(403).json({ message: "Only members can invite others" });
-      for (const username of usernames) {
-        await storage.sendGroupInvite(groupId, username, invitedBy);
-      }
-      res.json({ ok: true, invited: usernames.length });
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.delete("/api/groups/:groupId/members/:username", async (req, res) => {
-    const groupId = parseInt(req.params.groupId, 10);
-    if (isNaN(groupId)) return res.status(400).json({ message: "Invalid groupId" });
-    await storage.leaveGroup(groupId, req.params.username);
-    res.json({ ok: true });
-  });
-
-  // ── Group invites ──
-  app.get("/api/groups/invites/:username", async (req, res) => {
-    const invites = await storage.getPendingInvitesForUser(req.params.username);
-    res.json(invites);
-  });
-
-  app.post("/api/groups/invites/:inviteId/accept", async (req, res) => {
-    try {
-      const inviteId = parseInt(req.params.inviteId, 10);
-      if (isNaN(inviteId)) return res.status(400).json({ message: "Invalid inviteId" });
-      const { username } = z.object({ username: z.string().min(1).max(20) }).parse(req.body);
-      const result = await storage.acceptGroupInvite(inviteId, username);
-      if (!result) return res.status(404).json({ message: "Invite not found" });
-      res.json({ ok: true, groupId: result.groupId });
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/groups/invites/:inviteId/decline", async (req, res) => {
-    try {
-      const inviteId = parseInt(req.params.inviteId, 10);
-      if (isNaN(inviteId)) return res.status(400).json({ message: "Invalid inviteId" });
-      const { username } = z.object({ username: z.string().min(1).max(20) }).parse(req.body);
-      const ok = await storage.declineGroupInvite(inviteId, username);
-      if (!ok) return res.status(404).json({ message: "Invite not found" });
-      res.json({ ok: true });
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
-      res.status(500).json({ message: "Internal server error" });
     }
   });
 

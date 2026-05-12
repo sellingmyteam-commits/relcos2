@@ -1,6 +1,6 @@
-import { siteUsers, chatGroups, chatGroupMembers, groupMessages, groupInvites, userWarnings, lockedGames, type SiteUser, type ChatGroup, type GroupMessage, type InsertGroupMessage } from "@shared/schema";
+import { siteUsers, messages, userWarnings, lockedGames, type SiteUser, type Message, type InsertMessage } from "@shared/schema";
 import { db } from "./db";
-import { desc, eq, and, inArray } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -15,22 +15,14 @@ export interface IStorage {
   updateSiteUsername(id: number, newUsername: string): Promise<SiteUser | null>;
   setSiteUserStatus(id: number, status: number): Promise<SiteUser | null>;
   setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null>;
-  createGroup(name: string, createdBy: string, invitees: string[]): Promise<ChatGroup>;
-  getGroupsForUser(username: string): Promise<(ChatGroup & { members: string[] })[]>;
-  getGroupById(groupId: number): Promise<(ChatGroup & { members: string[] }) | null>;
-  isGroupMember(groupId: number, username: string): Promise<boolean>;
-  getGroupMessages(groupId: number): Promise<GroupMessage[]>;
-  createGroupMessage(msg: InsertGroupMessage): Promise<GroupMessage>;
-  addGroupMember(groupId: number, username: string): Promise<void>;
-  leaveGroup(groupId: number, username: string): Promise<void>;
-  sendGroupInvite(groupId: number, username: string, invitedBy: string): Promise<void>;
-  getPendingInvitesForUser(username: string): Promise<{ id: number; groupId: number; groupName: string; invitedBy: string; createdAt: Date | null }[]>;
-  acceptGroupInvite(inviteId: number, username: string): Promise<{ groupId: number } | null>;
-  declineGroupInvite(inviteId: number, username: string): Promise<boolean>;
-  getLatestGroupMessageForUser(username: string): Promise<(GroupMessage & { groupName: string }) | null>;
+  getMessages(): Promise<Message[]>;
+  createMessage(msg: InsertMessage): Promise<Message>;
   createWarning(userId: number, message: string, fromAdmin: string): Promise<void>;
   getActiveWarningsForUser(userId: number): Promise<{ id: number; message: string; fromAdmin: string; createdAt: Date | null }[]>;
   acknowledgeWarning(warningId: number, userId: number): Promise<boolean>;
+  getLockedGames(): Promise<{ gameId: string; lockedBy: string }[]>;
+  lockGame(gameId: string, lockedBy: string): Promise<void>;
+  unlockGame(gameId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -105,44 +97,13 @@ export class DatabaseStorage implements IStorage {
     return updated || null;
   }
 
-  async createGroup(name: string, createdBy: string, invitees: string[]): Promise<ChatGroup> {
-    const [group] = await db.insert(chatGroups).values({ name, createdBy }).returning();
-    await db.insert(chatGroupMembers).values({ groupId: group.id, username: createdBy });
-    const uniqueInvitees = Array.from(new Set(invitees.filter(u => u && u !== createdBy)));
-    if (uniqueInvitees.length > 0) {
-      await db.insert(groupInvites).values(
-        uniqueInvitees.map(username => ({ groupId: group.id, username, invitedBy: createdBy }))
-      );
-    }
-    return group;
+  async getMessages(): Promise<Message[]> {
+    return await db.select().from(messages).orderBy(messages.createdAt).limit(200);
   }
 
-  async getPendingInvitesForUser(username: string): Promise<{ id: number; groupId: number; groupName: string; invitedBy: string; createdAt: Date | null }[]> {
-    const invites = await db.select().from(groupInvites).where(eq(groupInvites.username, username)).orderBy(desc(groupInvites.createdAt));
-    if (invites.length === 0) return [];
-    const groupIds = invites.map(i => i.groupId);
-    const groups = await db.select({ id: chatGroups.id, name: chatGroups.name }).from(chatGroups).where(inArray(chatGroups.id, groupIds));
-    const nameMap = new Map(groups.map(g => [g.id, g.name]));
-    return invites.map(i => ({
-      id: i.id,
-      groupId: i.groupId,
-      groupName: nameMap.get(i.groupId) ?? "Group",
-      invitedBy: i.invitedBy,
-      createdAt: i.createdAt,
-    }));
-  }
-
-  async acceptGroupInvite(inviteId: number, username: string): Promise<{ groupId: number } | null> {
-    const [invite] = await db.select().from(groupInvites).where(and(eq(groupInvites.id, inviteId), eq(groupInvites.username, username))).limit(1);
-    if (!invite) return null;
-    await this.addGroupMember(invite.groupId, username);
-    await db.delete(groupInvites).where(eq(groupInvites.id, inviteId));
-    return { groupId: invite.groupId };
-  }
-
-  async declineGroupInvite(inviteId: number, username: string): Promise<boolean> {
-    const result = await db.delete(groupInvites).where(and(eq(groupInvites.id, inviteId), eq(groupInvites.username, username))).returning();
-    return result.length > 0;
+  async createMessage(msg: InsertMessage): Promise<Message> {
+    const [created] = await db.insert(messages).values(msg).returning();
+    return created;
   }
 
   async createWarning(userId: number, message: string, fromAdmin: string): Promise<void> {
@@ -173,68 +134,6 @@ export class DatabaseStorage implements IStorage {
   async unlockGame(gameId: string): Promise<boolean> {
     const result = await db.delete(lockedGames).where(eq(lockedGames.gameId, gameId)).returning();
     return result.length > 0;
-  }
-
-  async getGroupsForUser(username: string): Promise<(ChatGroup & { members: string[] })[]> {
-    const memberships = await db.select({ groupId: chatGroupMembers.groupId }).from(chatGroupMembers).where(eq(chatGroupMembers.username, username));
-    const groupIds = memberships.map(m => m.groupId);
-    if (groupIds.length === 0) return [];
-    const groups = await db.select().from(chatGroups).where(inArray(chatGroups.id, groupIds)).orderBy(desc(chatGroups.createdAt));
-    const allMembers = await db.select().from(chatGroupMembers).where(inArray(chatGroupMembers.groupId, groupIds));
-    return groups.map(g => ({
-      ...g,
-      members: allMembers.filter(m => m.groupId === g.id).map(m => m.username),
-    }));
-  }
-
-  async getGroupById(groupId: number): Promise<(ChatGroup & { members: string[] }) | null> {
-    const [group] = await db.select().from(chatGroups).where(eq(chatGroups.id, groupId)).limit(1);
-    if (!group) return null;
-    const members = await db.select({ username: chatGroupMembers.username }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, groupId));
-    return { ...group, members: members.map(m => m.username) };
-  }
-
-  async isGroupMember(groupId: number, username: string): Promise<boolean> {
-    const [row] = await db.select().from(chatGroupMembers).where(and(eq(chatGroupMembers.groupId, groupId), eq(chatGroupMembers.username, username))).limit(1);
-    return !!row;
-  }
-
-  async getGroupMessages(groupId: number): Promise<GroupMessage[]> {
-    return await db.select().from(groupMessages).where(eq(groupMessages.groupId, groupId)).orderBy(groupMessages.createdAt).limit(200);
-  }
-
-  async createGroupMessage(msg: InsertGroupMessage): Promise<GroupMessage> {
-    const [created] = await db.insert(groupMessages).values(msg).returning();
-    return created;
-  }
-
-  async getLatestGroupMessageForUser(username: string): Promise<(GroupMessage & { groupName: string }) | null> {
-    const memberships = await db.select({ groupId: chatGroupMembers.groupId }).from(chatGroupMembers).where(eq(chatGroupMembers.username, username));
-    const groupIds = memberships.map(m => m.groupId);
-    if (groupIds.length === 0) return null;
-    const [latest] = await db.select().from(groupMessages).where(inArray(groupMessages.groupId, groupIds)).orderBy(desc(groupMessages.createdAt)).limit(1);
-    if (!latest) return null;
-    const [group] = await db.select({ name: chatGroups.name }).from(chatGroups).where(eq(chatGroups.id, latest.groupId)).limit(1);
-    return { ...latest, groupName: group?.name ?? "Group" };
-  }
-
-  async addGroupMember(groupId: number, username: string): Promise<void> {
-    const exists = await this.isGroupMember(groupId, username);
-    if (exists) return;
-    await db.insert(chatGroupMembers).values({ groupId, username });
-  }
-
-  async leaveGroup(groupId: number, username: string): Promise<void> {
-    await db.delete(chatGroupMembers).where(and(eq(chatGroupMembers.groupId, groupId), eq(chatGroupMembers.username, username)));
-  }
-
-  async sendGroupInvite(groupId: number, username: string, invitedBy: string): Promise<void> {
-    const alreadyMember = await this.isGroupMember(groupId, username);
-    if (alreadyMember) return;
-    const existing = await db.select({ id: groupInvites.id }).from(groupInvites)
-      .where(and(eq(groupInvites.groupId, groupId), eq(groupInvites.username, username))).limit(1);
-    if (existing.length > 0) return;
-    await db.insert(groupInvites).values({ groupId, username, invitedBy });
   }
 }
 
