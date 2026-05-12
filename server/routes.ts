@@ -82,11 +82,6 @@ export async function registerRoutes(
   });
 
   // ── Users ──
-  app.get("/api/users", async (req, res) => {
-    const users = await storage.getAllUsers();
-    res.json(users);
-  });
-
   app.post("/api/user/register", async (req, res) => {
     try {
       const { username } = z.object({ username: z.string().min(1).max(20) }).parse(req.body);

@@ -6,7 +6,6 @@ import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { SecurityBlock } from "@/components/SecurityBlock";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
 import { motion, AnimatePresence } from "framer-motion";
-import { WarningModal } from "@/components/WarningModal";
 import { GameLockGuard } from "@/components/GameLockGuard";
 import { DoorProvider } from "@/components/DoorTransition";
 
@@ -420,7 +419,6 @@ function App() {
         )}
 
         {allReady && <WelcomeNotification />}
-        {allReady && <WarningModal />}
         {allReady && <GameLockGuard />}
 
         {banned && <BanWall />}

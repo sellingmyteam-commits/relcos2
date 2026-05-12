@@ -29,8 +29,6 @@ export default function Admin() {
 
   useEffect(() => {
     fetchUsers();
-    const interval = setInterval(fetchUsers, 120000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
