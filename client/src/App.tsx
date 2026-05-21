@@ -25,7 +25,6 @@ const BlockBlast = lazy(() => import("@/pages/BlockBlast"));
 const BitLife = lazy(() => import("@/pages/BitLife"));
 const EscapeRoad = lazy(() => import("@/pages/EscapeRoad"));
 const SuperHot = lazy(() => import("@/pages/SuperHot"));
-const CarKing = lazy(() => import("@/pages/CarKing"));
 const DriftBoss = lazy(() => import("@/pages/DriftBoss"));
 const Quake3 = lazy(() => import("@/pages/Quake3"));
 const TombOfTheMask = lazy(() => import("@/pages/TombOfTheMask"));
@@ -33,7 +32,6 @@ const OneLoveLol = lazy(() => import("@/pages/OneLoveLol"));
 const BikersRepublic = lazy(() => import("@/pages/BikersRepublic"));
 const CounterStrike = lazy(() => import("@/pages/CounterStrike"));
 const TenMinutesTillDawn = lazy(() => import("@/pages/TenMinutesTillDawn"));
-const BabySniperVietnam = lazy(() => import("@/pages/BabySniperVietnam"));
 const DriveMad = lazy(() => import("@/pages/DriveMad"));
 const SnowballIO = lazy(() => import("@/pages/SnowballIO"));
 const PixelShooter = lazy(() => import("@/pages/PixelShooter"));
@@ -41,16 +39,12 @@ const Pvz2Gardenless = lazy(() => import("@/pages/Pvz2Gardenless"));
 const BasketballStars = lazy(() => import("@/pages/BasketballStars"));
 const SubwaySurfersHouston = lazy(() => import("@/pages/SubwaySurfersHouston"));
 const RussianBuckshot = lazy(() => import("@/pages/RussianBuckshot"));
-const RooftopSnipers = lazy(() => import("@/pages/RooftopSnipers"));
 const NzPortable = lazy(() => import("@/pages/NzPortable"));
 const JetpackJoyride = lazy(() => import("@/pages/JetpackJoyride"));
-const GoogleBaseball = lazy(() => import("@/pages/GoogleBaseball"));
 const AngryBirds = lazy(() => import("@/pages/AngryBirds"));
-const DoubleBarrelSniper = lazy(() => import("@/pages/DoubleBarrelSniper"));
 const SolarSmash = lazy(() => import("@/pages/SolarSmash"));
 const SkibidiShooter = lazy(() => import("@/pages/SkibidiShooter"));
 const Bowmasters = lazy(() => import("@/pages/Bowmasters"));
-const Build = lazy(() => import("@/pages/Build"));
 const GunSpin = lazy(() => import("@/pages/GunSpin"));
 const HoleIo = lazy(() => import("@/pages/HoleIo"));
 const CookieClicker = lazy(() => import("@/pages/CookieClicker"));
@@ -85,7 +79,6 @@ function Router() {
         <Route path="/bikers-republic" component={BikersRepublic} />
         <Route path="/counter-strike" component={CounterStrike} />
         <Route path="/10-minutes-till-dawn" component={TenMinutesTillDawn} />
-        <Route path="/baby-sniper-vietnam" component={BabySniperVietnam} />
         <Route path="/drive-mad" component={DriveMad} />
         <Route path="/snowball-io" component={SnowballIO} />
         <Route path="/pixel-shooter" component={PixelShooter} />
@@ -93,16 +86,12 @@ function Router() {
         <Route path="/basketball-stars" component={BasketballStars} />
         <Route path="/subway-surfers-houston" component={SubwaySurfersHouston} />
         <Route path="/russian-buckshot" component={RussianBuckshot} />
-        <Route path="/rooftop-snipers" component={RooftopSnipers} />
         <Route path="/nz-portable" component={NzPortable} />
         <Route path="/jetpack-joyride" component={JetpackJoyride} />
-        <Route path="/google-baseball" component={GoogleBaseball} />
         <Route path="/angry-birds" component={AngryBirds} />
-        <Route path="/double-barrel-sniper" component={DoubleBarrelSniper} />
         <Route path="/solar-smash" component={SolarSmash} />
         <Route path="/skibidi-shooter" component={SkibidiShooter} />
         <Route path="/bowmasters" component={Bowmasters} />
-        <Route path="/build" component={Build} />
         <Route path="/gun-spin" component={GunSpin} />
         <Route path="/hole-io" component={HoleIo} />
         <Route path="/cookie-clicker" component={CookieClicker} />
@@ -116,7 +105,6 @@ function Router() {
         <Route path="/bitlife" component={BitLife} />
         <Route path="/escape-road" component={EscapeRoad} />
         <Route path="/super-hot" component={SuperHot} />
-        <Route path="/car-king" component={CarKing} />
         <Route path="/drift-boss" component={DriftBoss} />
         <Route path="/quake3" component={Quake3} />
         <Route path="/tomb-of-the-mask" component={TombOfTheMask} />

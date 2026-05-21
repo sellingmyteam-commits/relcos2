@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMessages, useSendMessage } from "@/hooks/use-chat";
-import { Send, Loader2, PanelRightClose, PanelRightOpen, Globe } from "lucide-react";
+import { Send, Loader2, PanelRightClose, PanelRightOpen, Globe, Wifi } from "lucide-react";
+import { useOnlineCount } from "@/hooks/useOnlineCount";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
@@ -112,6 +113,7 @@ function GlobalChatView({ username }: { username: string }) {
 export function SidebarChat() {
   const [isVisible, setIsVisible] = useState(true);
   const [username, setUsername] = useState(() => localStorage.getItem("chatUsername") || "");
+  const onlineCount = useOnlineCount();
 
   return (
     <div className="relative flex h-full">
@@ -144,8 +146,14 @@ export function SidebarChat() {
             </div>
             <span className="text-[10px] font-bold font-mono uppercase tracking-widest text-cyan-400">Global Chat</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-background/50 border border-white/10 rounded-full px-2.5 py-1 opacity-70">
-            <span className="text-[10px] font-mono text-white/60">{username || "Anon"}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20" data-testid="badge-sidebar-online">
+              <Wifi className="w-2.5 h-2.5 text-green-400" />
+              <span className="text-[10px] font-mono font-bold text-green-400">{onlineCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-background/50 border border-white/10 rounded-full px-2.5 py-1 opacity-70">
+              <span className="text-[10px] font-mono text-white/60">{username || "Anon"}</span>
+            </div>
           </div>
         </div>
 

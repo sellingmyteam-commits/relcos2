@@ -1,15 +1,15 @@
 import { Layout } from "@/components/Layout";
-import { Link, useLocation } from "wouter";
-import { MessageSquare, Skull, Zap, Users, Box, Bike, Crosshair, Circle, Target, Egg, Square, Sword, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Crown, Gauge, Bomb, Layers, Snowflake, Clock, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Building2, Ghost, Rocket, Baseline, Bird, Telescope, Globe2, Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
+import { MessageSquare, Skull, Zap, Users, Bike, Crosshair, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Bomb, Layers, Snowflake, Clock, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Bird, Globe2, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useGameLocks } from "@/hooks/useGameLocks";
-import { Lock } from "lucide-react";
+import { Lock, Wifi } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
+import { useOnlineCount } from "@/hooks/useOnlineCount";
 
 const GAMES = [
-  { href: "/build", label: "MC Girlfriend Defence", desc: "Defend your girlfriend from the endless horde.", icon: Box, color: "primary" },
   { href: "/cookie-clicker", label: "Cookie Clicker", desc: "Click cookies. Build an empire. Never stop.", icon: Star, color: "primary" },
   { href: "/hole-io", label: "Hole.io", desc: "Swallow everything in sight with your hole.", icon: Circle, color: "pink" },
   { href: "/slope", label: "Slope", desc: "Roll down the slope as fast as you can.", icon: Circle, color: "pink" },
@@ -22,18 +22,14 @@ const GAMES = [
   { href: "/basketball-stars", label: "Basketball Stars", desc: "Fast-paced 1v1 basketball duels.", icon: Dribbble, color: "pink" },
   { href: "/subway-surfers-houston", label: "Subway Surfers: Houston", desc: "Surf the Houston subway. Don't get caught.", icon: Train, color: "primary" },
   { href: "/russian-buckshot", label: "Russian Buckshot", desc: "Russian roulette with a shotgun.", icon: Bomb, color: "purple" },
-  { href: "/rooftop-snipers", label: "Rooftop Snipers", desc: "Knock your opponent off the roof.", icon: Building2, color: "pink" },
   { href: "/jetpack-joyride", label: "Jetpack Joyride", desc: "Blast through the lab with a jetpack.", icon: Rocket, color: "purple" },
-  { href: "/google-baseball", label: "Google Baseball", desc: "The classic Google Doodle BBQ baseball.", icon: Baseline, color: "pink" },
   { href: "/angry-birds", label: "Angry Birds", desc: "Launch birds at smug green pigs.", icon: Bird, color: "primary" },
-  { href: "/double-barrel-sniper", label: "Double Barrel Sniper", desc: "Speedrun targets with a double barrel.", icon: Telescope, color: "purple" },
   { href: "/solar-smash", label: "Solar Smash", desc: "Obliterate planets with cosmic weapons.", icon: Globe2, color: "pink" },
   { href: "/skibidi-shooter", label: "Skibidi Shooter", desc: "Take down skibidi toilets.", icon: Sparkles, color: "primary" },
   { href: "/1v1-lol", label: "1v1.lol", desc: "Build, edit and eliminate your opponents.", icon: Crosshair, color: "purple" },
   { href: "/counter-strike", label: "Counter Strike", desc: "Tactical FPS — eliminate the enemy team.", icon: Target, color: "pink" },
   { href: "/bikers-republic", label: "Bikers Republic", desc: "MX offroad bike racing madness.", icon: Skull, color: "primary" },
   { href: "/10-minutes-till-dawn", label: "10 Min Till Dawn", desc: "Survive waves of monsters until dawn.", icon: Clock, color: "purple" },
-  { href: "/baby-sniper-vietnam", label: "Baby Sniper Vietnam", desc: "Tactical sniper action game.", icon: Sword, color: "pink" },
   { href: "/snowball-io", label: "Snowball.io", desc: "Throw snowballs and knock out opponents.", icon: Snowflake, color: "pink" },
   { href: "/quake3", label: "Quake 3", desc: "Classic FPS arena combat.", icon: Bomb, color: "purple" },
   { href: "/super-hot", label: "Super Hot", desc: "Time moves only when you move.", icon: Flame, color: "pink" },
@@ -48,7 +44,6 @@ const GAMES = [
   { href: "/bitlife", label: "BitLife", desc: "Live your best virtual life.", icon: Heart, color: "pink" },
   { href: "/escape-road", label: "Escape Road", desc: "Outrun the police at all costs.", icon: Route, color: "primary" },
   { href: "/stickman-merge", label: "Stickman Merge", desc: "Merge and fight with your army.", icon: Users, color: "purple" },
-  { href: "/car-king", label: "Car King", desc: "Rule the arena in your car.", icon: Crown, color: "primary" },
   { href: "/drift-boss", label: "Drift Boss", desc: "Master the art of drifting.", icon: Gauge, color: "purple" },
   { href: "/tomb-of-the-mask", label: "Tomb of the Mask", desc: "Fast-paced arcade maze runner.", icon: Layers, color: "pink" },
   { href: "/bowmasters", label: "Bowmasters", desc: "Draw your bow and take out your rivals.", icon: Target, color: "pink" },
@@ -196,6 +191,7 @@ export default function Home() {
   const { isLocked } = useGameLocks();
   const [, setLocation] = useLocation();
   const door = useDoor();
+  const onlineCount = useOnlineCount();
 
   const handleLaunch = (href: string, label: string) => {
     door.open(label, () => setLocation(href));
@@ -229,6 +225,11 @@ export default function Home() {
             </p>
           </div>
 
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500/10 border border-green-500/25 self-start shrink-0" data-testid="badge-online-count">
+            <Wifi className="w-3.5 h-3.5 text-green-400" />
+            <span className="text-xs font-mono font-bold text-green-400">{onlineCount}</span>
+            <span className="text-[10px] font-mono text-green-400/60 uppercase tracking-wider">online</span>
+          </div>
         </div>
 
         {/* Search bar */}

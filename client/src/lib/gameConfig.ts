@@ -21,7 +21,6 @@ export const GAME_LIST: GameConfig[] = [
   { id: "escape-road", label: "Escape Road", lsTerms: ["escaperoad", "escape-road", "escape_road"], idbTerms: ["escaperoad", "escape"] },
   { id: "super-hot", label: "SuperHot", lsTerms: ["superhot", "super-hot", "super_hot"] },
   { id: "five-nights-at-winstons", label: "Five Nights At Winston's", lsTerms: ["winstons", "fivenight", "fnaw"] },
-  { id: "car-king", label: "Car King", lsTerms: ["carking", "car-king", "car_king"] },
   { id: "drift-boss", label: "Drift Boss", lsTerms: ["driftboss", "drift-boss", "drift_boss"] },
   { id: "quake3", label: "Quake 3", lsTerms: ["quake3", "quake-3", "quake_3", "quake"] },
   { id: "tomb-of-the-mask", label: "Tomb of the Mask", lsTerms: ["tombofthemask", "tomb-of-the-mask", "tomb_of_the_mask", "tombmask", "tomb"], idbTerms: ["tombofthemask", "tomb"] },
