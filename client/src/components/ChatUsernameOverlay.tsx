@@ -1,30 +1,28 @@
 import { useState } from "react";
-import { Lock, Terminal, Eye, EyeOff, KeyRound, Database } from "lucide-react";
+import { Terminal, Database } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-type Status = "idle" | "loading" | "error" | "bad_password" | "success" | "syncing";
+type Status = "idle" | "loading" | "error" | "success" | "syncing";
 
 export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: string, siteUserId: number) => void }) {
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [syncStep, setSyncStep] = useState(0);
 
-  const isShaking = status === "error" || status === "bad_password";
+  const isShaking = status === "error";
 
   const reset = () => {
     setStatus("idle");
     setErrorMsg("");
   };
 
-  const setError = (msg: string, type: Status = "error") => {
+  const setError = (msg: string) => {
     setErrorMsg(msg);
-    setStatus(type);
+    setStatus("error");
     setTimeout(reset, 2500);
   };
 
@@ -55,43 +53,21 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
     if (!cleanUsername) return setError("Enter a username");
     if (!/^[a-zA-Z0-9_]+$/.test(cleanUsername)) return setError("Letters, numbers, underscores only");
     if (cleanUsername.length < 2 || cleanUsername.length > 20) return setError("Username must be 2–20 characters");
-    if (!password) return setError("Enter a password");
-    if (password.length < 4) return setError("Password must be at least 4 characters");
 
     setStatus("loading");
     try {
-      const loginRes = await fetch("/api/auth/login", {
+      const res = await fetch("/api/user/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: cleanUsername, password }),
+        body: JSON.stringify({ username: cleanUsername }),
       });
 
-      if (loginRes.ok) {
-        const data = await loginRes.json();
-        return finish(data, "Welcome back!");
+      if (res.ok) {
+        const data = await res.json();
+        return finish(data, data.created === false ? "Welcome back!" : "Account created!");
       }
 
-      if (loginRes.status === 401) {
-        const regRes = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: cleanUsername, password }),
-        });
-
-        if (regRes.status === 201) {
-          const data = await regRes.json();
-          return finish(data, "Account created!");
-        }
-
-        if (regRes.status === 409) {
-          return setError("Wrong password for this username", "bad_password");
-        }
-
-        const regData = await regRes.json().catch(() => ({}));
-        return setError(regData.message || "Couldn't create account");
-      }
-
-      const data = await loginRes.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({}));
       setError(data.message || "Something went wrong");
     } catch {
       setError("Connection error, try again");
@@ -182,14 +158,14 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
                 : isShaking ? "text-red-400 border-red-500/30"
                 : "text-secondary border-secondary/30"
               }`}>
-                <KeyRound className="w-7 h-7" />
+                <Terminal className="w-7 h-7" />
               </div>
 
               <h1 className="text-2xl font-black tracking-tighter text-white uppercase">
-                LOG IN OR SIGN UP
+                ENTER USERNAME
               </h1>
               <p className="text-[11px] text-muted-foreground leading-relaxed max-w-[260px]">
-                Type a username and password. We'll sign you in if the account exists, or create one if it doesn't.
+                Pick a username to get started. We'll create your account or load your existing one.
               </p>
 
               {errorMsg && (
@@ -221,31 +197,8 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
                 />
               </div>
 
-              <div className="relative group">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-secondary transition-colors">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <Input
-                  type={showPass ? "text" : "password"}
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  data-testid="input-password"
-                  className="w-full h-11 bg-white/5 border-white/10 pl-10 pr-10 font-mono focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                  data-testid="button-toggle-password"
-                >
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-
               <p className="text-[9px] text-center text-muted-foreground/50 font-mono">
-                Letters, numbers, underscores · 2–20 chars · Password min 4 chars
+                Letters, numbers, underscores · 2–20 chars
               </p>
 
               <Button
@@ -267,7 +220,7 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
               </Button>
 
               <p className="text-[9px] text-center text-muted-foreground/40 font-mono uppercase tracking-wider pt-1">
-                One form for new and returning users
+                No password needed
               </p>
             </div>
           </motion.div>
