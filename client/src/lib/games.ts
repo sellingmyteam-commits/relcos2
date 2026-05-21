@@ -9,6 +9,7 @@ import type { LucideIcon } from "lucide-react";
 export type GameEntry = { href: string; label: string; icon: LucideIcon };
 
 export const ALL_GAMES: GameEntry[] = [
+  { href: "/fireboy-and-watergirl", label: "Fireboy and Watergirl", icon: Flame },
   { href: "/1v1-lol", label: "1v1.lol", icon: Crosshair },
   { href: "/counter-strike", label: "Counter Strike", icon: Target },
   { href: "/bikers-republic", label: "Bikers Republic", icon: Skull },

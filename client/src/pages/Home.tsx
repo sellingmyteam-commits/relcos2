@@ -10,6 +10,7 @@ import { useDoor } from "@/components/DoorTransition";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
 
 const GAMES = [
+  { href: "/fireboy-and-watergirl", label: "Fireboy and Watergirl", desc: "Work together — fire and water must survive.", icon: Flame, color: "pink" },
   { href: "/cookie-clicker", label: "Cookie Clicker", desc: "Click cookies. Build an empire. Never stop.", icon: Star, color: "primary" },
   { href: "/hole-io", label: "Hole.io", desc: "Swallow everything in sight with your hole.", icon: Circle, color: "pink" },
   { href: "/slope", label: "Slope", desc: "Roll down the slope as fast as you can.", icon: Circle, color: "pink" },

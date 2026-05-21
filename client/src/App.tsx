@@ -39,6 +39,7 @@ const Pvz2Gardenless = lazy(() => import("@/pages/Pvz2Gardenless"));
 const BasketballStars = lazy(() => import("@/pages/BasketballStars"));
 const SubwaySurfersHouston = lazy(() => import("@/pages/SubwaySurfersHouston"));
 const RussianBuckshot = lazy(() => import("@/pages/RussianBuckshot"));
+const FireboyAndWatergirl = lazy(() => import("@/pages/FireboyAndWatergirl"));
 const NzPortable = lazy(() => import("@/pages/NzPortable"));
 const JetpackJoyride = lazy(() => import("@/pages/JetpackJoyride"));
 const AngryBirds = lazy(() => import("@/pages/AngryBirds"));
@@ -86,6 +87,7 @@ function Router() {
         <Route path="/basketball-stars" component={BasketballStars} />
         <Route path="/subway-surfers-houston" component={SubwaySurfersHouston} />
         <Route path="/russian-buckshot" component={RussianBuckshot} />
+        <Route path="/fireboy-and-watergirl" component={FireboyAndWatergirl} />
         <Route path="/nz-portable" component={NzPortable} />
         <Route path="/jetpack-joyride" component={JetpackJoyride} />
         <Route path="/angry-birds" component={AngryBirds} />
