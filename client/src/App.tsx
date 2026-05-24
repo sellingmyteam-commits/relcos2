@@ -28,10 +28,8 @@ const SuperHot = lazy(() => import("@/pages/SuperHot"));
 const DriftBoss = lazy(() => import("@/pages/DriftBoss"));
 const Quake3 = lazy(() => import("@/pages/Quake3"));
 const TombOfTheMask = lazy(() => import("@/pages/TombOfTheMask"));
-const OneLoveLol = lazy(() => import("@/pages/OneLoveLol"));
 const BikersRepublic = lazy(() => import("@/pages/BikersRepublic"));
 const CounterStrike = lazy(() => import("@/pages/CounterStrike"));
-const TenMinutesTillDawn = lazy(() => import("@/pages/TenMinutesTillDawn"));
 const DriveMad = lazy(() => import("@/pages/DriveMad"));
 const SnowballIO = lazy(() => import("@/pages/SnowballIO"));
 const PixelShooter = lazy(() => import("@/pages/PixelShooter"));
@@ -76,10 +74,8 @@ function Router() {
         <Route path="/motox3m" component={MotoX3M} />
         <Route path="/stickman-merge" component={StickmanMerge} />
         <Route path="/slope" component={Slope} />
-        <Route path="/1v1-lol" component={OneLoveLol} />
         <Route path="/bikers-republic" component={BikersRepublic} />
         <Route path="/counter-strike" component={CounterStrike} />
-        <Route path="/10-minutes-till-dawn" component={TenMinutesTillDawn} />
         <Route path="/drive-mad" component={DriveMad} />
         <Route path="/snowball-io" component={SnowballIO} />
         <Route path="/pixel-shooter" component={PixelShooter} />

@@ -10,10 +10,8 @@ export type GameEntry = { href: string; label: string; icon: LucideIcon };
 
 export const ALL_GAMES: GameEntry[] = [
   { href: "/fireboy-and-watergirl", label: "Fireboy and Watergirl", icon: Flame },
-  { href: "/1v1-lol", label: "1v1.lol", icon: Crosshair },
   { href: "/counter-strike", label: "Counter Strike", icon: Target },
   { href: "/bikers-republic", label: "Bikers Republic", icon: Skull },
-  { href: "/10-minutes-till-dawn", label: "10 Min Till Dawn", icon: Clock },
   { href: "/drive-mad", label: "Drive Mad", icon: Square },
   { href: "/snowball-io", label: "Snowball.io", icon: Snowflake },
   { href: "/pixel-shooter", label: "Pixel Shooter", icon: Crosshair },
