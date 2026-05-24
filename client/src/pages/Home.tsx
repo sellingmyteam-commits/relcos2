@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { useLocation } from "wouter";
-import { MessageSquare, Skull, Zap, Users, Bike, Crosshair, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Bomb, Layers, Snowflake, Clock, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Bird, Globe2, Sparkles } from "lucide-react";
+import { MessageSquare, Skull, Zap, Users, Bike, Crosshair, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Bomb, Layers, Snowflake, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Bird, Globe2, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -27,10 +27,8 @@ const GAMES = [
   { href: "/angry-birds", label: "Angry Birds", desc: "Launch birds at smug green pigs.", icon: Bird, color: "primary" },
   { href: "/solar-smash", label: "Solar Smash", desc: "Obliterate planets with cosmic weapons.", icon: Globe2, color: "pink" },
   { href: "/skibidi-shooter", label: "Skibidi Shooter", desc: "Take down skibidi toilets.", icon: Sparkles, color: "primary" },
-  { href: "/1v1-lol", label: "1v1.lol", desc: "Build, edit and eliminate your opponents.", icon: Crosshair, color: "purple" },
   { href: "/counter-strike", label: "Counter Strike", desc: "Tactical FPS — eliminate the enemy team.", icon: Target, color: "pink" },
   { href: "/bikers-republic", label: "Bikers Republic", desc: "MX offroad bike racing madness.", icon: Skull, color: "primary" },
-  { href: "/10-minutes-till-dawn", label: "10 Min Till Dawn", desc: "Survive waves of monsters until dawn.", icon: Clock, color: "purple" },
   { href: "/snowball-io", label: "Snowball.io", desc: "Throw snowballs and knock out opponents.", icon: Snowflake, color: "pink" },
   { href: "/quake3", label: "Quake 3", desc: "Classic FPS arena combat.", icon: Bomb, color: "purple" },
   { href: "/super-hot", label: "Super Hot", desc: "Time moves only when you move.", icon: Flame, color: "pink" },
