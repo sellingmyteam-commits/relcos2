@@ -49,6 +49,7 @@ const GAMES = [
   { href: "/gun-spin", label: "Gun Spin", desc: "Spin your gun and blast through enemies.", icon: Gauge, color: "purple" },
   { href: "/idle-miner-tycoon", label: "Idle Miner Tycoon", desc: "Mine your way to riches while you idle.", icon: Layers, color: "purple" },
   { href: "/hole-io", label: "Hole.io", desc: "Swallow everything in sight with your hole.", icon: Circle, color: "pink" },
+  { href: "/proxy", label: "Web Proxy", desc: "Browse any site through the proxy.", icon: Globe2, color: "purple" },
   { href: "/chat", label: "Live Comms", desc: "Talk trash in real-time.", icon: MessageSquare, color: "primary" },
 ];
 
