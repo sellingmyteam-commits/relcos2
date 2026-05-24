@@ -134,7 +134,7 @@ function GameCard({
 
       {!locked && onlineCount && onlineCount > 0 ? (
         <div className="absolute bottom-2.5 left-3 flex items-center gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" style={{ boxShadow: "0 0 4px #4ade80" }} />
+          <Wifi className="w-3 h-3 text-green-400" style={{ filter: "drop-shadow(0 0 3px #4ade80)" }} />
           <span className="text-[9px] font-mono text-green-400/80">{onlineCount}</span>
         </div>
       ) : null}
