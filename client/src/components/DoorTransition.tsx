@@ -1,4 +1,3 @@
-import { motion, AnimatePresence } from "framer-motion";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 type DoorState = { id: number; label: string };
@@ -29,7 +28,7 @@ export function DoorProvider({ children }: { children: ReactNode }) {
     const r = requestAnimationFrame(() => {
       reveal?.();
     });
-    const t = setTimeout(() => setState(null), 1400);
+    const t = setTimeout(() => setState(null), 900);
     return () => {
       cancelAnimationFrame(r);
       clearTimeout(t);
@@ -39,89 +38,206 @@ export function DoorProvider({ children }: { children: ReactNode }) {
   return (
     <DoorContext.Provider value={{ open }}>
       {children}
-      <DoorOverlay state={state} />
+      {state && <GlitchOverlay key={state.id} label={state.label} />}
     </DoorContext.Provider>
   );
 }
 
-function DoorOverlay({ state }: { state: DoorState | null }) {
+const GLITCH_CHARS = "!<>-_\\/[]{}—=+*^?#@$%&|~";
+
+function randomChar() {
+  return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+}
+
+function glitchText(text: string, intensity: number): string {
+  return text
+    .split("")
+    .map((c) =>
+      Math.random() < intensity ? randomChar() : c
+    )
+    .join("");
+}
+
+function GlitchOverlay({ label }: { label: string }) {
+  const [bars, setBars] = useState<{ top: number; height: number; offset: number; opacity: number; color: string }[]>([]);
+  const [chroma, setChroma] = useState({ x: 0, y: 0 });
+  const [displayLabel, setDisplayLabel] = useState(label);
+  const [flicker, setFlicker] = useState(false);
+  const [whiteFlash, setWhiteFlash] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const startTime = useRef(Date.now());
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const DURATION = 900;
+
+    const tick = () => {
+      const elapsed = Date.now() - startTime.current;
+      const p = Math.min(elapsed / DURATION, 1);
+      setProgress(p);
+
+      const intensity = p < 0.6
+        ? 0.4 + Math.sin(p * Math.PI * 8) * 0.4
+        : 1 - (p - 0.6) / 0.4;
+
+      const barCount = Math.floor(intensity * 12);
+      setBars(
+        Array.from({ length: barCount }, () => ({
+          top: Math.random() * 100,
+          height: Math.random() * 8 + 1,
+          offset: (Math.random() - 0.5) * 120,
+          opacity: Math.random() * 0.8 + 0.2,
+          color: Math.random() < 0.5
+            ? `rgba(0,255,249,${Math.random() * 0.6 + 0.2})`
+            : `rgba(255,0,60,${Math.random() * 0.6 + 0.2})`,
+        }))
+      );
+
+      setChroma({
+        x: (Math.random() - 0.5) * 20 * intensity,
+        y: (Math.random() - 0.5) * 6 * intensity,
+      });
+
+      const glitchIntensity = p < 0.5 ? p * 0.8 : (1 - p) * 1.6;
+      setDisplayLabel(glitchText(label, glitchIntensity));
+
+      setFlicker(Math.random() < 0.15 * intensity);
+      setWhiteFlash(p < 0.05 || (p > 0.45 && p < 0.55 && Math.random() < 0.5));
+
+      if (p < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [label]);
+
+  const opacity = progress < 0.1
+    ? progress / 0.1
+    : progress > 0.75
+    ? 1 - (progress - 0.75) / 0.25
+    : 1;
+
   return (
-    <AnimatePresence>
-      {state && (
-        <motion.div
-          key={state.id}
-          className="fixed inset-0 z-[10000] pointer-events-none overflow-hidden"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          data-testid="door-transition"
-        >
-          <motion.div
-            className="absolute top-0 left-0 h-full w-1/2 border-r border-secondary/40 shadow-[0_0_60px_rgba(0,0,0,0.7)]"
-            style={{
-              backgroundImage:
-                "linear-gradient(135deg, #0b0b14 0%, #18182a 50%, #0b0b14 100%)",
-            }}
-            initial={{ x: 0 }}
-            animate={{ x: "-100%" }}
-            transition={{ duration: 1.0, ease: [0.7, 0, 0.2, 1], delay: 0.2 }}
-          >
-            <div
-              className="absolute inset-0 opacity-40 mix-blend-overlay"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 4px)",
-              }}
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-              <div className="w-3 h-10 rounded-full bg-secondary/60 shadow-[0_0_15px_rgba(56,189,248,0.6)]" />
-              <div className="w-3 h-3 rounded-full bg-pink-500/80 shadow-[0_0_12px_rgba(236,72,153,0.7)] animate-pulse" />
-            </div>
-            <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-secondary/60 to-transparent" />
-          </motion.div>
+    <div
+      className="fixed inset-0 z-[10000] pointer-events-none overflow-hidden"
+      style={{ opacity }}
+      data-testid="door-transition"
+    >
+      {/* Dark base */}
+      <div className="absolute inset-0 bg-[#060610]" />
 
-          <motion.div
-            className="absolute top-0 right-0 h-full w-1/2 border-l border-secondary/40 shadow-[0_0_60px_rgba(0,0,0,0.7)]"
-            style={{
-              backgroundImage:
-                "linear-gradient(225deg, #0b0b14 0%, #18182a 50%, #0b0b14 100%)",
-            }}
-            initial={{ x: 0 }}
-            animate={{ x: "100%" }}
-            transition={{ duration: 1.0, ease: [0.7, 0, 0.2, 1], delay: 0.2 }}
-          >
-            <div
-              className="absolute inset-0 opacity-40 mix-blend-overlay"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 4px)",
-              }}
-            />
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-              <div className="w-3 h-10 rounded-full bg-secondary/60 shadow-[0_0_15px_rgba(56,189,248,0.6)]" />
-              <div className="w-3 h-3 rounded-full bg-pink-500/80 shadow-[0_0_12px_rgba(236,72,153,0.7)] animate-pulse" />
-            </div>
-            <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-secondary/60 to-transparent" />
-          </motion.div>
+      {/* Scanlines */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "repeating-linear-gradient(0deg, rgba(0,255,249,0.03) 0 1px, transparent 1px 3px)",
+          pointerEvents: "none",
+        }}
+      />
 
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: [0, 1, 1, 0], scale: [0.7, 1, 1, 1.4] }}
-            transition={{ duration: 1.1, times: [0, 0.18, 0.65, 1], ease: "easeOut" }}
-          >
-            <div className="text-center">
-              <div className="text-[10px] font-mono tracking-[0.4em] text-secondary/70 mb-1">
-                ACCESS GRANTED
-              </div>
-              <div className="text-3xl font-display font-black tracking-tight text-white drop-shadow-[0_0_20px_rgba(56,189,248,0.7)]">
-                {state.label || "ENTERING"}
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
+      {/* Glitch bars */}
+      {bars.map((b, i) => (
+        <div
+          key={i}
+          className="absolute w-full"
+          style={{
+            top: `${b.top}%`,
+            height: `${b.height}px`,
+            background: b.color,
+            transform: `translateX(${b.offset}px)`,
+            mixBlendMode: "screen",
+          }}
+        />
+      ))}
+
+      {/* RGB channel cyan */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `rgba(0,255,249,0.06)`,
+          transform: `translate(${chroma.x * 1.5}px, ${chroma.y}px)`,
+          mixBlendMode: "screen",
+        }}
+      />
+
+      {/* RGB channel red */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `rgba(255,0,60,0.06)`,
+          transform: `translate(${-chroma.x}px, ${chroma.y * 0.5}px)`,
+          mixBlendMode: "screen",
+        }}
+      />
+
+      {/* White strobe flash */}
+      {whiteFlash && (
+        <div className="absolute inset-0 bg-white/20" />
       )}
-    </AnimatePresence>
+
+      {/* Flicker dim */}
+      {flicker && (
+        <div className="absolute inset-0 bg-black/40" />
+      )}
+
+      {/* Center label */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+        <div
+          className="text-[9px] font-mono tracking-[0.6em] uppercase"
+          style={{ color: "rgba(0,255,249,0.6)" }}
+        >
+          LOADING GAME
+        </div>
+
+        <div className="relative">
+          {/* Cyan ghost */}
+          <div
+            className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl font-black font-display tracking-wider uppercase"
+            style={{
+              color: "rgba(0,255,249,0.4)",
+              transform: `translate(${chroma.x * 0.6}px, 0)`,
+              filter: "blur(1px)",
+            }}
+          >
+            {displayLabel}
+          </div>
+          {/* Red ghost */}
+          <div
+            className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl font-black font-display tracking-wider uppercase"
+            style={{
+              color: "rgba(255,0,60,0.35)",
+              transform: `translate(${-chroma.x * 0.4}px, 0)`,
+              filter: "blur(1px)",
+            }}
+          >
+            {displayLabel}
+          </div>
+          {/* Main label */}
+          <div
+            className="relative text-2xl sm:text-3xl font-black font-display tracking-wider uppercase"
+            style={{
+              color: "#e0f7ff",
+              textShadow: `0 0 20px rgba(0,255,249,0.8), 0 0 60px rgba(0,255,249,0.4), ${chroma.x * 0.3}px 0 0 rgba(255,0,60,0.6), ${-chroma.x * 0.3}px 0 0 rgba(0,255,249,0.6)`,
+            }}
+          >
+            {displayLabel}
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-40 h-px bg-white/10 mt-3 overflow-hidden">
+          <div
+            className="h-full transition-none"
+            style={{
+              width: `${progress * 100}%`,
+              background: "linear-gradient(90deg, rgba(0,255,249,0.8), rgba(255,0,200,0.8))",
+              boxShadow: "0 0 8px rgba(0,255,249,0.8)",
+            }}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
