@@ -49,7 +49,6 @@ const GunSpin = lazy(() => import("@/pages/GunSpin"));
 const HoleIo = lazy(() => import("@/pages/HoleIo"));
 const CookieClicker = lazy(() => import("@/pages/CookieClicker"));
 const IdleMinerTycoon = lazy(() => import("@/pages/IdleMinerTycoon"));
-const Proxy = lazy(() => import("@/pages/Proxy"));
 const Chat = lazy(() => import("@/pages/Chat"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -108,7 +107,6 @@ function Router() {
         <Route path="/drift-boss" component={DriftBoss} />
         <Route path="/quake3" component={Quake3} />
         <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
-        <Route path="/proxy" component={Proxy} />
         <Route path="/chat" component={Chat} />
         <Route path="/admin" component={Admin} />
         <Route component={NotFound} />

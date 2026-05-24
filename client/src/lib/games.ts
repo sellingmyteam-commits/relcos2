@@ -47,7 +47,6 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/bowmasters", label: "Bowmasters", icon: Target },
   { href: "/gun-spin", label: "Gun Spin", icon: Gauge },
   { href: "/idle-miner-tycoon", label: "Idle Miner Tycoon", icon: Layers },
-  { href: "/proxy", label: "Web Proxy", icon: Globe2 },
   { href: "/chat", label: "Live Comms", icon: MessageSquare },
 ];
 
