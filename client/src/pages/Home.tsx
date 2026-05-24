@@ -8,6 +8,7 @@ import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock, Wifi } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
+import { usePageCounts } from "@/hooks/usePageCounts";
 
 const GAMES = [
   { href: "/fireboy-and-watergirl", label: "Fireboy and Watergirl", desc: "Work together — fire and water must survive.", icon: Flame, color: "pink" },
@@ -73,11 +74,11 @@ function useFavourites() {
 }
 
 function GameCard({
-  href, label, desc, icon: Icon, color, isFavourite, onToggleFavourite, locked, onLaunch,
+  href, label, desc, icon: Icon, color, isFavourite, onToggleFavourite, locked, onLaunch, onlineCount,
 }: {
   href: string; label: string; desc: string; icon: React.ElementType;
   color: string; isFavourite: boolean; onToggleFavourite: (e: React.MouseEvent) => void;
-  locked?: boolean; onLaunch: (href: string, label: string) => void;
+  locked?: boolean; onLaunch: (href: string, label: string) => void; onlineCount?: number;
 }) {
   const glowColor = color === "purple" ? "rgba(140,60,255,0.55)" : color === "pink" ? "rgba(255,0,193,0.55)" : "rgba(0,255,249,0.55)";
   const hoverBorder = color === "purple" ? "rgba(140,60,255,0.45)" : color === "pink" ? "rgba(255,0,193,0.45)" : "rgba(0,255,249,0.45)";
@@ -130,6 +131,13 @@ function GameCard({
         {label}
       </h3>
       <p className={cn("text-xs text-center leading-relaxed", locked ? "text-red-300/70" : "text-white/45")}>{desc}</p>
+
+      {!locked && onlineCount && onlineCount > 0 ? (
+        <div className="absolute bottom-2.5 left-3 flex items-center gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" style={{ boxShadow: "0 0 4px #4ade80" }} />
+          <span className="text-[9px] font-mono text-green-400/80">{onlineCount}</span>
+        </div>
+      ) : null}
 
       {locked && (
         <>
@@ -191,6 +199,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const door = useDoor();
   const onlineCount = useOnlineCount();
+  const pageCounts = usePageCounts();
 
   const handleLaunch = (href: string, label: string) => {
     door.open(label, () => setLocation(href));
@@ -269,6 +278,7 @@ export default function Home() {
                   <GameCard href={href} label={label} desc={desc} icon={icon} color={color}
                     isFavourite={true} locked={isLocked(href)}
                     onLaunch={handleLaunch}
+                    onlineCount={pageCounts[href] || 0}
                     onToggleFavourite={(e) => { e.preventDefault(); e.stopPropagation(); toggle(href); }} />
                 </motion.div>
               ))}
@@ -302,6 +312,7 @@ export default function Home() {
                 <GameCard href={href} label={label} desc={desc} icon={icon} color={color}
                   isFavourite={false} locked={isLocked(href)}
                   onLaunch={handleLaunch}
+                  onlineCount={pageCounts[href] || 0}
                   onToggleFavourite={(e) => { e.preventDefault(); e.stopPropagation(); toggle(href); }} />
               </motion.div>
             ))}
