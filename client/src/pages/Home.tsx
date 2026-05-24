@@ -12,7 +12,6 @@ import { useOnlineCount } from "@/hooks/useOnlineCount";
 const GAMES = [
   { href: "/fireboy-and-watergirl", label: "Fireboy and Watergirl", desc: "Work together — fire and water must survive.", icon: Flame, color: "pink" },
   { href: "/cookie-clicker", label: "Cookie Clicker", desc: "Click cookies. Build an empire. Never stop.", icon: Star, color: "primary" },
-  { href: "/hole-io", label: "Hole.io", desc: "Swallow everything in sight with your hole.", icon: Circle, color: "pink" },
   { href: "/slope", label: "Slope", desc: "Roll down the slope as fast as you can.", icon: Circle, color: "pink" },
   { href: "/nz-portable", label: "COD Zombies", desc: "Survive the undead horde, round after round.", icon: Ghost, color: "primary" },
   { href: "/eaglercraft", label: "Eagler Craft X", desc: "Minecraft in your browser.", icon: Cuboid, color: "primary" },
@@ -48,6 +47,7 @@ const GAMES = [
   { href: "/bowmasters", label: "Bowmasters", desc: "Draw your bow and take out your rivals.", icon: Target, color: "pink" },
   { href: "/gun-spin", label: "Gun Spin", desc: "Spin your gun and blast through enemies.", icon: Gauge, color: "purple" },
   { href: "/idle-miner-tycoon", label: "Idle Miner Tycoon", desc: "Mine your way to riches while you idle.", icon: Layers, color: "purple" },
+  { href: "/hole-io", label: "Hole.io", desc: "Swallow everything in sight with your hole.", icon: Circle, color: "pink" },
   { href: "/chat", label: "Live Comms", desc: "Talk trash in real-time.", icon: MessageSquare, color: "primary" },
 ];
 
