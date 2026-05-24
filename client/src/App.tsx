@@ -8,7 +8,7 @@ import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameLockGuard } from "@/components/GameLockGuard";
 import { DoorProvider } from "@/components/DoorTransition";
-import { useChatToasts } from "@/hooks/useChatToasts";
+import { ChatNotifications } from "@/components/ChatNotifications";
 
 const Home = lazy(() => import("@/pages/Home"));
 const Eaglercraft = lazy(() => import("@/pages/Eaglercraft"));
@@ -332,10 +332,6 @@ function BanWall() {
   );
 }
 
-function ChatToastListener({ username }: { username: string }) {
-  useChatToasts(username);
-  return null;
-}
 
 function App() {
   const [securityFinished, setSecurityFinished] = useState(false);
@@ -402,7 +398,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ChatToastListener username={username} />
+      <ChatNotifications currentUsername={username} />
       <DoorProvider>
         <PanicButton />
         <SecurityBlock onComplete={() => setSecurityFinished(true)} />
