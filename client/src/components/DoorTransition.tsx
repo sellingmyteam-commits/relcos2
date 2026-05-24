@@ -96,7 +96,7 @@ function GlitchOverlay({ label }: { label: string }) {
           </span>
         </div>
 
-        <div className="w-28 h-[2px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+        <div className="w-48 h-[4px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
           <div
             className="h-full rounded-full"
             style={{
