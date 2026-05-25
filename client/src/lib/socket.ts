@@ -11,7 +11,12 @@ export function getSharedSocket(): Socket {
     if (window.__sharedSocket) {
       window.__sharedSocket.disconnect();
     }
-    const socket = io();
+    const socket = io(window.location.origin, {
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+    });
     socket.on("connect", () => {
       const username = localStorage.getItem("chatUsername");
       if (username) {
