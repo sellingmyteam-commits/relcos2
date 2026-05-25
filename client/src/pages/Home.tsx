@@ -11,6 +11,7 @@ import { useOnlineCount } from "@/hooks/useOnlineCount";
 import { usePageCounts } from "@/hooks/usePageCounts";
 
 const GAMES = [
+  { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
   { href: "/fireboy-and-watergirl", label: "Fireboy and Watergirl", desc: "Work together — fire and water must survive.", icon: Flame, color: "pink" },
   { href: "/cookie-clicker", label: "Cookie Clicker", desc: "Click cookies. Build an empire. Never stop.", icon: Star, color: "primary" },
   { href: "/slope", label: "Slope", desc: "Roll down the slope as fast as you can.", icon: Circle, color: "pink" },
