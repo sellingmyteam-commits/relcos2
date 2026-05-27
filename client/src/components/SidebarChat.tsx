@@ -17,12 +17,20 @@ const AVATAR_COLORS = [
 ];
 
 function MiniAvatar({ name }: { name: string }) {
+  const isRelc = name.toLowerCase() === "relc";
   const idx = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
   const [from, to] = AVATAR_COLORS[idx];
+  const gradient = isRelc
+    ? "linear-gradient(135deg, #9b5de5, #f15025)"
+    : `linear-gradient(135deg, ${from}, ${to})`;
   return (
     <div
-      className="w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] text-black flex-shrink-0 mt-0.5"
-      style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
+      className="w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] flex-shrink-0 mt-0.5"
+      style={{
+        background: gradient,
+        color: isRelc ? "#fff" : "#000",
+        boxShadow: isRelc ? "0 0 6px rgba(155,93,229,0.7)" : undefined,
+      }}
     >
       {name.slice(0, 1).toUpperCase()}
     </div>
