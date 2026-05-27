@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { useMessages, useSendMessage } from "@/hooks/use-chat";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
-import { Send, Loader2, Radio, Globe } from "lucide-react";
+import { Send, Loader2, Radio, Globe, Palette, X } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -23,17 +23,50 @@ const AVATAR_COLORS = [
   ["#5566ff", "#9900ff"],
 ];
 
-function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" | "lg" }) {
+const COLOR_PALETTE = [
+  { hex: "#00fff9", from: "#00fff9", to: "#0080ff" },
+  { hex: "#ff00aa", from: "#bf5fff", to: "#ff00c1" },
+  { hex: "#9b5de5", from: "#7b2fff", to: "#bf5fff" },
+  { hex: "#00ffaa", from: "#00ffaa", to: "#00aa55" },
+  { hex: "#ffcc00", from: "#ffcc00", to: "#ff6600" },
+  { hex: "#ff6600", from: "#ff6600", to: "#ff0040" },
+  { hex: "#5566ff", from: "#5566ff", to: "#9900ff" },
+  { hex: "#ff2255", from: "#ff0040", to: "#ff6600" },
+];
+
+function getGradientForColor(hex: string) {
+  const entry = COLOR_PALETTE.find(p => p.hex === hex);
+  return entry ? `linear-gradient(135deg, ${entry.from}, ${entry.to})` : `linear-gradient(135deg, ${hex}, ${hex}bb)`;
+}
+
+function Avatar({ name, size = "sm", customColor }: { name: string; size?: "sm" | "md" | "lg"; customColor?: string }) {
   const isRelc = name.toLowerCase() === "relc";
   const idx = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
   const [from, to] = AVATAR_COLORS[idx];
   const sizeClass = size === "lg" ? "w-10 h-10 text-sm" : size === "md" ? "w-8 h-8 text-xs" : "w-7 h-7 text-[10px]";
-  const gradient = isRelc ? "linear-gradient(135deg, #7b2fff, #bf5fff)" : `linear-gradient(135deg, ${from}, ${to})`;
-  const shadow = isRelc ? "0 0 12px rgba(155,93,229,0.9)" : `0 0 10px ${from}55`;
+
+  let gradient: string;
+  let shadow: string;
+  let textColor: string;
+
+  if (customColor) {
+    gradient = getGradientForColor(customColor);
+    shadow = `0 0 12px ${customColor}99`;
+    textColor = "#fff";
+  } else if (isRelc) {
+    gradient = "linear-gradient(135deg, #7b2fff, #bf5fff)";
+    shadow = "0 0 12px rgba(155,93,229,0.9)";
+    textColor = "#fff";
+  } else {
+    gradient = `linear-gradient(135deg, ${from}, ${to})`;
+    shadow = `0 0 10px ${from}55`;
+    textColor = "#000";
+  }
+
   return (
     <div
       className={cn("rounded-full flex items-center justify-center font-black flex-shrink-0 shadow-lg", sizeClass)}
-      style={{ background: gradient, boxShadow: shadow, color: isRelc ? "#fff" : "#000" }}
+      style={{ background: gradient, boxShadow: shadow, color: textColor }}
     >
       {name.slice(0, 1).toUpperCase()}
     </div>
@@ -50,10 +83,11 @@ function DateDivider({ label }: { label: string }) {
   );
 }
 
-function ChatMessage({ msg, isMe, prevMsg }: {
+function ChatMessage({ msg, isMe, prevMsg, myColor }: {
   msg: Message;
   isMe: boolean;
   prevMsg?: Message | null;
+  myColor?: string;
 }) {
   const msgDate = new Date(msg.createdAt || new Date());
   const prevDate = prevMsg ? new Date(prevMsg.createdAt || new Date()) : null;
@@ -61,7 +95,12 @@ function ChatMessage({ msg, isMe, prevMsg }: {
     prevDate && (msgDate.getTime() - prevDate.getTime()) < 5 * 60 * 1000;
 
   const idx = msg.fromUser.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
-  const [nameColor] = msg.fromUser.toLowerCase() === "relc" ? ["#bf5fff"] : AVATAR_COLORS[idx];
+  const customColor = isMe && myColor ? myColor : undefined;
+  const [nameColor] = customColor
+    ? [customColor]
+    : msg.fromUser.toLowerCase() === "relc"
+    ? ["#bf5fff"]
+    : AVATAR_COLORS[idx];
 
   return (
     <motion.div
@@ -71,7 +110,7 @@ function ChatMessage({ msg, isMe, prevMsg }: {
       className={cn("flex gap-3 px-4 group transition-colors", isGrouped ? "mt-0.5 py-0.5" : "mt-4 py-1")}
     >
       {!isGrouped ? (
-        <Avatar name={msg.fromUser} size="md" />
+        <Avatar name={msg.fromUser} size="md" customColor={customColor} />
       ) : (
         <div className="w-8 flex-shrink-0 flex items-end justify-center pb-1">
           <span className="text-[9px] text-white/20 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
@@ -102,6 +141,9 @@ export default function Chat() {
   const [showOverlay, setShowOverlay] = useState(!username);
   const [currentUsername, setCurrentUsername] = useState(username);
   const [input, setInput] = useState("");
+  const [myColor, setMyColor] = useState<string>(() => localStorage.getItem("chatNameColor") || "");
+  const [showPicker, setShowPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -116,13 +158,35 @@ export default function Chat() {
 
   useEffect(() => { inputRef.current?.focus(); }, [showOverlay]);
 
+  useEffect(() => {
+    if (!showPicker) return;
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showPicker]);
+
+  const handleColorSelect = (hex: string) => {
+    setMyColor(hex);
+    localStorage.setItem("chatNameColor", hex);
+    setShowPicker(false);
+  };
+
+  const handleColorReset = () => {
+    setMyColor("");
+    localStorage.removeItem("chatNameColor");
+    setShowPicker(false);
+  };
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !currentUsername) return;
     sendMessage({ fromUser: currentUsername, content: input }, { onSuccess: () => setInput("") });
   };
 
-  // Group messages by date for dividers
   const renderMessages = () => {
     if (!msgs || msgs.length === 0) return null;
     const elements: React.ReactNode[] = [];
@@ -140,6 +204,7 @@ export default function Chat() {
           msg={msg}
           isMe={msg.fromUser === currentUsername}
           prevMsg={i > 0 ? msgs[i - 1] : null}
+          myColor={myColor}
         />
       );
     });
@@ -215,7 +280,55 @@ export default function Chat() {
           }}
         >
           <form onSubmit={handleSend} className="flex items-center gap-2">
-            <Avatar name={currentUsername} size="sm" />
+            <Avatar name={currentUsername} size="sm" customColor={myColor || undefined} />
+
+            <div className="relative shrink-0" ref={pickerRef}>
+              <button
+                type="button"
+                onClick={() => setShowPicker(!showPicker)}
+                data-testid="button-color-picker-chat"
+                title="Change name colour"
+                className="p-1.5 rounded-lg hover:bg-white/5 transition-all"
+                style={{ color: myColor || "rgba(255,255,255,0.3)" }}
+              >
+                <Palette className="w-4 h-4" />
+              </button>
+
+              {showPicker && (
+                <div
+                  className="absolute bottom-full mb-2 left-0 z-50 p-3 rounded-xl shadow-2xl"
+                  style={{ background: "#080818", border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Name colour</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {COLOR_PALETTE.map(({ hex }) => (
+                      <button
+                        key={hex}
+                        type="button"
+                        onClick={() => handleColorSelect(hex)}
+                        className="w-7 h-7 rounded-full transition-transform hover:scale-125 active:scale-95"
+                        style={{
+                          background: hex,
+                          boxShadow: myColor === hex ? `0 0 10px ${hex}` : undefined,
+                          outline: myColor === hex ? `2px solid ${hex}` : "none",
+                          outlineOffset: "2px",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {myColor && (
+                    <button
+                      type="button"
+                      onClick={handleColorReset}
+                      className="mt-2.5 w-full flex items-center justify-center gap-1 text-[9px] font-mono text-white/30 hover:text-white/60 transition-colors"
+                    >
+                      <X className="w-2.5 h-2.5" /> reset to default
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="flex-1 relative">
               <input
                 ref={inputRef}

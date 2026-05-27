@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useMessages, useSendMessage } from "@/hooks/use-chat";
-import { Send, Loader2, PanelRightClose, PanelRightOpen, Globe, Wifi } from "lucide-react";
+import { Send, Loader2, PanelRightClose, PanelRightOpen, Globe, Wifi, Palette, X } from "lucide-react";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -16,21 +16,49 @@ const AVATAR_COLORS = [
   ["#5566ff", "#9900ff"],
 ];
 
-function MiniAvatar({ name }: { name: string }) {
+const COLOR_PALETTE = [
+  { hex: "#00fff9", from: "#00fff9", to: "#0080ff" },
+  { hex: "#ff00aa", from: "#bf5fff", to: "#ff00c1" },
+  { hex: "#9b5de5", from: "#7b2fff", to: "#bf5fff" },
+  { hex: "#00ffaa", from: "#00ffaa", to: "#00aa55" },
+  { hex: "#ffcc00", from: "#ffcc00", to: "#ff6600" },
+  { hex: "#ff6600", from: "#ff6600", to: "#ff0040" },
+  { hex: "#5566ff", from: "#5566ff", to: "#9900ff" },
+  { hex: "#ff2255", from: "#ff0040", to: "#ff6600" },
+];
+
+function getGradientForColor(hex: string) {
+  const entry = COLOR_PALETTE.find(p => p.hex === hex);
+  return entry ? `linear-gradient(135deg, ${entry.from}, ${entry.to})` : `linear-gradient(135deg, ${hex}, ${hex}bb)`;
+}
+
+function MiniAvatar({ name, customColor }: { name: string; customColor?: string }) {
   const isRelc = name.toLowerCase() === "relc";
   const idx = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
   const [from, to] = AVATAR_COLORS[idx];
-  const gradient = isRelc
-    ? "linear-gradient(135deg, #7b2fff, #bf5fff)"
-    : `linear-gradient(135deg, ${from}, ${to})`;
+
+  let gradient: string;
+  let textColor: string;
+  let boxShadow: string | undefined;
+
+  if (customColor) {
+    gradient = getGradientForColor(customColor);
+    textColor = "#fff";
+    boxShadow = `0 0 6px ${customColor}99`;
+  } else if (isRelc) {
+    gradient = "linear-gradient(135deg, #7b2fff, #bf5fff)";
+    textColor = "#fff";
+    boxShadow = "0 0 6px rgba(155,93,229,0.7)";
+  } else {
+    gradient = `linear-gradient(135deg, ${from}, ${to})`;
+    textColor = "#000";
+    boxShadow = undefined;
+  }
+
   return (
     <div
       className="w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] flex-shrink-0 mt-0.5"
-      style={{
-        background: gradient,
-        color: isRelc ? "#fff" : "#000",
-        boxShadow: isRelc ? "0 0 6px rgba(155,93,229,0.7)" : undefined,
-      }}
+      style={{ background: gradient, color: textColor, boxShadow }}
     >
       {name.slice(0, 1).toUpperCase()}
     </div>
@@ -40,6 +68,9 @@ function MiniAvatar({ name }: { name: string }) {
 function GlobalChatView({ username }: { username: string }) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [myColor, setMyColor] = useState<string>(() => localStorage.getItem("chatNameColor") || "");
+  const [showPicker, setShowPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const { data: messages, isLoading } = useMessages();
   const { mutate: sendMsg, isPending } = useSendMessage();
@@ -49,6 +80,29 @@ function GlobalChatView({ username }: { username: string }) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (!showPicker) return;
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showPicker]);
+
+  const handleColorSelect = (hex: string) => {
+    setMyColor(hex);
+    localStorage.setItem("chatNameColor", hex);
+    setShowPicker(false);
+  };
+
+  const handleColorReset = () => {
+    setMyColor("");
+    localStorage.removeItem("chatNameColor");
+    setShowPicker(false);
+  };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,11 +120,16 @@ function GlobalChatView({ username }: { username: string }) {
         ) : messages && messages.length > 0 ? (
           messages.map((msg) => {
             const isMe = msg.fromUser === username;
+            const customColor = isMe && myColor ? myColor : undefined;
             const idx = msg.fromUser.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
-            const [nameColor] = msg.fromUser.toLowerCase() === "relc" ? ["#bf5fff"] : AVATAR_COLORS[idx];
+            const [nameColor] = customColor
+              ? [customColor]
+              : msg.fromUser.toLowerCase() === "relc"
+              ? ["#bf5fff"]
+              : AVATAR_COLORS[idx];
             return (
               <div key={msg.id} className="flex gap-2 items-start px-1.5 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group">
-                <MiniAvatar name={msg.fromUser} />
+                <MiniAvatar name={msg.fromUser} customColor={customColor} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 mb-0.5">
                     <span className="text-xs font-bold leading-none" style={{ color: nameColor }}>{msg.fromUser}</span>
@@ -94,24 +153,71 @@ function GlobalChatView({ username }: { username: string }) {
       </div>
 
       <div className="p-2 border-t border-white/10 bg-background/50">
-        <form onSubmit={handleSend} className="relative flex items-center gap-1">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Message everyone..."
-            data-testid="input-sidebar-message"
-            maxLength={2000}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 pr-9 text-xs focus:outline-none focus:border-cyan-500/40 transition-all text-white/85 placeholder:text-white/20"
-          />
-          <button
-            type="submit"
-            disabled={isPending || !input.trim()}
-            data-testid="button-sidebar-send"
-            className="absolute right-1.5 p-1.5 bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 rounded-md hover:bg-cyan-500/30 disabled:opacity-40 transition-all"
-          >
-            {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-          </button>
+        <form onSubmit={handleSend} className="flex items-center gap-1">
+          <div className="relative shrink-0" ref={pickerRef}>
+            <button
+              type="button"
+              onClick={() => setShowPicker(!showPicker)}
+              data-testid="button-color-picker"
+              title="Change name colour"
+              className="p-1.5 rounded-md hover:bg-white/5 transition-all"
+              style={{ color: myColor || "rgba(255,255,255,0.3)" }}
+            >
+              <Palette className="w-3.5 h-3.5" />
+            </button>
+
+            {showPicker && (
+              <div className="absolute bottom-full mb-2 left-0 z-50 p-2.5 rounded-xl shadow-2xl"
+                style={{ background: "#080818", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Name colour</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {COLOR_PALETTE.map(({ hex }) => (
+                    <button
+                      key={hex}
+                      type="button"
+                      onClick={() => handleColorSelect(hex)}
+                      className="w-6 h-6 rounded-full transition-transform hover:scale-125 active:scale-95"
+                      style={{
+                        background: hex,
+                        boxShadow: myColor === hex ? `0 0 8px ${hex}` : undefined,
+                        outline: myColor === hex ? `2px solid ${hex}` : "none",
+                        outlineOffset: "2px",
+                      }}
+                    />
+                  ))}
+                </div>
+                {myColor && (
+                  <button
+                    type="button"
+                    onClick={handleColorReset}
+                    className="mt-2 w-full flex items-center justify-center gap-1 text-[9px] font-mono text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    <X className="w-2.5 h-2.5" /> reset
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Message everyone..."
+              data-testid="input-sidebar-message"
+              maxLength={2000}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 pr-9 text-xs focus:outline-none focus:border-cyan-500/40 transition-all text-white/85 placeholder:text-white/20"
+            />
+            <button
+              type="submit"
+              disabled={isPending || !input.trim()}
+              data-testid="button-sidebar-send"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 rounded-md hover:bg-cyan-500/30 disabled:opacity-40 transition-all"
+            >
+              {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+            </button>
+          </div>
         </form>
       </div>
     </>
