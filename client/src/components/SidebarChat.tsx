@@ -167,7 +167,7 @@ function GlobalChatView({ username }: { username: string }) {
             </button>
 
             {showPicker && (
-              <div className="absolute bottom-full mb-2 left-0 z-50 p-2.5 rounded-xl shadow-2xl"
+              <div className="absolute bottom-full mb-2 left-0 z-50 p-2.5 rounded-xl shadow-2xl w-fit"
                 style={{ background: "#080818", border: "1px solid rgba(255,255,255,0.1)" }}>
                 <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Name colour</p>
                 <div className="grid grid-cols-4 gap-2">
