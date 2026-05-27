@@ -70,7 +70,9 @@ function GlobalChatView({ username }: { username: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [myColor, setMyColor] = useState<string>(() => localStorage.getItem("chatNameColor") || "");
   const [showPicker, setShowPicker] = useState(false);
+  const [pickerPos, setPickerPos] = useState<{ bottom: number; left: number } | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const paletteButtonRef = useRef<HTMLButtonElement>(null);
 
   const { data: messages, isLoading } = useMessages();
   const { mutate: sendMsg, isPending } = useSendMessage();
@@ -91,6 +93,14 @@ function GlobalChatView({ username }: { username: string }) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showPicker]);
+
+  const handleTogglePicker = () => {
+    if (!showPicker && paletteButtonRef.current) {
+      const rect = paletteButtonRef.current.getBoundingClientRect();
+      setPickerPos({ bottom: window.innerHeight - rect.top + 6, left: rect.left });
+    }
+    setShowPicker(p => !p);
+  };
 
   const handleColorSelect = (hex: string) => {
     setMyColor(hex);
@@ -154,10 +164,11 @@ function GlobalChatView({ username }: { username: string }) {
 
       <div className="p-2 border-t border-white/10 bg-background/50">
         <form onSubmit={handleSend} className="flex items-center gap-1">
-          <div className="relative shrink-0" ref={pickerRef}>
+          <div className="shrink-0">
             <button
+              ref={paletteButtonRef}
               type="button"
-              onClick={() => setShowPicker(!showPicker)}
+              onClick={handleTogglePicker}
               data-testid="button-color-picker"
               title="Change name colour"
               className="p-1.5 rounded-md hover:bg-white/5 transition-all"
@@ -166,9 +177,17 @@ function GlobalChatView({ username }: { username: string }) {
               <Palette className="w-3.5 h-3.5" />
             </button>
 
-            {showPicker && (
-              <div className="absolute bottom-full mb-2 left-0 z-50 p-2.5 rounded-xl shadow-2xl w-fit"
-                style={{ background: "#080818", border: "1px solid rgba(255,255,255,0.1)" }}>
+            {showPicker && pickerPos && (
+              <div
+                ref={pickerRef}
+                className="fixed z-[9999] p-2.5 rounded-xl shadow-2xl w-fit"
+                style={{
+                  background: "#080818",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  bottom: pickerPos.bottom,
+                  left: pickerPos.left,
+                }}
+              >
                 <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Name colour</p>
                 <div className="grid grid-cols-4 gap-2">
                   {COLOR_PALETTE.map(({ hex }) => (
