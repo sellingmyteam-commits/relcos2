@@ -143,7 +143,9 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [myColor, setMyColor] = useState<string>(() => localStorage.getItem("chatNameColor") || "");
   const [showPicker, setShowPicker] = useState(false);
+  const [pickerPos, setPickerPos] = useState<{ bottom: number; left: number } | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const paletteButtonRef = useRef<HTMLButtonElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -168,6 +170,14 @@ export default function Chat() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showPicker]);
+
+  const handleTogglePicker = () => {
+    if (!showPicker && paletteButtonRef.current) {
+      const rect = paletteButtonRef.current.getBoundingClientRect();
+      setPickerPos({ bottom: window.innerHeight - rect.top + 6, left: rect.left });
+    }
+    setShowPicker(p => !p);
+  };
 
   const handleColorSelect = (hex: string) => {
     setMyColor(hex);
@@ -282,10 +292,11 @@ export default function Chat() {
           <form onSubmit={handleSend} className="flex items-center gap-2">
             <Avatar name={currentUsername} size="sm" customColor={myColor || undefined} />
 
-            <div className="relative shrink-0" ref={pickerRef}>
+            <div className="shrink-0">
               <button
+                ref={paletteButtonRef}
                 type="button"
-                onClick={() => setShowPicker(!showPicker)}
+                onClick={handleTogglePicker}
                 data-testid="button-color-picker-chat"
                 title="Change name colour"
                 className="p-1.5 rounded-lg hover:bg-white/5 transition-all"
@@ -294,22 +305,29 @@ export default function Chat() {
                 <Palette className="w-4 h-4" />
               </button>
 
-              {showPicker && (
+              {showPicker && pickerPos && (
                 <div
-                  className="absolute bottom-full mb-2 left-0 z-50 p-3 rounded-xl shadow-2xl w-fit"
-                  style={{ background: "#080818", border: "1px solid rgba(255,255,255,0.1)" }}
+                  ref={pickerRef}
+                  className="fixed z-[9999] p-4 rounded-xl shadow-2xl"
+                  style={{
+                    background: "#080818",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    bottom: pickerPos.bottom,
+                    left: pickerPos.left,
+                    width: "200px",
+                  }}
                 >
-                  <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Name colour</p>
-                  <div className="grid grid-cols-4 gap-2">
+                  <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-3">Name colour</p>
+                  <div className="grid grid-cols-4 gap-2.5">
                     {COLOR_PALETTE.map(({ hex }) => (
                       <button
                         key={hex}
                         type="button"
                         onClick={() => handleColorSelect(hex)}
-                        className="w-9 h-9 rounded-lg transition-transform hover:scale-110 active:scale-95"
+                        className="w-10 h-10 rounded-lg transition-transform hover:scale-110 active:scale-95"
                         style={{
                           background: hex,
-                          boxShadow: myColor === hex ? `0 0 10px ${hex}` : undefined,
+                          boxShadow: myColor === hex ? `0 0 12px ${hex}` : undefined,
                           outline: myColor === hex ? `2px solid ${hex}` : "none",
                           outlineOffset: "2px",
                         }}
@@ -320,7 +338,7 @@ export default function Chat() {
                     <button
                       type="button"
                       onClick={handleColorReset}
-                      className="mt-2.5 w-full flex items-center justify-center gap-1 text-[9px] font-mono text-white/30 hover:text-white/60 transition-colors"
+                      className="mt-3 w-full flex items-center justify-center gap-1 text-[9px] font-mono text-white/30 hover:text-white/60 transition-colors"
                     >
                       <X className="w-2.5 h-2.5" /> reset to default
                     </button>
