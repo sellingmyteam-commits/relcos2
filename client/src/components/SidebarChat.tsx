@@ -21,7 +21,7 @@ function MiniAvatar({ name }: { name: string }) {
   const idx = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
   const [from, to] = AVATAR_COLORS[idx];
   const gradient = isRelc
-    ? "linear-gradient(135deg, #9b5de5, #f15025)"
+    ? "linear-gradient(135deg, #7b2fff, #bf5fff)"
     : `linear-gradient(135deg, ${from}, ${to})`;
   return (
     <div
@@ -67,7 +67,7 @@ function GlobalChatView({ username }: { username: string }) {
           messages.map((msg) => {
             const isMe = msg.fromUser === username;
             const idx = msg.fromUser.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
-            const [nameColor] = AVATAR_COLORS[idx];
+            const [nameColor] = msg.fromUser.toLowerCase() === "relc" ? ["#bf5fff"] : AVATAR_COLORS[idx];
             return (
               <div key={msg.id} className="flex gap-2 items-start px-1.5 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group">
                 <MiniAvatar name={msg.fromUser} />
