@@ -170,16 +170,16 @@ function GlobalChatView({ username }: { username: string }) {
               <div className="absolute bottom-full mb-2 left-0 z-50 p-2.5 rounded-xl shadow-2xl"
                 style={{ background: "#080818", border: "1px solid rgba(255,255,255,0.1)" }}>
                 <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Name colour</p>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-4 gap-2">
                   {COLOR_PALETTE.map(({ hex }) => (
                     <button
                       key={hex}
                       type="button"
                       onClick={() => handleColorSelect(hex)}
-                      className="w-6 h-6 rounded-full transition-transform hover:scale-125 active:scale-95"
+                      className="w-8 h-8 rounded-lg transition-transform hover:scale-110 active:scale-95"
                       style={{
                         background: hex,
-                        boxShadow: myColor === hex ? `0 0 8px ${hex}` : undefined,
+                        boxShadow: myColor === hex ? `0 0 10px ${hex}` : undefined,
                         outline: myColor === hex ? `2px solid ${hex}` : "none",
                         outlineOffset: "2px",
                       }}

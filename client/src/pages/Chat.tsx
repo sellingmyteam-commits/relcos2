@@ -306,7 +306,7 @@ export default function Chat() {
                         key={hex}
                         type="button"
                         onClick={() => handleColorSelect(hex)}
-                        className="w-7 h-7 rounded-full transition-transform hover:scale-125 active:scale-95"
+                        className="w-9 h-9 rounded-lg transition-transform hover:scale-110 active:scale-95"
                         style={{
                           background: hex,
                           boxShadow: myColor === hex ? `0 0 10px ${hex}` : undefined,
