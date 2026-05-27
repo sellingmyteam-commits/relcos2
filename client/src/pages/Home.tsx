@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { useLocation } from "wouter";
-import { MessageSquare, Skull, Zap, Users, Bike, Crosshair, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Bomb, Layers, Snowflake, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Bird, Globe2, Sparkles } from "lucide-react";
+import { MessageSquare, Skull, Zap, Users, Bike, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Layers, Snowflake, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Globe2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -19,19 +19,14 @@ const GAMES = [
   { href: "/eaglercraft", label: "Eagler Craft X", desc: "Minecraft in your browser.", icon: Cuboid, color: "primary" },
   { href: "/drive-mad", label: "Drive Mad", desc: "Crazy physics-based driving action.", icon: Square, color: "purple" },
   { href: "/geometry-dash", label: "Geometry Dash", desc: "Jump and fly your way through danger!", icon: Zap, color: "pink" },
-  { href: "/pixel-shooter", label: "Pixel Shooter", desc: "Pixel-art FPS with arcade chaos.", icon: Crosshair, color: "primary" },
   { href: "/pvz2-gardenless", label: "PvZ2 Gardenless", desc: "Plants vs Zombies 2 reborn online.", icon: Sprout, color: "purple" },
   { href: "/basketball-stars", label: "Basketball Stars", desc: "Fast-paced 1v1 basketball duels.", icon: Dribbble, color: "pink" },
   { href: "/subway-surfers-houston", label: "Subway Surfers: Houston", desc: "Surf the Houston subway. Don't get caught.", icon: Train, color: "primary" },
-  { href: "/russian-buckshot", label: "Russian Buckshot", desc: "Russian roulette with a shotgun.", icon: Bomb, color: "purple" },
   { href: "/jetpack-joyride", label: "Jetpack Joyride", desc: "Blast through the lab with a jetpack.", icon: Rocket, color: "purple" },
-  { href: "/angry-birds", label: "Angry Birds", desc: "Launch birds at smug green pigs.", icon: Bird, color: "primary" },
   { href: "/solar-smash", label: "Solar Smash", desc: "Obliterate planets with cosmic weapons.", icon: Globe2, color: "pink" },
-  { href: "/skibidi-shooter", label: "Skibidi Shooter", desc: "Take down skibidi toilets.", icon: Sparkles, color: "primary" },
   { href: "/counter-strike", label: "Counter Strike", desc: "Tactical FPS — eliminate the enemy team.", icon: Target, color: "pink" },
   { href: "/bikers-republic", label: "Bikers Republic", desc: "MX offroad bike racing madness.", icon: Skull, color: "primary" },
   { href: "/snowball-io", label: "Snowball.io", desc: "Throw snowballs and knock out opponents.", icon: Snowflake, color: "pink" },
-  { href: "/quake3", label: "Quake 3", desc: "Classic FPS arena combat.", icon: Bomb, color: "purple" },
   { href: "/super-hot", label: "Super Hot", desc: "Time moves only when you move.", icon: Flame, color: "pink" },
   { href: "/shellshockers", label: "Shellshockers", desc: "The world's top egg-based shooter.", icon: Egg, color: "purple" },
   { href: "/motox3m", label: "Moto X3M", desc: "The best bike racing game.", icon: Bike, color: "primary" },
