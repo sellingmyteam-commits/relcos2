@@ -17,7 +17,7 @@ export function ChatNotifications({ currentUsername }: { currentUsername: string
 
   const { data: messages } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
-    refetchInterval: 4000,
+    refetchInterval: 10000,
   });
 
   useEffect(() => {
