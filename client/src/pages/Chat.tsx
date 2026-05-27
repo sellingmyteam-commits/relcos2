@@ -24,13 +24,16 @@ const AVATAR_COLORS = [
 ];
 
 function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" | "lg" }) {
+  const isRelc = name.toLowerCase() === "relc";
   const idx = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
   const [from, to] = AVATAR_COLORS[idx];
   const sizeClass = size === "lg" ? "w-10 h-10 text-sm" : size === "md" ? "w-8 h-8 text-xs" : "w-7 h-7 text-[10px]";
+  const gradient = isRelc ? "linear-gradient(135deg, #9b5de5, #f15025)" : `linear-gradient(135deg, ${from}, ${to})`;
+  const shadow = isRelc ? "0 0 10px rgba(155,93,229,0.7)" : `0 0 10px ${from}55`;
   return (
     <div
-      className={cn("rounded-full flex items-center justify-center font-black text-black flex-shrink-0 shadow-lg", sizeClass)}
-      style={{ background: `linear-gradient(135deg, ${from}, ${to})`, boxShadow: `0 0 10px ${from}55` }}
+      className={cn("rounded-full flex items-center justify-center font-black flex-shrink-0 shadow-lg", sizeClass)}
+      style={{ background: gradient, boxShadow: shadow, color: isRelc ? "#fff" : "#000" }}
     >
       {name.slice(0, 1).toUpperCase()}
     </div>
