@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock, Wifi } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
-import { useOnlineCount } from "@/hooks/useOnlineCount";
 import { usePageCounts } from "@/hooks/usePageCounts";
 
 const GAMES = [
@@ -194,7 +193,6 @@ export default function Home() {
   const { isLocked } = useGameLocks();
   const [, setLocation] = useLocation();
   const door = useDoor();
-  const onlineCount = useOnlineCount();
   const pageCounts = usePageCounts();
 
   const handleLaunch = (href: string, label: string) => {
@@ -229,11 +227,6 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500/10 border border-green-500/25 self-start shrink-0" data-testid="badge-online-count">
-            <Wifi className="w-3.5 h-3.5 text-green-400" />
-            <span className="text-xs font-mono font-bold text-green-400">{onlineCount}</span>
-            <span className="text-[10px] font-mono text-green-400/60 uppercase tracking-wider">online</span>
-          </div>
         </div>
 
         {/* Search bar */}

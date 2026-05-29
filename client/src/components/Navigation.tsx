@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Gamepad2, Star, Lock, FileCode } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Gamepad2, Star, Lock, FileCode, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
@@ -10,6 +10,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { HtmlEmulator } from "@/components/HtmlEmulator";
 import { ALL_GAMES } from "@/lib/games";
 import { useGameLocks } from "@/hooks/useGameLocks";
+import { useOnlineCount } from "@/hooks/useOnlineCount";
 
 export function Navigation() {
   const [location, setLocation] = useLocation();
@@ -28,6 +29,7 @@ export function Navigation() {
   });
   const inputRef = useRef<HTMLInputElement>(null);
   const { isLocked } = useGameLocks();
+  const onlineCount = useOnlineCount();
 
   useEffect(() => {
     const reload = () => {
@@ -287,6 +289,26 @@ export function Navigation() {
             <Settings className="w-3.5 h-3.5 shrink-0" />
             {!collapsed && <span>SETTINGS</span>}
           </button>
+
+          {/* Online counter */}
+          <div
+            data-testid="badge-nav-online"
+            title={collapsed ? `${onlineCount} online` : undefined}
+            className={cn(
+              "flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20",
+              collapsed ? "justify-center w-full" : "w-full"
+            )}
+          >
+            <Wifi className="w-3.5 h-3.5 text-green-400 shrink-0" />
+            {collapsed ? (
+              <span className="text-[10px] font-mono font-bold text-green-400">{onlineCount}</span>
+            ) : (
+              <>
+                <span className="text-[10px] font-mono font-bold text-green-400">{onlineCount}</span>
+                <span className="text-[10px] font-mono text-green-400/60 uppercase tracking-widest">online</span>
+              </>
+            )}
+          </div>
 
           {/* Admin */}
           {isAdmin && (
