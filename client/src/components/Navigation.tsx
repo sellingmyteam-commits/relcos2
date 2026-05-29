@@ -59,7 +59,24 @@ export function Navigation() {
 
   useEffect(() => {
     const socket = getSharedSocket();
-    socket.emit("join_page", location);
+
+    const emitPage = () => {
+      socket.emit("join_page", location);
+    };
+
+    // Emit now if already connected, otherwise the connect handler will fire it
+    if (socket.connected) {
+      emitPage();
+    }
+
+    // Re-emit on connect (covers initial connection) and reconnect (covers drops)
+    socket.on("connect", emitPage);
+    socket.on("reconnect", emitPage);
+
+    return () => {
+      socket.off("connect", emitPage);
+      socket.off("reconnect", emitPage);
+    };
   }, [location]);
 
   useEffect(() => {
