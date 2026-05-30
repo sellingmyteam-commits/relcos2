@@ -46,6 +46,14 @@ function filterContent(text: string): string {
   );
 }
 
+// ── Messages cache ──
+let messagesCache: { data: unknown[]; ts: number } | null = null;
+const MESSAGES_TTL = 8000; // 8 s — slightly under the 10 s client poll interval
+
+function invalidateMessagesCache() {
+  messagesCache = null;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -54,7 +62,12 @@ export async function registerRoutes(
   // ── Global chat messages ──
   app.get("/api/messages", async (_req, res) => {
     try {
+      const now = Date.now();
+      if (messagesCache && now - messagesCache.ts < MESSAGES_TTL) {
+        return res.json(messagesCache.data);
+      }
       const msgs = await storage.getMessages();
+      messagesCache = { data: msgs, ts: now };
       res.json(msgs);
     } catch (err) {
       console.error("messages get error:", err);
@@ -71,6 +84,7 @@ export async function registerRoutes(
       const filtered = filterContent(content);
       if (!filtered.trim()) return res.status(400).json({ message: "Message blocked by chat filter" });
       const msg = await storage.createMessage({ fromUser, content: filtered });
+      invalidateMessagesCache();
       res.status(201).json(msg);
     } catch (err) {
       if (err instanceof z.ZodError) {
