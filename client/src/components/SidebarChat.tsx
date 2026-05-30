@@ -14,6 +14,16 @@ const AVATAR_COLORS = [
   ["#ff6600", "#ff0040"],
   ["#ffcc00", "#ff6600"],
   ["#5566ff", "#9900ff"],
+  ["#ff69b4", "#c2185b"],
+  ["#39ff14", "#007700"],
+  ["#00bfff", "#3700b3"],
+  ["#ff4500", "#8b0000"],
+  ["#00e5ff", "#006064"],
+  ["#ffd700", "#e65100"],
+  ["#e040fb", "#4a148c"],
+  ["#76ff03", "#1b5e20"],
+  ["#ff1493", "#7b0080"],
+  ["#00ffcc", "#004466"],
 ];
 
 const COLOR_PALETTE = [
@@ -25,6 +35,16 @@ const COLOR_PALETTE = [
   { hex: "#ff6600", from: "#ff6600", to: "#ff0040" },
   { hex: "#5566ff", from: "#5566ff", to: "#9900ff" },
   { hex: "#ff2255", from: "#ff0040", to: "#ff6600" },
+  { hex: "#ff69b4", from: "#ff69b4", to: "#c2185b" },
+  { hex: "#39ff14", from: "#39ff14", to: "#007700" },
+  { hex: "#00bfff", from: "#00bfff", to: "#3700b3" },
+  { hex: "#ff4500", from: "#ff4500", to: "#8b0000" },
+  { hex: "#00e5ff", from: "#00e5ff", to: "#006064" },
+  { hex: "#ffd700", from: "#ffd700", to: "#e65100" },
+  { hex: "#e040fb", from: "#e040fb", to: "#4a148c" },
+  { hex: "#76ff03", from: "#76ff03", to: "#1b5e20" },
+  { hex: "#ff1493", from: "#ff1493", to: "#7b0080" },
+  { hex: "#00ffcc", from: "#00ffcc", to: "#004466" },
 ];
 
 function getGradientForColor(hex: string) {
