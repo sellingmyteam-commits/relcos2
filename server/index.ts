@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -21,6 +22,9 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+app.use(compression());
+
+const isProd = process.env.NODE_ENV === "production";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -34,6 +38,7 @@ export function log(message: string, source = "express") {
 }
 
 app.use((req, res, next) => {
+  if (isProd) return next();
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
@@ -51,7 +56,6 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
       log(logLine);
     }
   });
@@ -65,10 +69,10 @@ app.use((req, res, next) => {
   // Real-time online user tracking with Socket.IO
   const { Server } = await import("socket.io");
   const io = new Server(httpServer, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    }
+    cors: { origin: "*", methods: ["GET", "POST"] },
+    pingInterval: 25000,
+    pingTimeout: 20000,
+    transports: ["websocket", "polling"],
   });
 
   const userStats = {
@@ -83,6 +87,7 @@ app.use((req, res, next) => {
     socket.on("join_page", (path: string) => {
       if (userStats.pages[currentPath]) {
         userStats.pages[currentPath]--;
+        if (userStats.pages[currentPath] <= 0) delete userStats.pages[currentPath];
       }
       currentPath = path;
       userStats.pages[currentPath] = (userStats.pages[currentPath] || 0) + 1;
@@ -93,6 +98,7 @@ app.use((req, res, next) => {
       userStats.total--;
       if (userStats.pages[currentPath]) {
         userStats.pages[currentPath]--;
+        if (userStats.pages[currentPath] <= 0) delete userStats.pages[currentPath];
       }
       io.emit("stats_update", userStats);
     });
