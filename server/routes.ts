@@ -54,6 +54,14 @@ function invalidateMessagesCache() {
   messagesCache = null;
 }
 
+// ── Locked games cache ──
+let lockedGamesCache: { data: unknown[]; ts: number } | null = null;
+const LOCKED_GAMES_TTL = 120000; // 2 min — client polls every 3 min
+
+function invalidateLockedGamesCache() {
+  lockedGamesCache = null;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -254,7 +262,12 @@ export async function registerRoutes(
 
   // ── Game locks ──
   app.get("/api/locked-games", async (_req, res) => {
+    const now = Date.now();
+    if (lockedGamesCache && now - lockedGamesCache.ts < LOCKED_GAMES_TTL) {
+      return res.json(lockedGamesCache.data);
+    }
     const list = await storage.getLockedGames();
+    lockedGamesCache = { data: list, ts: now };
     res.json(list);
   });
 
@@ -265,6 +278,7 @@ export async function registerRoutes(
         lockedBy: z.string().min(1).max(20),
       }).parse(req.body);
       await storage.lockGame(gameId, lockedBy);
+      invalidateLockedGamesCache();
       res.json({ ok: true });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
@@ -275,6 +289,7 @@ export async function registerRoutes(
   app.delete("/api/admin/games/lock/:gameId", async (req, res) => {
     const ok = await storage.unlockGame(req.params.gameId);
     if (!ok) return res.status(404).json({ message: "Not locked" });
+    invalidateLockedGamesCache();
     res.json({ ok: true });
   });
 
