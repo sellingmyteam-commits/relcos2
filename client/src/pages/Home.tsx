@@ -12,6 +12,7 @@ import { usePageCounts } from "@/hooks/usePageCounts";
 const GAMES = [
   { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
   { href: "/fireboy-and-watergirl", label: "Fireboy and Watergirl", desc: "Work together — fire and water must survive.", icon: Flame, color: "pink" },
+  { href: "/snow-rider", label: "Snow Rider 3D", desc: "Race down snow-covered hills and pull off sick tricks.", icon: Snowflake, color: "purple" },
   { href: "/cookie-clicker", label: "Cookie Clicker", desc: "Click cookies. Build an empire. Never stop.", icon: Star, color: "primary" },
   { href: "/slope", label: "Slope", desc: "Roll down the slope as fast as you can.", icon: Circle, color: "pink" },
   { href: "/nz-portable", label: "COD Zombies", desc: "Survive the undead horde, round after round.", icon: Ghost, color: "primary" },
