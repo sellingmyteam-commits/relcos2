@@ -260,6 +260,22 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/users/:id/qwerty", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const { hasQwerty } = z.object({ hasQwerty: z.number().int().min(0).max(1) }).parse(req.body);
+      const updated = await storage.setQwertyAccess(id, hasQwerty);
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
   // ── Game locks ──
   app.get("/api/locked-games", async (_req, res) => {
     const now = Date.now();

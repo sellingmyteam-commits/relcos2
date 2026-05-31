@@ -80,9 +80,19 @@ app.use((req, res, next) => {
     pages: {} as Record<string, number>
   };
 
+  // userId → socketId mapping for targeted events
+  const userSocketMap: Record<string, string> = {};
+  const socketUserMap: Record<string, string> = {};
+
   io.on("connection", (socket) => {
     userStats.total++;
     let currentPath = "/";
+
+    socket.on("user_identify", (userId: string) => {
+      if (!userId) return;
+      socketUserMap[socket.id] = userId;
+      userSocketMap[userId] = socket.id;
+    });
 
     socket.on("join_page", (path: string) => {
       if (userStats.pages[currentPath]) {
@@ -94,11 +104,23 @@ app.use((req, res, next) => {
       io.emit("stats_update", userStats);
     });
 
+    socket.on("trigger_qwerty_hack", (targetUserId: string) => {
+      const targetSocketId = userSocketMap[targetUserId];
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("qwerty_hack");
+      }
+    });
+
     socket.on("disconnect", () => {
       userStats.total--;
       if (userStats.pages[currentPath]) {
         userStats.pages[currentPath]--;
         if (userStats.pages[currentPath] <= 0) delete userStats.pages[currentPath];
+      }
+      const uid = socketUserMap[socket.id];
+      if (uid) {
+        delete userSocketMap[uid];
+        delete socketUserMap[socket.id];
       }
       io.emit("stats_update", userStats);
     });

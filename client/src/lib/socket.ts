@@ -18,18 +18,12 @@ export function getSharedSocket(): Socket {
       reconnectionDelay: 2000,
       reconnectionDelayMax: 10000,
     });
-    socket.on("connect", () => {
-      const username = localStorage.getItem("chatUsername");
-      if (username) {
-        socket.emit("user_online", username);
-      }
-    });
-    socket.on("reconnect", () => {
-      const username = localStorage.getItem("chatUsername");
-      if (username) {
-        socket.emit("user_online", username);
-      }
-    });
+    const identify = () => {
+      const userId = localStorage.getItem("siteUserId");
+      if (userId) socket.emit("user_identify", userId);
+    };
+    socket.on("connect", identify);
+    socket.on("reconnect", identify);
     window.__sharedSocket = socket;
   }
   return window.__sharedSocket;

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GameLockGuard } from "@/components/GameLockGuard";
 import { DoorProvider } from "@/components/DoorTransition";
 import { ChatNotifications } from "@/components/ChatNotifications";
+import { HackSequence } from "@/components/HackSequence";
 
 const Home = lazy(() => import("@/pages/Home"));
 const Eaglercraft = lazy(() => import("@/pages/Eaglercraft"));
@@ -391,6 +392,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ChatNotifications currentUsername={username} />
+      <HackSequence />
       <DoorProvider>
         <PanicButton />
         <SecurityBlock onComplete={() => setSecurityFinished(true)} />

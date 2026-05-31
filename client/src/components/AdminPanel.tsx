@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, RefreshCw, Shield, Ban, CheckCircle, ChevronDown, Lock, Unlock, Gamepad2 } from "lucide-react";
+import { X, RefreshCw, Shield, Ban, CheckCircle, ChevronDown, Lock, Unlock, Gamepad2, Zap } from "lucide-react";
 import { ALL_GAMES, gameIdFromPath } from "@/lib/games";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ interface SiteUser {
   username: string;
   status: number;
   isAdmin: boolean;
+  hasQwerty: number;
 }
 
 interface AdminPanelProps {
@@ -104,6 +105,9 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
 
   const toggleAdmin = (user: SiteUser) =>
     patch(user.id, "admin", { isAdmin: !user.isAdmin });
+
+  const toggleQwerty = (user: SiteUser) =>
+    patch(user.id, "qwerty", { hasQwerty: user.hasQwerty === 1 ? 0 : 1 });
 
   const filtered = users.filter(u =>
     u.username.toLowerCase().includes(search.toLowerCase())
@@ -292,6 +296,23 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     >
                       <Shield className="w-3 h-3" />
                       {user.isAdmin ? "REVOKE" : "ADMIN"}
+                    </button>
+
+                    {/* QWERTY toggle */}
+                    <button
+                      onClick={() => toggleQwerty(user)}
+                      disabled={isSaving}
+                      data-testid={`button-qwerty-toggle-${user.id}`}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] font-bold font-mono tracking-wider border transition-all disabled:opacity-40",
+                        user.hasQwerty === 1
+                          ? "border-red-500/40 text-red-400 hover:bg-red-500/10"
+                          : "border-white/10 text-white/20 hover:border-red-500/30 hover:text-red-400/60"
+                      )}
+                      title={user.hasQwerty === 1 ? "Revoke QWERTY" : "Grant QWERTY"}
+                    >
+                      <Zap className="w-3 h-3" />
+                      {user.hasQwerty === 1 ? "Q" : "Q"}
                     </button>
                   </div>
                 </div>

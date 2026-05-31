@@ -15,6 +15,7 @@ export interface IStorage {
   updateSiteUsername(id: number, newUsername: string): Promise<SiteUser | null>;
   setSiteUserStatus(id: number, status: number): Promise<SiteUser | null>;
   setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null>;
+  setQwertyAccess(id: number, value: number): Promise<SiteUser | null>;
   getMessages(): Promise<Message[]>;
   createMessage(msg: InsertMessage): Promise<Message>;
   getLockedGames(): Promise<{ gameId: string; lockedBy: string }[]>;
@@ -91,6 +92,11 @@ export class DatabaseStorage implements IStorage {
 
   async setSiteUserAdmin(id: number, isAdmin: boolean): Promise<SiteUser | null> {
     const [updated] = await db.update(siteUsers).set({ isAdmin }).where(eq(siteUsers.id, id)).returning();
+    return updated || null;
+  }
+
+  async setQwertyAccess(id: number, value: number): Promise<SiteUser | null> {
+    const [updated] = await db.update(siteUsers).set({ hasQwerty: value }).where(eq(siteUsers.id, id)).returning();
     return updated || null;
   }
 

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Gamepad2, Star, Lock, FileCode, Wifi } from "lucide-react";
+import { Shield, Maximize2, Search, Settings, MessageSquare, ChevronLeft, ChevronRight, X, Gamepad2, Star, Lock, FileCode, Wifi, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AdminPanel } from "@/components/AdminPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { HtmlEmulator } from "@/components/HtmlEmulator";
+import { QwertyPanel } from "@/components/QwertyPanel";
 import { ALL_GAMES } from "@/lib/games";
 import { useGameLocks } from "@/hooks/useGameLocks";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
@@ -16,9 +17,11 @@ export function Navigation() {
   const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [hasQwerty, setHasQwerty] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showHtmlEmulator, setShowHtmlEmulator] = useState(false);
+  const [showQwertyPanel, setShowQwertyPanel] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [favourites, setFavourites] = useState<string[]>(() => {
     try {
@@ -90,6 +93,7 @@ export function Navigation() {
         if (res.ok) {
           const data = await res.json();
           setIsAdmin(!!data.isAdmin);
+          setHasQwerty(data.hasQwerty === 1);
         }
       } catch {}
     };
@@ -310,6 +314,30 @@ export function Navigation() {
             )}
           </div>
 
+          {/* QWERTY */}
+          {hasQwerty && (
+            <button
+              onClick={() => setShowQwertyPanel(true)}
+              data-testid="button-qwerty-panel"
+              title={collapsed ? "QWERTY" : undefined}
+              className={cn(
+                "flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] font-bold font-mono tracking-widest uppercase transition-all border",
+                collapsed ? "justify-center w-full" : "w-full"
+              )}
+              style={{
+                background: "rgba(255,0,60,0.08)",
+                borderColor: "rgba(255,0,60,0.35)",
+                color: "#ff003c",
+                textShadow: "0 0 8px rgba(255,0,60,0.5)",
+                boxShadow: "inset 0 0 12px rgba(255,0,60,0.05)",
+                animation: "qwerty-nav-flicker 3s infinite",
+              }}
+            >
+              <Zap className="w-3.5 h-3.5 shrink-0" style={{ filter: "drop-shadow(0 0 4px #ff003c)" }} />
+              {!collapsed && <span>QWERTY</span>}
+            </button>
+          )}
+
           {/* Admin */}
           {isAdmin && (
             <button
@@ -330,6 +358,7 @@ export function Navigation() {
 
       {showSettingsPanel && <SettingsPanel onClose={() => setShowSettingsPanel(false)} />}
       {showAdminPanel && <AdminPanel onClose={() => setShowAdminPanel(false)} />}
+      {showQwertyPanel && <QwertyPanel onClose={() => setShowQwertyPanel(false)} />}
       {showHtmlEmulator && <HtmlEmulator onClose={() => setShowHtmlEmulator(false)} />}
     </>
   );
