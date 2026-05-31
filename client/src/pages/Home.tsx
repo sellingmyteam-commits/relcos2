@@ -30,7 +30,6 @@ const GAMES = [
   { href: "/super-hot", label: "Super Hot", desc: "Time moves only when you move.", icon: Flame, color: "pink" },
   { href: "/shellshockers", label: "Shellshockers", desc: "The world's top egg-based shooter.", icon: Egg, color: "purple" },
   { href: "/motox3m", label: "Moto X3M", desc: "The best bike racing game.", icon: Bike, color: "primary" },
-  { href: "/five-nights-at-winstons", label: "Five Nights At Winston's", desc: "Survive the night with Winston.", icon: Cctv, color: "purple" },
   { href: "/retro-bowl", label: "Retro Bowl", desc: "Classic retro football action.", icon: Goal, color: "primary" },
   { href: "/rocket-soccer", label: "Rocket Soccer", desc: "High-octane car soccer action.", icon: Trophy, color: "purple" },
   { href: "/drift-hunters", label: "Drift Hunters", desc: "3D car drifting on epic tracks.", icon: Car, color: "pink" },

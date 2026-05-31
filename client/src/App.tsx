@@ -17,7 +17,6 @@ const GeometryDash = lazy(() => import("@/pages/GeometryDash"));
 const MotoX3M = lazy(() => import("@/pages/MotoX3M"));
 const StickmanMerge = lazy(() => import("@/pages/StickmanMerge"));
 const Slope = lazy(() => import("@/pages/Slope"));
-const FiveNightsAtWinstons = lazy(() => import("@/pages/FiveNightsAtWinstons"));
 const RocketSoccer = lazy(() => import("@/pages/RocketSoccer"));
 const RetroBowl = lazy(() => import("@/pages/RetroBowl"));
 const DriftHunters = lazy(() => import("@/pages/DriftHunters"));
@@ -88,7 +87,6 @@ function Router() {
         <Route path="/hole-io" component={HoleIo} />
         <Route path="/cookie-clicker" component={CookieClicker} />
         <Route path="/idle-miner-tycoon" component={IdleMinerTycoon} />
-        <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
         <Route path="/rocket-soccer" component={RocketSoccer} />
         <Route path="/retro-bowl" component={RetroBowl} />
         <Route path="/drift-hunters" component={DriftHunters} />

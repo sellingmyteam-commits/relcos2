@@ -27,7 +27,6 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/shellshockers", label: "Shellshockers", icon: Egg },
   { href: "/geometry-dash", label: "Geometry Dash", icon: Zap },
   { href: "/motox3m", label: "Moto X3M", icon: Bike },
-  { href: "/five-nights-at-winstons", label: "Five Nights At Winston's", icon: Cctv },
   { href: "/slope", label: "Slope", icon: Circle },
   { href: "/retro-bowl", label: "Retro Bowl", icon: Goal },
   { href: "/rocket-soccer", label: "Rocket Soccer", icon: Trophy },
