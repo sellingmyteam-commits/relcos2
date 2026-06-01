@@ -214,11 +214,13 @@ export default function Home() {
       setCodeStatus({ type: "success", message: data.message });
       setCodeInput("");
     },
-    onError: async (err: any) => {
+    onError: (err: any) => {
       let msg = "Invalid code";
       try {
-        const json = await err?.response?.json?.();
-        if (json?.message) msg = json.message;
+        const raw = err?.message || "";
+        const jsonStr = raw.replace(/^\d+:\s*/, "");
+        const parsed = JSON.parse(jsonStr);
+        if (parsed?.message) msg = parsed.message;
       } catch {}
       setCodeStatus({ type: "error", message: msg });
     },
