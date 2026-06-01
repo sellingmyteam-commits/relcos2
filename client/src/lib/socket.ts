@@ -28,3 +28,11 @@ export function getSharedSocket(): Socket {
   }
   return window.__sharedSocket;
 }
+
+/** Call this after storing a new siteUserId to re-announce the user to the server. */
+export function reIdentifyUser(userId: string | number) {
+  const socket = getSharedSocket();
+  if (socket.connected) {
+    socket.emit("user_identify", String(userId));
+  }
+}

@@ -10,6 +10,7 @@ import { GameLockGuard } from "@/components/GameLockGuard";
 import { DoorProvider } from "@/components/DoorTransition";
 import { ChatNotifications } from "@/components/ChatNotifications";
 import { HackSequence } from "@/components/HackSequence";
+import { reIdentifyUser } from "@/lib/socket";
 
 const Home = lazy(() => import("@/pages/Home"));
 const Eaglercraft = lazy(() => import("@/pages/Eaglercraft"));
@@ -342,6 +343,7 @@ function App() {
     if (id > 0) {
       setSiteUserId(id);
       localStorage.setItem("siteUserId", String(id));
+      reIdentifyUser(id);
     }
   };
 
@@ -381,6 +383,7 @@ function App() {
           const data = await res.json();
           setSiteUserId(data.id);
           localStorage.setItem("siteUserId", String(data.id));
+          reIdentifyUser(data.id);
           await checkStatus(data.id);
         }
       } catch {}
