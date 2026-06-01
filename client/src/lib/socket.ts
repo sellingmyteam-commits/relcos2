@@ -20,7 +20,8 @@ export function getSharedSocket(): Socket {
     });
     const identify = () => {
       const userId = localStorage.getItem("siteUserId");
-      if (userId) socket.emit("user_identify", userId);
+      const username = localStorage.getItem("chatUsername");
+      if (userId) socket.emit("user_identify", { userId, username: username || "" });
     };
     socket.on("connect", identify);
     socket.on("reconnect", identify);
@@ -32,7 +33,8 @@ export function getSharedSocket(): Socket {
 /** Call this after storing a new siteUserId to re-announce the user to the server. */
 export function reIdentifyUser(userId: string | number) {
   const socket = getSharedSocket();
+  const username = localStorage.getItem("chatUsername") || "";
   if (socket.connected) {
-    socket.emit("user_identify", String(userId));
+    socket.emit("user_identify", { userId: String(userId), username });
   }
 }

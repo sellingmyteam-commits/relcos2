@@ -79,15 +79,21 @@ app.use((req, res, next) => {
     total: 0,
     pages: {} as Record<string, number>,
     onlineUserIds: [] as string[],
+    onlineUsers: [] as { id: string; username: string }[],
   };
 
   // userId → socketId mapping for targeted events
   const userSocketMap: Record<string, string> = {};
   const socketUserMap: Record<string, string> = {};
   const onlineUserIds = new Set<string>();
+  const onlineUsernames: Record<string, string> = {}; // userId → username
 
   const broadcastStats = () => {
     userStats.onlineUserIds = Array.from(onlineUserIds);
+    userStats.onlineUsers = Array.from(onlineUserIds).map((id) => ({
+      id,
+      username: onlineUsernames[id] || "",
+    }));
     io.emit("stats_update", userStats);
   };
 
@@ -95,11 +101,14 @@ app.use((req, res, next) => {
     userStats.total++;
     let currentPath = "/";
 
-    socket.on("user_identify", (userId: string) => {
+    socket.on("user_identify", (payload: string | { userId: string; username?: string }) => {
+      const userId = typeof payload === "string" ? payload : payload?.userId;
+      const username = typeof payload === "object" ? (payload?.username || "") : "";
       if (!userId) return;
       socketUserMap[socket.id] = userId;
       userSocketMap[userId] = socket.id;
       onlineUserIds.add(userId);
+      if (username) onlineUsernames[userId] = username;
       broadcastStats();
     });
 
@@ -131,11 +140,16 @@ app.use((req, res, next) => {
         delete userSocketMap[uid];
         delete socketUserMap[socket.id];
         onlineUserIds.delete(uid);
+        delete onlineUsernames[uid];
       }
       broadcastStats();
     });
 
-    socket.emit("stats_update", { ...userStats, onlineUserIds: Array.from(onlineUserIds) });
+    socket.emit("stats_update", {
+      ...userStats,
+      onlineUserIds: Array.from(onlineUserIds),
+      onlineUsers: Array.from(onlineUserIds).map((id) => ({ id, username: onlineUsernames[id] || "" })),
+    });
   });
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {

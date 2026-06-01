@@ -9,6 +9,7 @@ import { Lock, Wifi } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
 import { usePageCounts } from "@/hooks/usePageCounts";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
+import { useOnlineUsers } from "@/hooks/useOnlineUsers";
 
 const GAMES = [
   { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
@@ -197,6 +198,7 @@ export default function Home() {
   const pageCounts = usePageCounts();
 
   const onlineCount = useOnlineCount();
+  const onlineUsers = useOnlineUsers();
 
   const handleLaunch = (href: string, label: string) => {
     door.open(label, () => setLocation(href));
@@ -230,34 +232,54 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Online counter */}
+          {/* Online counter + user list */}
           <div
-            className="flex items-center gap-3 px-4 py-3 rounded-xl border shrink-0 self-start"
+            className="rounded-xl border shrink-0 self-start overflow-hidden"
             style={{
               background: "rgba(0,255,100,0.05)",
               borderColor: "rgba(0,255,100,0.2)",
               boxShadow: "0 0 20px rgba(0,255,100,0.06)",
+              minWidth: "180px",
             }}
           >
-            <div className="relative flex items-center justify-center w-8 h-8 rounded-full shrink-0"
-              style={{ background: "rgba(0,255,100,0.1)" }}>
-              <Wifi className="w-4 h-4" style={{ color: "#4ade80" }} />
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-background"
-                style={{ animation: "home-pulse 2s ease-in-out infinite" }} />
-            </div>
-            <div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-display font-black leading-none" style={{ color: "#4ade80" }}>
-                  {onlineCount}
-                </span>
-                <span className="text-xs font-mono font-bold uppercase tracking-widest" style={{ color: "rgba(74,222,128,0.6)" }}>
-                  online
-                </span>
+            {/* Count row */}
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-full shrink-0"
+                style={{ background: "rgba(0,255,100,0.1)" }}>
+                <Wifi className="w-4 h-4" style={{ color: "#4ade80" }} />
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-background"
+                  style={{ animation: "home-pulse 2s ease-in-out infinite" }} />
               </div>
-              <p className="text-[10px] font-mono mt-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>
-                users on the site
-              </p>
+              <div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl font-display font-black leading-none" style={{ color: "#4ade80" }}>
+                    {onlineCount}
+                  </span>
+                  <span className="text-xs font-mono font-bold uppercase tracking-widest" style={{ color: "rgba(74,222,128,0.6)" }}>
+                    online
+                  </span>
+                </div>
+                <p className="text-[10px] font-mono mt-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>
+                  users on the site
+                </p>
+              </div>
             </div>
+
+            {/* User list */}
+            {onlineUsers.length > 0 && (
+              <div style={{ borderTop: "1px solid rgba(0,255,100,0.12)" }}>
+                <div className="px-3 py-2 max-h-40 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+                  {onlineUsers.map((u) => (
+                    <div key={u.id} className="flex items-center gap-2 py-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#4ade80", boxShadow: "0 0 4px #4ade80" }} />
+                      <span className="text-xs font-mono truncate" style={{ color: u.username ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.25)" }}>
+                        {u.username || "anonymous"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
