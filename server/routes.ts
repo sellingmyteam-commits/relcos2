@@ -137,6 +137,41 @@ export async function registerRoutes(
     }
   });
 
+  // ── Code redemption ──
+  app.post("/api/redeem-code", async (req, res) => {
+    try {
+      const { userId, code } = z.object({
+        userId: z.number().int().positive(),
+        code: z.string().min(1).max(50),
+      }).parse(req.body);
+
+      const user = await storage.getSiteUserById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const upperCode = code.trim().toUpperCase();
+
+      if (upperCode === "ADMIN2000") {
+        if (user.isAdmin) return res.status(400).json({ message: "Already an admin" });
+        await storage.setSiteUserAdmin(userId, true);
+        return res.json({ success: true, granted: "admin", message: "Admin access granted." });
+      }
+
+      if (upperCode === "QWERTY10") {
+        if (user.hasQwerty) return res.status(400).json({ message: "Qwerty access already active" });
+        await storage.setQwertyAccess(userId, 1);
+        return res.json({ success: true, granted: "qwerty", message: "Qwerty access granted." });
+      }
+
+      return res.status(400).json({ message: "Invalid code" });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = z.object({

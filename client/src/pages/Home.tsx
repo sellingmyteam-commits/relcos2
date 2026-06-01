@@ -1,8 +1,8 @@
 import { Layout } from "@/components/Layout";
 import { useLocation } from "wouter";
-import { MessageSquare, Skull, Zap, Users, Bike, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Layers, Snowflake, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Globe2 } from "lucide-react";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { MessageSquare, Skull, Zap, Users, Bike, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Layers, Snowflake, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Globe2, KeyRound, CheckCircle, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock, Wifi } from "lucide-react";
@@ -10,7 +10,8 @@ import { useDoor } from "@/components/DoorTransition";
 import { usePageCounts } from "@/hooks/usePageCounts";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
 import { reIdentifyUser } from "@/lib/socket";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 const GAMES = [
   { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
@@ -198,6 +199,52 @@ export default function Home() {
 
   const onlineCount = useOnlineCount();
 
+  // Code redemption modal state
+  const [codeModalOpen, setCodeModalOpen] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeStatus, setCodeStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+
+  const redeemMutation = useMutation({
+    mutationFn: async ({ userId, code }: { userId: number; code: string }) => {
+      const res = await apiRequest("POST", "/api/redeem-code", { userId, code });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setCodeStatus({ type: "success", message: data.message });
+      setCodeInput("");
+    },
+    onError: async (err: any) => {
+      let msg = "Invalid code";
+      try {
+        const json = await err?.response?.json?.();
+        if (json?.message) msg = json.message;
+      } catch {}
+      setCodeStatus({ type: "error", message: msg });
+    },
+  });
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (val.trim().toUpperCase() === "CODE") {
+      setSearchQuery("");
+      setCodeInput("");
+      setCodeStatus(null);
+      setCodeModalOpen(true);
+      setTimeout(() => codeInputRef.current?.focus(), 80);
+    }
+  };
+
+  const handleRedeemSubmit = () => {
+    const userId = parseInt(localStorage.getItem("siteUserId") || "0", 10);
+    if (!userId) {
+      setCodeStatus({ type: "error", message: "You must be logged in to redeem a code." });
+      return;
+    }
+    if (!codeInput.trim()) return;
+    redeemMutation.mutate({ userId, code: codeInput.trim() });
+  };
+
   const { data: onlineUsers = [] } = useQuery<{ id: string; username: string }[]>({
     queryKey: ["/api/online-users"],
     refetchInterval: 10000,
@@ -306,7 +353,7 @@ export default function Home() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search games..."
               data-testid="input-home-search"
               className="w-full pl-9 pr-8 h-10 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-muted-foreground outline-none focus:border-secondary/50 focus:bg-secondary/5 transition-all"
@@ -383,6 +430,121 @@ export default function Home() {
           <span>SYSTEM ONLINE • SECURE CONNECTION • READY TO PLAY</span>
         </div>
       </div>
+
+      {/* Code Redemption Modal */}
+      <AnimatePresence>
+        {codeModalOpen && (
+          <motion.div
+            key="code-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" }}
+            onClick={(e) => { if (e.target === e.currentTarget) { setCodeModalOpen(false); setCodeStatus(null); setCodeInput(""); } }}
+          >
+            <motion.div
+              key="code-modal-panel"
+              initial={{ opacity: 0, scale: 0.88, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.88, y: 24 }}
+              transition={{ type: "spring", stiffness: 320, damping: 28 }}
+              className="relative w-full max-w-sm mx-4 rounded-2xl border overflow-hidden"
+              style={{
+                background: "rgba(5,8,25,0.97)",
+                borderColor: "rgba(0,255,249,0.25)",
+                boxShadow: "0 0 60px rgba(0,255,249,0.12), 0 0 0 1px rgba(0,255,249,0.08)",
+              }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(0,255,249,0.1)", border: "1px solid rgba(0,255,249,0.2)" }}>
+                    <KeyRound className="w-4 h-4" style={{ color: "rgba(0,255,249,0.9)" }} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-display font-bold text-white tracking-widest uppercase">Enter Code</h2>
+                    <p className="text-[11px] font-mono mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>Redeem an access code</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setCodeModalOpen(false); setCodeStatus(null); setCodeInput(""); }}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+                  data-testid="button-code-modal-close"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5 flex flex-col gap-4">
+                <div className="relative">
+                  <input
+                    ref={codeInputRef}
+                    type="text"
+                    value={codeInput}
+                    onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeStatus(null); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleRedeemSubmit(); }}
+                    placeholder="ENTER CODE HERE"
+                    data-testid="input-redeem-code"
+                    spellCheck={false}
+                    className="w-full h-12 px-4 rounded-xl text-sm font-mono tracking-widest text-white placeholder:tracking-widest outline-none transition-all"
+                    style={{
+                      background: "rgba(0,255,249,0.04)",
+                      border: "1px solid rgba(0,255,249,0.18)",
+                      letterSpacing: "0.15em",
+                    }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,249,0.45)"; e.currentTarget.style.boxShadow = "0 0 16px rgba(0,255,249,0.08)"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,249,0.18)"; e.currentTarget.style.boxShadow = "none"; }}
+                  />
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {codeStatus && (
+                    <motion.div
+                      key={codeStatus.type}
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-mono"
+                      style={codeStatus.type === "success" ? {
+                        background: "rgba(74,222,128,0.08)",
+                        border: "1px solid rgba(74,222,128,0.25)",
+                        color: "#4ade80",
+                      } : {
+                        background: "rgba(239,68,68,0.08)",
+                        border: "1px solid rgba(239,68,68,0.25)",
+                        color: "#f87171",
+                      }}
+                    >
+                      {codeStatus.type === "success"
+                        ? <CheckCircle className="w-4 h-4 shrink-0" />
+                        : <AlertCircle className="w-4 h-4 shrink-0" />}
+                      <span>{codeStatus.message}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <button
+                  onClick={handleRedeemSubmit}
+                  disabled={redeemMutation.isPending || !codeInput.trim()}
+                  data-testid="button-redeem-submit"
+                  className="w-full h-11 rounded-xl font-display font-bold text-sm uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: "rgba(0,255,249,0.12)",
+                    border: "1px solid rgba(0,255,249,0.3)",
+                    color: "rgba(0,255,249,0.9)",
+                  }}
+                  onMouseEnter={e => { if (!redeemMutation.isPending && codeInput.trim()) { e.currentTarget.style.background = "rgba(0,255,249,0.2)"; e.currentTarget.style.boxShadow = "0 0 20px rgba(0,255,249,0.15)"; } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,255,249,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
+                >
+                  {redeemMutation.isPending ? "REDEEMING..." : "REDEEM"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 }
