@@ -1,131 +1,221 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
 
-type Phase = "idle" | "glitch" | "dark" | "text";
+type Phase = "idle" | "glitch" | "dark" | "hacked" | "countdown" | "goodbye";
 
-// Pre-compute random values so they don't change on re-render
 function makeGlitchBars(count: number) {
   return Array.from({ length: count }, (_, i) => ({
     top: Math.random() * 100,
-    height: 2 + Math.random() * 8,
-    color: i % 3 === 0 ? "#ff003c" : i % 3 === 1 ? "#00fff9" : "#fff",
-    opacity: 0.15 + Math.random() * 0.4,
-    duration: 0.1 + Math.random() * 0.3,
+    height: 2 + Math.random() * 14,
+    color: i % 3 === 0 ? "#ff003c" : i % 3 === 1 ? "#00fff9" : "#fff200",
+    opacity: 0.12 + Math.random() * 0.55,
+    duration: 0.05 + Math.random() * 0.2,
+    delay: Math.random() * 0.15,
+    xOffset: (Math.random() - 0.5) * 120,
   }));
 }
 
-function makeTextBars(count: number) {
-  return Array.from({ length: count }, (_, i) => ({
-    left: Math.random() * 60,
-    width: 30 + Math.random() * 40,
-    color: i % 2 === 0 ? "#ff003c" : "#00fff9",
-    duration: 0.15 + Math.random() * 0.25,
+function makeStaticDots(count: number) {
+  return Array.from({ length: count }, () => ({
+    top: Math.random() * 100,
+    left: Math.random() * 100,
+    size: 1 + Math.random() * 3,
+    opacity: 0.3 + Math.random() * 0.7,
+    duration: 0.06 + Math.random() * 0.12,
   }));
 }
+
+const SCRAMBLE_CHARS = "!@#$%^&*<>?/\\|[]{}~`▓▒░█▄▀QWERTY01";
+const HACKED_TARGET = "HACKED BY QWERTY!!!";
 
 export function HackSequence() {
   const [phase, setPhase] = useState<Phase>("idle");
-  const [glitchText, setGlitchText] = useState("HACKED BY QWERTY!!!!!");
-  const [textVisible, setTextVisible] = useState(true);
+  const [hackedText, setHackedText] = useState(HACKED_TARGET);
+  const [hackedVisible, setHackedVisible] = useState(true);
+  const [countdown, setCountdown] = useState(3);
+  const [chromaShift, setChromaShift] = useState({ x: 0, y: 0 });
+  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0, skew: 0 });
+  const [staticNoise, setStaticNoise] = useState(0);
+  const [scanlineOffset, setScanlineOffset] = useState(0);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // Stable random values — only recomputed when needed
-  const glitchBars = useMemo(() => makeGlitchBars(20), []);
-  const textBars = useMemo(() => makeTextBars(6), []);
+  const glitchBars = useMemo(() => makeGlitchBars(35), []);
+  const staticDots = useMemo(() => makeStaticDots(80), []);
+
+  const addTimer = (fn: () => void, ms: number) => {
+    const t = setTimeout(fn, ms);
+    timersRef.current.push(t);
+    return t;
+  };
 
   useEffect(() => {
     const socket = getSharedSocket();
 
     const onHack = () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+
       setPhase("glitch");
+      setCountdown(3);
+      setHackedText(HACKED_TARGET);
 
       try { document.documentElement.requestFullscreen?.(); } catch {}
 
-      setTimeout(() => setPhase("dark"), 2200);
-      setTimeout(() => setPhase("text"), 3000);
-      setTimeout(() => {
-        // Try to close — works only if opened by JS
+      addTimer(() => setPhase("dark"), 3200);
+      addTimer(() => setPhase("hacked"), 3900);
+      addTimer(() => {
+        setPhase("countdown");
+        setCountdown(3);
+      }, 7200);
+      addTimer(() => setCountdown(2), 8200);
+      addTimer(() => setCountdown(1), 9200);
+      addTimer(() => setPhase("goodbye"), 10200);
+      addTimer(() => {
         try { window.close(); } catch {}
-        // Fallback: navigate away
         try { window.location.replace("about:blank"); } catch {}
-      }, 6500);
+      }, 11500);
     };
 
     socket.on("qwerty_hack", onHack);
     return () => { socket.off("qwerty_hack", onHack); };
   }, []);
 
-  // Text scrambler + flicker — only runs in "text" phase
+  // Glitch phase: heavy screen distortion loop
   useEffect(() => {
-    if (phase !== "text") return;
-    const chars = "!@#$%^&*<>?/\\|[]{}~`QWERTY";
-    const target = "HACKED BY QWERTY!!!!!";
+    if (phase !== "glitch") return;
     let frame = 0;
+    const interval = setInterval(() => {
+      frame++;
+      setChromaShift({
+        x: (Math.random() - 0.5) * 30,
+        y: (Math.random() - 0.5) * 12,
+      });
+      setShakeOffset({
+        x: (Math.random() - 0.5) * 24,
+        y: (Math.random() - 0.5) * 16,
+        skew: (Math.random() - 0.5) * 10,
+      });
+      setStaticNoise(Math.random());
+      setScanlineOffset(Math.random() * 4);
+    }, 60);
+    return () => clearInterval(interval);
+  }, [phase]);
 
+  // Hacked phase: scramble text + flicker
+  useEffect(() => {
+    if (phase !== "hacked") return;
+    let frame = 0;
     const scramble = setInterval(() => {
       frame++;
-      if (frame > 18) {
-        setGlitchText(target);
+      if (frame > 22) {
+        setHackedText(HACKED_TARGET);
         clearInterval(scramble);
         return;
       }
-      setGlitchText(
-        target.split("").map((c, i) =>
-          i < frame ? c : chars[Math.floor(Math.random() * chars.length)]
+      setHackedText(
+        HACKED_TARGET.split("").map((c, i) =>
+          i < frame - 1 ? c : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
         ).join("")
       );
-    }, 80);
+    }, 90);
 
-    const flicker = setInterval(() => setTextVisible(v => !v), 120);
+    const flicker = setInterval(() => setHackedVisible(v => !v), 100);
     const stopFlicker = setTimeout(() => {
       clearInterval(flicker);
-      setTextVisible(true);
-    }, 1200);
+      setHackedVisible(true);
+    }, 1400);
+
+    let shakeFrame = 0;
+    const shakeLoop = setInterval(() => {
+      shakeFrame++;
+      setShakeOffset({
+        x: (Math.random() - 0.5) * 18,
+        y: (Math.random() - 0.5) * 10,
+        skew: (Math.random() - 0.5) * 6,
+      });
+    }, 80);
 
     return () => {
       clearInterval(scramble);
       clearInterval(flicker);
       clearTimeout(stopFlicker);
+      clearInterval(shakeLoop);
     };
+  }, [phase]);
+
+  // Countdown / goodbye: subtle shake
+  useEffect(() => {
+    if (phase !== "countdown" && phase !== "goodbye") return;
+    const shakeLoop = setInterval(() => {
+      setShakeOffset({
+        x: (Math.random() - 0.5) * 8,
+        y: (Math.random() - 0.5) * 4,
+        skew: (Math.random() - 0.5) * 3,
+      });
+    }, 100);
+    return () => clearInterval(shakeLoop);
   }, [phase]);
 
   if (phase === "idle") return null;
 
+  const isBlack = phase === "dark" || phase === "hacked" || phase === "countdown" || phase === "goodbye";
+
   return (
     <>
       <style>{`
-        @keyframes hs-shake {
-          0%   { transform: translate(0, 0); }
-          20%  { transform: translate(-3px, 2px); }
-          40%  { transform: translate(3px, -2px); }
-          60%  { transform: translate(-2px, -3px); }
-          80%  { transform: translate(2px, 3px); }
-          100% { transform: translate(0, 0); }
-        }
         @keyframes hs-bar {
-          0%   { transform: translateX(0);   opacity: 0.3; }
-          33%  { transform: translateX(8px);  opacity: 0.7; }
-          66%  { transform: translateX(-5px); opacity: 0.2; }
-          100% { transform: translateX(0);   opacity: 0.5; }
+          0%   { transform: translateX(0) scaleY(1);   opacity: 0.5; }
+          25%  { transform: translateX(12px) scaleY(1.4); opacity: 0.9; }
+          50%  { transform: translateX(-8px) scaleY(0.7); opacity: 0.3; }
+          75%  { transform: translateX(6px) scaleY(1.2); opacity: 0.7; }
+          100% { transform: translateX(0) scaleY(1);   opacity: 0.5; }
         }
-        @keyframes hs-shake-slow {
-          0%   { transform: translate(0, 0); }
-          25%  { transform: translate(-2px, 1px); }
-          50%  { transform: translate(2px, -1px); }
-          75%  { transform: translate(-1px, -2px); }
-          100% { transform: translate(0, 0); }
+        @keyframes hs-static {
+          0%, 100% { opacity: 0.6; }
+          50%       { opacity: 0.1; }
+        }
+        @keyframes hs-red-pulse {
+          0%, 100% { text-shadow: 0 0 40px #ff003c, 0 0 80px #ff003c, 0 0 120px #ff003c, 6px 0 0 #00fff9, -6px 0 0 #00fff9; }
+          50%      { text-shadow: 0 0 20px #ff003c, 0 0 50px #ff002080, 4px 0 0 #00fff9aa, -4px 0 0 #00fff9aa; }
+        }
+        @keyframes hs-countdown-in {
+          from { opacity: 0; transform: scale(1.6); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes hs-goodbye-in {
+          from { opacity: 0; letter-spacing: 1em; }
+          to   { opacity: 1; letter-spacing: 0.1em; }
+        }
+        @keyframes hs-vignette-pulse {
+          0%, 100% { opacity: 0.8; }
+          50%       { opacity: 0.4; }
+        }
+        @keyframes hs-flicker-bg {
+          0%, 95%, 100% { opacity: 1; }
+          96%            { opacity: 0.2; }
+          97%            { opacity: 0.9; }
+          98%            { opacity: 0.1; }
+          99%            { opacity: 0.85; }
         }
       `}</style>
 
       <div
-        className="fixed inset-0 z-[99999]"
+        className="fixed inset-0 z-[99999] overflow-hidden"
         style={{
-          background: phase === "dark" || phase === "text" ? "#000" : "transparent",
+          background: isBlack ? "#000" : "rgba(0,0,0,0.92)",
           pointerEvents: "all",
+          animation: phase === "glitch" ? "hs-flicker-bg 0.3s infinite" : "none",
         }}
       >
-        {/* Glitch phase */}
+        {/* === GLITCH PHASE === */}
         {phase === "glitch" && (
-          <div className="absolute inset-0" style={{ animation: "hs-shake 0.08s infinite" }}>
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: `translate(${shakeOffset.x}px, ${shakeOffset.y}px) skewX(${shakeOffset.skew}deg)`,
+            }}
+          >
+            {/* Horizontal glitch bars */}
             {glitchBars.map((bar, i) => (
               <div
                 key={i}
@@ -136,75 +226,251 @@ export function HackSequence() {
                   background: bar.color,
                   opacity: bar.opacity,
                   mixBlendMode: "screen" as const,
-                  animation: `hs-bar ${bar.duration}s infinite`,
+                  animation: `hs-bar ${bar.duration}s ${bar.delay}s infinite`,
+                  transform: `translateX(${bar.xOffset}px)`,
                 }}
               />
             ))}
+
+            {/* Static noise dots */}
+            {staticDots.map((dot, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  top: `${dot.top}%`,
+                  left: `${dot.left}%`,
+                  width: `${dot.size}px`,
+                  height: `${dot.size}px`,
+                  background: i % 3 === 0 ? "#ff003c" : i % 3 === 1 ? "#00fff9" : "#fff",
+                  opacity: dot.opacity * staticNoise,
+                  animation: `hs-static ${dot.duration}s infinite`,
+                }}
+              />
+            ))}
+
             {/* Scanlines */}
-            <div className="absolute inset-0" style={{
-              background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 4px)",
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: `repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0px, rgba(0,0,0,0.25) 1px, transparent 1px, transparent ${3 + scanlineOffset}px)`,
             }} />
-            {/* Red channel */}
+
+            {/* RGB chromatic aberration — red channel */}
             <div className="absolute inset-0" style={{
-              background: "rgba(255,0,60,0.18)",
-              transform: "translateX(-6px)",
+              background: "rgba(255,0,60,0.22)",
+              transform: `translateX(${chromaShift.x * 1.5}px) translateY(${chromaShift.y}px)`,
               mixBlendMode: "screen" as const,
             }} />
-            {/* Cyan channel */}
+
+            {/* RGB chromatic aberration — cyan channel */}
             <div className="absolute inset-0" style={{
               background: "rgba(0,255,249,0.18)",
-              transform: "translateX(6px)",
+              transform: `translateX(${-chromaShift.x}px) translateY(${chromaShift.y * 0.5}px)`,
               mixBlendMode: "screen" as const,
+            }} />
+
+            {/* Yellow distortion band */}
+            <div className="absolute inset-0" style={{
+              background: "rgba(255,220,0,0.08)",
+              transform: `translateX(${chromaShift.x * 0.6}px) translateY(${-chromaShift.y * 0.8}px)`,
+              mixBlendMode: "screen" as const,
+            }} />
+
+            {/* Vignette */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.75) 100%)",
+              animation: "hs-vignette-pulse 0.4s infinite",
+            }} />
+
+            {/* Big center flash bar */}
+            {staticNoise > 0.7 && (
+              <div className="absolute left-0 right-0" style={{
+                top: `${30 + staticNoise * 40}%`,
+                height: "4px",
+                background: "linear-gradient(90deg, transparent, #ff003c, #fff, #00fff9, transparent)",
+                opacity: 0.9,
+              }} />
+            )}
+
+            {/* Flickering "INCOMING" warning text */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{
+              opacity: staticNoise > 0.5 ? 0.6 : 0,
+            }}>
+              <span style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: "clamp(0.7rem, 3vw, 1.4rem)",
+                fontWeight: 900,
+                color: "#ff003c",
+                letterSpacing: "0.6em",
+                textShadow: "0 0 20px #ff003c",
+                transform: `translateX(${chromaShift.x * 2}px)`,
+              }}>
+                ▓▓ SIGNAL COMPROMISED ▓▓
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* === HACKED PHASE === */}
+        {phase === "hacked" && (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6"
+            style={{
+              transform: `translate(${shakeOffset.x}px, ${shakeOffset.y}px) skewX(${shakeOffset.skew * 0.5}deg)`,
+            }}
+          >
+            {/* Scanlines */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.35) 0px, rgba(0,0,0,0.35) 1px, transparent 1px, transparent 3px)",
+            }} />
+
+            {/* Red channel copy */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: "rgba(255,0,60,0.05)",
+              transform: `translateX(${shakeOffset.x * 0.3}px)`,
+              mixBlendMode: "screen" as const,
+            }} />
+
+            {/* Main hacked text */}
+            <div
+              style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: "clamp(2rem, 8vw, 6rem)",
+                fontWeight: 900,
+                color: "#ff003c",
+                animation: "hs-red-pulse 0.4s infinite",
+                letterSpacing: "0.04em",
+                textAlign: "center",
+                opacity: hackedVisible ? 1 : 0,
+                transition: "opacity 0.04s",
+                lineHeight: 1.1,
+                padding: "0 1rem",
+                position: "relative",
+                zIndex: 10,
+              }}
+            >
+              {/* Cyan ghost copy */}
+              <span style={{
+                position: "absolute",
+                inset: 0,
+                color: "rgba(0,255,249,0.3)",
+                transform: `translate(${shakeOffset.x * 0.4}px, 3px)`,
+                filter: "blur(2px)",
+                userSelect: "none",
+              }}>
+                {hackedText}
+              </span>
+              {hackedText}
+            </div>
+
+            {/* Sub text */}
+            <div style={{
+              fontFamily: "'Share Tech Mono', monospace",
+              fontSize: "clamp(0.5rem, 2vw, 0.9rem)",
+              color: "rgba(255,0,60,0.5)",
+              letterSpacing: "0.5em",
+              textTransform: "uppercase",
+              position: "relative",
+              zIndex: 10,
+            }}>
+              CONNECTION TERMINATED · SYSTEM BREACH DETECTED
+            </div>
+          </div>
+        )}
+
+        {/* === COUNTDOWN PHASE === */}
+        {phase === "countdown" && (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-8"
+            style={{
+              transform: `translate(${shakeOffset.x * 0.4}px, ${shakeOffset.y * 0.4}px)`,
+            }}
+          >
+            <div style={{
+              fontFamily: "'Share Tech Mono', monospace",
+              fontSize: "clamp(0.8rem, 3vw, 1.4rem)",
+              fontWeight: 700,
+              color: "#ff8080",
+              letterSpacing: "0.35em",
+              textTransform: "uppercase",
+              animation: "hs-countdown-in 0.4s ease-out",
+            }}>
+              TAB CLOSING IN
+            </div>
+
+            <div
+              key={countdown}
+              style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: "clamp(5rem, 20vw, 14rem)",
+                fontWeight: 900,
+                color: "#ff003c",
+                lineHeight: 1,
+                textShadow: "0 0 60px #ff003c, 0 0 120px #ff003c80, 8px 0 0 #00fff944, -8px 0 0 #00fff944",
+                animation: "hs-countdown-in 0.25s ease-out",
+              }}
+            >
+              {countdown}
+            </div>
+
+            {/* Progress dots */}
+            <div className="flex gap-3">
+              {[3, 2, 1].map(n => (
+                <div key={n} style={{
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "50%",
+                  background: countdown <= n ? "#ff003c" : "rgba(255,0,60,0.15)",
+                  boxShadow: countdown <= n ? "0 0 10px #ff003c" : "none",
+                  transition: "all 0.2s",
+                }} />
+              ))}
+            </div>
+
+            {/* Scanlines */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 3px)",
             }} />
           </div>
         )}
 
-        {/* Text phase */}
-        {phase === "text" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
+        {/* === GOODBYE PHASE === */}
+        {phase === "goodbye" && (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6"
+            style={{
+              transform: `translate(${shakeOffset.x * 0.3}px, ${shakeOffset.y * 0.3}px)`,
+            }}
+          >
             {/* Scanlines */}
             <div className="absolute inset-0 pointer-events-none" style={{
-              background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.4) 0px, rgba(0,0,0,0.4) 1px, transparent 1px, transparent 3px)",
+              background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 3px)",
             }} />
-            {/* Glitch bars */}
-            {textBars.map((bar, i) => (
-              <div key={i} className="absolute" style={{
-                top: `${10 + i * 14}%`,
-                left: `${bar.left}%`,
-                width: `${bar.width}%`,
-                height: "2px",
-                background: bar.color,
-                opacity: 0.4,
-                animation: `hs-bar ${bar.duration}s infinite`,
-              }} />
-            ))}
-            {/* Main text */}
+
             <div style={{
               fontFamily: "'Share Tech Mono', monospace",
-              fontSize: "clamp(1.5rem, 5vw, 3.5rem)",
+              fontSize: "clamp(1.5rem, 6vw, 4.5rem)",
               fontWeight: 900,
               color: "#ff003c",
-              textShadow: "0 0 30px #ff003c, 0 0 60px #ff003c, 4px 0 0 #00fff9, -4px 0 0 #00fff9",
-              letterSpacing: "0.05em",
-              opacity: textVisible ? 1 : 0,
-              transition: "opacity 0.05s",
-              animation: "hs-shake 0.06s infinite",
+              textShadow: "0 0 30px #ff003c, 0 0 60px #ff003c60, 5px 0 0 #00fff933, -5px 0 0 #00fff933",
+              letterSpacing: "0.1em",
+              textAlign: "center",
+              animation: "hs-goodbye-in 0.35s ease-out forwards",
               position: "relative",
               zIndex: 10,
+              padding: "0 1rem",
             }}>
-              {glitchText}
+              GOODBYE HAHAHAHAHA
             </div>
+
             <div style={{
               fontFamily: "'Share Tech Mono', monospace",
-              fontSize: "clamp(0.6rem, 2vw, 1rem)",
-              color: "#ffffff44",
-              letterSpacing: "0.4em",
-              textTransform: "uppercase",
-              animation: "hs-shake-slow 0.12s infinite",
+              fontSize: "clamp(0.5rem, 1.5vw, 0.75rem)",
+              color: "rgba(255,0,60,0.35)",
+              letterSpacing: "0.5em",
               position: "relative",
               zIndex: 10,
             }}>
-              CONNECTION TERMINATED
+              ▓▓▓ SESSION TERMINATED BY QWERTY ▓▓▓
             </div>
           </div>
         )}

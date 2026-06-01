@@ -314,6 +314,22 @@ export function Navigation() {
             )}
           </div>
 
+          {/* Admin */}
+          {isAdmin && (
+            <button
+              onClick={() => setShowAdminPanel(true)}
+              data-testid="button-admin-panel"
+              title={collapsed ? "Admin" : undefined}
+              className={cn(
+                "flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold font-mono tracking-widest uppercase hover:bg-cyan-500/20 hover:border-cyan-500/60 transition-all",
+                collapsed ? "justify-center w-full" : "w-full"
+              )}
+            >
+              <Shield className="w-3.5 h-3.5 shrink-0" />
+              {!collapsed && <span>ADMIN</span>}
+            </button>
+          )}
+
           {/* QWERTY */}
           {hasQwerty && (
             <button
@@ -335,22 +351,6 @@ export function Navigation() {
             >
               <Zap className="w-3.5 h-3.5 shrink-0" style={{ filter: "drop-shadow(0 0 4px #ff003c)" }} />
               {!collapsed && <span>QWERTY</span>}
-            </button>
-          )}
-
-          {/* Admin */}
-          {isAdmin && (
-            <button
-              onClick={() => setShowAdminPanel(true)}
-              data-testid="button-admin-panel"
-              title={collapsed ? "Admin" : undefined}
-              className={cn(
-                "flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold font-mono tracking-widest uppercase hover:bg-cyan-500/20 hover:border-cyan-500/60 transition-all",
-                collapsed ? "justify-center w-full" : "w-full"
-              )}
-            >
-              <Shield className="w-3.5 h-3.5 shrink-0" />
-              {!collapsed && <span>ADMIN</span>}
             </button>
           )}
         </div>
