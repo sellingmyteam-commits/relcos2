@@ -8,6 +8,7 @@ import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock, Wifi } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
 import { usePageCounts } from "@/hooks/usePageCounts";
+import { useOnlineCount } from "@/hooks/useOnlineCount";
 
 const GAMES = [
   { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
@@ -195,6 +196,8 @@ export default function Home() {
   const door = useDoor();
   const pageCounts = usePageCounts();
 
+  const onlineCount = useOnlineCount();
+
   const handleLaunch = (href: string, label: string) => {
     door.open(label, () => setLocation(href));
   };
@@ -227,7 +230,43 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Online counter */}
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border shrink-0 self-start"
+            style={{
+              background: "rgba(0,255,100,0.05)",
+              borderColor: "rgba(0,255,100,0.2)",
+              boxShadow: "0 0 20px rgba(0,255,100,0.06)",
+            }}
+          >
+            <div className="relative flex items-center justify-center w-8 h-8 rounded-full shrink-0"
+              style={{ background: "rgba(0,255,100,0.1)" }}>
+              <Wifi className="w-4 h-4" style={{ color: "#4ade80" }} />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-background"
+                style={{ animation: "home-pulse 2s ease-in-out infinite" }} />
+            </div>
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-display font-black leading-none" style={{ color: "#4ade80" }}>
+                  {onlineCount}
+                </span>
+                <span className="text-xs font-mono font-bold uppercase tracking-widest" style={{ color: "rgba(74,222,128,0.6)" }}>
+                  online
+                </span>
+              </div>
+              <p className="text-[10px] font-mono mt-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>
+                users on the site
+              </p>
+            </div>
+          </div>
         </div>
+
+        <style>{`
+          @keyframes home-pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+            50%       { opacity: 0.7; box-shadow: 0 0 0 4px rgba(74,222,128,0); }
+          }
+        `}</style>
 
         {/* Search bar */}
         <div className="mb-6">
