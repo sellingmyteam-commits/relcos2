@@ -2,7 +2,7 @@ import { Layout } from "@/components/Layout";
 import { useLocation } from "wouter";
 import { MessageSquare, Skull, Zap, Users, Bike, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Layers, Snowflake, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Globe2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useGameLocks } from "@/hooks/useGameLocks";
 import { Lock, Wifi } from "lucide-react";
@@ -10,6 +10,7 @@ import { useDoor } from "@/components/DoorTransition";
 import { usePageCounts } from "@/hooks/usePageCounts";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
 import { useOnlineUsers } from "@/hooks/useOnlineUsers";
+import { reIdentifyUser } from "@/lib/socket";
 
 const GAMES = [
   { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
@@ -199,6 +200,12 @@ export default function Home() {
 
   const onlineCount = useOnlineCount();
   const onlineUsers = useOnlineUsers();
+
+  // Re-announce username to server on mount so existing connections get their name tracked
+  useEffect(() => {
+    const userId = localStorage.getItem("siteUserId");
+    if (userId) reIdentifyUser(userId);
+  }, []);
 
   const handleLaunch = (href: string, label: string) => {
     door.open(label, () => setLocation(href));
