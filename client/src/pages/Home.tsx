@@ -11,7 +11,6 @@ import { usePageCounts } from "@/hooks/usePageCounts";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
 import { reIdentifyUser } from "@/lib/socket";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 
 const GAMES = [
   { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
@@ -207,22 +206,22 @@ export default function Home() {
 
   const redeemMutation = useMutation({
     mutationFn: async ({ userId, code }: { userId: number; code: string }) => {
-      const res = await apiRequest("POST", "/api/redeem-code", { userId, code });
-      return res.json();
+      const res = await fetch("/api/redeem-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, code }),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Invalid code");
+      return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setCodeStatus({ type: "success", message: data.message });
       setCodeInput("");
     },
     onError: (err: any) => {
-      let msg = "Invalid code";
-      try {
-        const raw = err?.message || "";
-        const jsonStr = raw.replace(/^\d+:\s*/, "");
-        const parsed = JSON.parse(jsonStr);
-        if (parsed?.message) msg = parsed.message;
-      } catch {}
-      setCodeStatus({ type: "error", message: msg });
+      setCodeStatus({ type: "error", message: err?.message || "Invalid code" });
     },
   });
 
