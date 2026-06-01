@@ -2,6 +2,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import { onlineState } from "./onlineState";
 
 function safeUser(user: Record<string, unknown>) {
   const { passwordHash: _ph, ...safe } = user;
@@ -307,6 +308,15 @@ export async function registerRoutes(
     if (!ok) return res.status(404).json({ message: "Not locked" });
     invalidateLockedGamesCache();
     res.json({ ok: true });
+  });
+
+  app.get("/api/online-users", async (_req, res) => {
+    const ids = Array.from(onlineState.userIds);
+    const users = ids.map((id) => ({
+      id,
+      username: onlineState.usernames[id] || "",
+    }));
+    res.json(users);
   });
 
   return httpServer;

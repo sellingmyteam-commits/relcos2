@@ -9,8 +9,8 @@ import { Lock, Wifi } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
 import { usePageCounts } from "@/hooks/usePageCounts";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
-import { useOnlineUsers } from "@/hooks/useOnlineUsers";
 import { reIdentifyUser } from "@/lib/socket";
+import { useQuery } from "@tanstack/react-query";
 
 const GAMES = [
   { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
@@ -199,7 +199,11 @@ export default function Home() {
   const pageCounts = usePageCounts();
 
   const onlineCount = useOnlineCount();
-  const onlineUsers = useOnlineUsers();
+
+  const { data: onlineUsers = [] } = useQuery<{ id: string; username: string }[]>({
+    queryKey: ["/api/online-users"],
+    refetchInterval: 3000,
+  });
 
   // Re-announce username to server on mount so existing connections get their name tracked
   useEffect(() => {

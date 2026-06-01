@@ -85,14 +85,14 @@ app.use((req, res, next) => {
   // userId → socketId mapping for targeted events
   const userSocketMap: Record<string, string> = {};
   const socketUserMap: Record<string, string> = {};
-  const onlineUserIds = new Set<string>();
-  const onlineUsernames: Record<string, string> = {}; // userId → username
+
+  const { onlineState } = await import("./onlineState");
 
   const broadcastStats = () => {
-    userStats.onlineUserIds = Array.from(onlineUserIds);
-    userStats.onlineUsers = Array.from(onlineUserIds).map((id) => ({
+    userStats.onlineUserIds = Array.from(onlineState.userIds);
+    userStats.onlineUsers = Array.from(onlineState.userIds).map((id) => ({
       id,
-      username: onlineUsernames[id] || "",
+      username: onlineState.usernames[id] || "",
     }));
     io.emit("stats_update", userStats);
   };
@@ -107,8 +107,8 @@ app.use((req, res, next) => {
       if (!userId) return;
       socketUserMap[socket.id] = userId;
       userSocketMap[userId] = socket.id;
-      onlineUserIds.add(userId);
-      if (username) onlineUsernames[userId] = username;
+      onlineState.userIds.add(userId);
+      if (username) onlineState.usernames[userId] = username;
       broadcastStats();
     });
 
@@ -139,16 +139,16 @@ app.use((req, res, next) => {
       if (uid) {
         delete userSocketMap[uid];
         delete socketUserMap[socket.id];
-        onlineUserIds.delete(uid);
-        delete onlineUsernames[uid];
+        onlineState.userIds.delete(uid);
+        delete onlineState.usernames[uid];
       }
       broadcastStats();
     });
 
     socket.emit("stats_update", {
       ...userStats,
-      onlineUserIds: Array.from(onlineUserIds),
-      onlineUsers: Array.from(onlineUserIds).map((id) => ({ id, username: onlineUsernames[id] || "" })),
+      onlineUserIds: Array.from(onlineState.userIds),
+      onlineUsers: Array.from(onlineState.userIds).map((id) => ({ id, username: onlineState.usernames[id] || "" })),
     });
   });
 
