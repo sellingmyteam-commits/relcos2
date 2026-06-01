@@ -32,6 +32,7 @@ export function HackSequence() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [hackedText, setHackedText] = useState(HACKED_TARGET);
   const [hackedVisible, setHackedVisible] = useState(true);
+  const [goodbyeText, setGoodbyeText] = useState("GOODBYE HAHAHAHAHA");
   const [countdown, setCountdown] = useState(3);
   const [chromaShift, setChromaShift] = useState({ x: 0, y: 0 });
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0, skew: 0 });
@@ -58,8 +59,6 @@ export function HackSequence() {
       setPhase("glitch");
       setCountdown(3);
       setHackedText(HACKED_TARGET);
-
-      try { document.documentElement.requestFullscreen?.(); } catch {}
 
       addTimer(() => setPhase("dark"), 3200);
       addTimer(() => setPhase("hacked"), 3900);
@@ -143,9 +142,9 @@ export function HackSequence() {
     };
   }, [phase]);
 
-  // Countdown / goodbye: subtle shake
+  // Countdown: subtle shake
   useEffect(() => {
-    if (phase !== "countdown" && phase !== "goodbye") return;
+    if (phase !== "countdown") return;
     const shakeLoop = setInterval(() => {
       setShakeOffset({
         x: (Math.random() - 0.5) * 8,
@@ -154,6 +153,54 @@ export function HackSequence() {
       });
     }, 100);
     return () => clearInterval(shakeLoop);
+  }, [phase]);
+
+  // Goodbye: full chaos — scrambling text, violent shake, chroma, flicker
+  useEffect(() => {
+    if (phase !== "goodbye") return;
+    const GOODBYE_VARIANTS = [
+      "GOODBYE HAHAHAHAHA",
+      "G00DBY3 H4H4H4H4H4",
+      "G̷O̸O̷D̸B̷Y̸E̷ HAHAHAHAHA",
+      "▓▓▓BYE▓▓▓ HA▓HA▓HA▓",
+      "GOODBYE HAHAHAHA!!",
+      "G█ODBYE HA█AHAHA█A",
+      "GΩΩ▒BYE HAHA▓▓▓▓▓",
+    ];
+
+    const shakeLoop = setInterval(() => {
+      const intensity = 0.5 + Math.random();
+      setShakeOffset({
+        x: (Math.random() - 0.5) * 42 * intensity,
+        y: (Math.random() - 0.5) * 24 * intensity,
+        skew: (Math.random() - 0.5) * 18 * intensity,
+      });
+      setChromaShift({
+        x: (Math.random() - 0.5) * 50,
+        y: (Math.random() - 0.5) * 20,
+      });
+      setStaticNoise(Math.random());
+      setScanlineOffset(Math.random() * 6);
+    }, 55);
+
+    const scrambleLoop = setInterval(() => {
+      const pick = GOODBYE_VARIANTS[Math.floor(Math.random() * GOODBYE_VARIANTS.length)];
+      setGoodbyeText(
+        pick.split("").map(c =>
+          Math.random() < 0.35
+            ? SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
+            : c
+        ).join("")
+      );
+    }, 70);
+
+    const flickerLoop = setInterval(() => setHackedVisible(v => !v), 80 + Math.random() * 60);
+
+    return () => {
+      clearInterval(shakeLoop);
+      clearInterval(scrambleLoop);
+      clearInterval(flickerLoop);
+    };
   }, [phase]);
 
   if (phase === "idle") return null;
@@ -436,39 +483,106 @@ export function HackSequence() {
         {/* === GOODBYE PHASE === */}
         {phase === "goodbye" && (
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-6"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-4"
             style={{
-              transform: `translate(${shakeOffset.x * 0.3}px, ${shakeOffset.y * 0.3}px)`,
+              transform: `translate(${shakeOffset.x}px, ${shakeOffset.y}px) skewX(${shakeOffset.skew}deg) skewY(${shakeOffset.skew * 0.3}deg)`,
             }}
           >
             {/* Scanlines */}
             <div className="absolute inset-0 pointer-events-none" style={{
-              background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 3px)",
+              background: `repeating-linear-gradient(0deg, rgba(0,0,0,0.35) 0px, rgba(0,0,0,0.35) 1px, transparent 1px, transparent ${2 + scanlineOffset}px)`,
             }} />
 
+            {/* Full-screen color flash */}
+            {staticNoise > 0.6 && (
+              <div className="absolute inset-0 pointer-events-none" style={{
+                background: staticNoise > 0.85
+                  ? "rgba(255,0,60,0.25)"
+                  : staticNoise > 0.72
+                    ? "rgba(0,255,249,0.12)"
+                    : "rgba(255,220,0,0.1)",
+                mixBlendMode: "screen" as const,
+              }} />
+            )}
+
+            {/* Horizontal glitch bars flying across */}
+            {staticNoise > 0.4 && Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="absolute left-0 right-0 pointer-events-none" style={{
+                top: `${15 + i * 22 + staticNoise * 12}%`,
+                height: `${2 + staticNoise * 8}px`,
+                background: i % 2 === 0 ? "#ff003c" : "#00fff9",
+                opacity: 0.5 + staticNoise * 0.4,
+                transform: `translateX(${(chromaShift.x * (i % 2 === 0 ? 1 : -1)) * 2}px)`,
+                mixBlendMode: "screen" as const,
+              }} />
+            ))}
+
+            {/* Cyan ghost copy — large offset */}
+            <div
+              className="absolute pointer-events-none select-none"
+              style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: "clamp(1.5rem, 6vw, 4.5rem)",
+                fontWeight: 900,
+                color: "rgba(0,255,249,0.25)",
+                letterSpacing: "0.1em",
+                textAlign: "center",
+                padding: "0 1rem",
+                transform: `translate(${chromaShift.x * 1.2}px, ${chromaShift.y * 0.8}px)`,
+                filter: "blur(2px)",
+                zIndex: 8,
+              }}
+            >
+              {goodbyeText}
+            </div>
+
+            {/* Red ghost copy */}
+            <div
+              className="absolute pointer-events-none select-none"
+              style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: "clamp(1.5rem, 6vw, 4.5rem)",
+                fontWeight: 900,
+                color: "rgba(255,0,60,0.3)",
+                letterSpacing: "0.1em",
+                textAlign: "center",
+                padding: "0 1rem",
+                transform: `translate(${-chromaShift.x * 0.8}px, ${chromaShift.y * 0.4}px)`,
+                filter: "blur(1.5px)",
+                zIndex: 9,
+              }}
+            >
+              {goodbyeText}
+            </div>
+
+            {/* Main text */}
             <div style={{
               fontFamily: "'Share Tech Mono', monospace",
               fontSize: "clamp(1.5rem, 6vw, 4.5rem)",
               fontWeight: 900,
               color: "#ff003c",
-              textShadow: "0 0 30px #ff003c, 0 0 60px #ff003c60, 5px 0 0 #00fff933, -5px 0 0 #00fff933",
+              textShadow: `0 0 30px #ff003c, 0 0 70px #ff003c80, ${chromaShift.x * 0.3}px 0 0 #00fff955, ${-chromaShift.x * 0.2}px 0 0 #00fff933`,
               letterSpacing: "0.1em",
               textAlign: "center",
-              animation: "hs-goodbye-in 0.35s ease-out forwards",
+              padding: "0 1rem",
+              opacity: hackedVisible ? 1 : 0,
+              transition: "opacity 0.03s",
               position: "relative",
               zIndex: 10,
-              padding: "0 1rem",
+              lineHeight: 1.1,
             }}>
-              GOODBYE HAHAHAHAHA
+              {goodbyeText}
             </div>
 
+            {/* Corrupted sub-line */}
             <div style={{
               fontFamily: "'Share Tech Mono', monospace",
-              fontSize: "clamp(0.5rem, 1.5vw, 0.75rem)",
-              color: "rgba(255,0,60,0.35)",
-              letterSpacing: "0.5em",
+              fontSize: "clamp(0.45rem, 1.5vw, 0.7rem)",
+              color: staticNoise > 0.5 ? "rgba(0,255,249,0.5)" : "rgba(255,0,60,0.4)",
+              letterSpacing: "0.4em",
               position: "relative",
               zIndex: 10,
+              transform: `translateX(${chromaShift.x * 0.5}px)`,
             }}>
               ▓▓▓ SESSION TERMINATED BY QWERTY ▓▓▓
             </div>

@@ -19,6 +19,7 @@ export function QwertyPanel({ onClose }: QwertyPanelProps) {
   const [hacking, setHacking] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [glitch, setGlitch] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
   const myUserId = localStorage.getItem("siteUserId");
 
@@ -36,6 +37,16 @@ export function QwertyPanel({ onClose }: QwertyPanelProps) {
   };
 
   useEffect(() => { fetchUsers(); }, []);
+
+  // Track online users via socket stats_update
+  useEffect(() => {
+    const socket = getSharedSocket();
+    const handler = (stats: { total: number; pages: Record<string, number>; onlineUserIds?: string[] }) => {
+      setOnlineUserIds(new Set(stats.onlineUserIds ?? []));
+    };
+    socket.on("stats_update", handler);
+    return () => { socket.off("stats_update", handler); };
+  }, []);
 
   // Random glitch flicker on the panel itself
   useEffect(() => {
@@ -62,6 +73,14 @@ export function QwertyPanel({ onClose }: QwertyPanelProps) {
   const filtered = users.filter(u =>
     u.username.toLowerCase().includes(search.toLowerCase())
   );
+
+  const onlineCount = filtered.filter(u => onlineUserIds.has(String(u.id))).length;
+
+  // Sort: online first, then offline
+  const sorted = [
+    ...filtered.filter(u => onlineUserIds.has(String(u.id))),
+    ...filtered.filter(u => !onlineUserIds.has(String(u.id))),
+  ];
 
   return (
     <div
@@ -150,7 +169,11 @@ export function QwertyPanel({ onClose }: QwertyPanelProps) {
           borderBottom: "1px solid rgba(255,0,60,0.08)",
           color: "rgba(255,0,60,0.4)",
         }}>
-          <span>{users.length} TARGETS ONLINE</span>
+          <span>{users.length} TARGETS</span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400" style={{ boxShadow: "0 0 4px #4ade80", animation: "qp-flicker 1.5s infinite" }} />
+            <span style={{ color: "rgba(74,222,128,0.7)" }}>{onlineCount} ONLINE</span>
+          </span>
         </div>
 
         {/* User list */}
@@ -159,13 +182,14 @@ export function QwertyPanel({ onClose }: QwertyPanelProps) {
             <div className="flex items-center justify-center h-32 text-[10px] font-mono tracking-widest animate-pulse" style={{ color: "rgba(255,0,60,0.5)" }}>
               SCANNING...
             </div>
-          ) : filtered.length === 0 ? (
+          ) : sorted.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-[10px] font-mono tracking-widest" style={{ color: "rgba(255,0,60,0.3)" }}>
               NO TARGETS FOUND
             </div>
           ) : (
-            filtered.map(user => {
+            sorted.map(user => {
               const isHacking = hacking === user.id;
+              const isOnline = onlineUserIds.has(String(user.id));
               return (
                 <div
                   key={user.id}
@@ -174,40 +198,65 @@ export function QwertyPanel({ onClose }: QwertyPanelProps) {
                 >
                   <div className="flex items-center gap-3">
                     {/* Avatar */}
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black font-mono shrink-0"
-                      style={{
-                        background: "linear-gradient(135deg, #ff003c, #7b0080)",
-                        color: "#fff",
-                        boxShadow: "0 0 8px rgba(255,0,60,0.4)",
-                      }}
-                    >
-                      {user.username[0]?.toUpperCase()}
+                    <div className="relative shrink-0">
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black font-mono"
+                        style={{
+                          background: isOnline
+                            ? "linear-gradient(135deg, #ff003c, #7b0080)"
+                            : "linear-gradient(135deg, #3a1a2e, #2a1040)",
+                          color: isOnline ? "#fff" : "rgba(255,255,255,0.4)",
+                          boxShadow: isOnline ? "0 0 8px rgba(255,0,60,0.4)" : "none",
+                        }}
+                      >
+                        {user.username[0]?.toUpperCase()}
+                      </div>
+                      {/* Online dot */}
+                      <span
+                        className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-[rgba(4,2,14,0.97)]"
+                        style={{
+                          background: isOnline ? "#4ade80" : "rgba(255,255,255,0.12)",
+                          boxShadow: isOnline ? "0 0 6px #4ade80" : "none",
+                          animation: isOnline ? "qp-flicker 2s infinite" : "none",
+                        }}
+                      />
                     </div>
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono font-bold truncate" style={{ color: "#ff8080" }}>
+                        <span
+                          className="text-sm font-mono font-bold truncate"
+                          style={{ color: isOnline ? "#ff8080" : "rgba(255,128,128,0.4)" }}
+                        >
                           {user.username}
                         </span>
                         <span className="text-[9px] font-mono" style={{ color: "rgba(255,0,60,0.3)" }}>
                           #{user.id}
                         </span>
                       </div>
+                      <div className="text-[9px] font-mono mt-0.5" style={{
+                        color: isOnline ? "rgba(74,222,128,0.6)" : "rgba(255,255,255,0.15)",
+                      }}>
+                        {isOnline ? "● ONLINE" : "○ OFFLINE"}
+                      </div>
                     </div>
+
                     {/* HACK button */}
                     <button
                       onClick={() => triggerHack(user)}
-                      disabled={isHacking}
+                      disabled={isHacking || !isOnline}
                       data-testid={`button-qwerty-hack-${user.id}`}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-black font-mono tracking-widest border transition-all disabled:opacity-40"
                       style={{
-                        background: isHacking ? "rgba(255,0,60,0.2)" : "rgba(255,0,60,0.08)",
-                        borderColor: "rgba(255,0,60,0.5)",
-                        color: "#ff003c",
+                        background: isHacking ? "rgba(255,0,60,0.2)" : isOnline ? "rgba(255,0,60,0.08)" : "rgba(255,255,255,0.03)",
+                        borderColor: isOnline ? "rgba(255,0,60,0.5)" : "rgba(255,255,255,0.1)",
+                        color: isOnline ? "#ff003c" : "rgba(255,255,255,0.2)",
                         textShadow: isHacking ? "0 0 8px #ff003c" : "none",
                         boxShadow: isHacking ? "0 0 12px rgba(255,0,60,0.3)" : "none",
                         animation: isHacking ? "qp-flicker 0.15s infinite" : "none",
+                        cursor: isOnline ? "pointer" : "not-allowed",
                       }}
+                      title={!isOnline ? "User is offline" : undefined}
                     >
                       <Zap className="w-3 h-3" />
                       {isHacking ? "HACKING..." : "HACK"}

@@ -77,12 +77,19 @@ app.use((req, res, next) => {
 
   const userStats = {
     total: 0,
-    pages: {} as Record<string, number>
+    pages: {} as Record<string, number>,
+    onlineUserIds: [] as string[],
   };
 
   // userId → socketId mapping for targeted events
   const userSocketMap: Record<string, string> = {};
   const socketUserMap: Record<string, string> = {};
+  const onlineUserIds = new Set<string>();
+
+  const broadcastStats = () => {
+    userStats.onlineUserIds = Array.from(onlineUserIds);
+    io.emit("stats_update", userStats);
+  };
 
   io.on("connection", (socket) => {
     userStats.total++;
@@ -92,6 +99,8 @@ app.use((req, res, next) => {
       if (!userId) return;
       socketUserMap[socket.id] = userId;
       userSocketMap[userId] = socket.id;
+      onlineUserIds.add(userId);
+      broadcastStats();
     });
 
     socket.on("join_page", (path: string) => {
@@ -101,7 +110,7 @@ app.use((req, res, next) => {
       }
       currentPath = path;
       userStats.pages[currentPath] = (userStats.pages[currentPath] || 0) + 1;
-      io.emit("stats_update", userStats);
+      broadcastStats();
     });
 
     socket.on("trigger_qwerty_hack", (targetUserId: string) => {
@@ -121,11 +130,12 @@ app.use((req, res, next) => {
       if (uid) {
         delete userSocketMap[uid];
         delete socketUserMap[socket.id];
+        onlineUserIds.delete(uid);
       }
-      io.emit("stats_update", userStats);
+      broadcastStats();
     });
 
-    socket.emit("stats_update", userStats);
+    socket.emit("stats_update", { ...userStats, onlineUserIds: Array.from(onlineUserIds) });
   });
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
