@@ -19,7 +19,6 @@ export const GAME_LIST: GameConfig[] = [
   { id: "block-blast", label: "Block Blast", lsTerms: ["blockblast", "block-blast", "block_blast"] },
   { id: "bitlife", label: "BitLife", lsTerms: ["bitlife", "bit-life"] },
   { id: "escape-road", label: "Escape Road", lsTerms: ["escaperoad", "escape-road", "escape_road"], idbTerms: ["escaperoad", "escape"] },
-  { id: "super-hot", label: "SuperHot", lsTerms: ["superhot", "super-hot", "super_hot"] },
   { id: "five-nights-at-winstons", label: "Five Nights At Winston's", lsTerms: ["winstons", "fivenight", "fnaw"] },
   { id: "drift-boss", label: "Drift Boss", lsTerms: ["driftboss", "drift-boss", "drift_boss"] },
   { id: "tomb-of-the-mask", label: "Tomb of the Mask", lsTerms: ["tombofthemask", "tomb-of-the-mask", "tomb_of_the_mask", "tombmask", "tomb"], idbTerms: ["tombofthemask", "tomb"] },

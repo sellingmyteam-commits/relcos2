@@ -30,7 +30,6 @@ const GAMES = [
   { href: "/counter-strike", label: "Counter Strike", desc: "Tactical FPS — eliminate the enemy team.", icon: Target, color: "pink" },
   { href: "/bikers-republic", label: "Bikers Republic", desc: "MX offroad bike racing madness.", icon: Skull, color: "primary" },
   { href: "/snowball-io", label: "Snowball.io", desc: "Throw snowballs and knock out opponents.", icon: Snowflake, color: "pink" },
-  { href: "/super-hot", label: "Super Hot", desc: "Time moves only when you move.", icon: Flame, color: "pink" },
   { href: "/shellshockers", label: "Shellshockers", desc: "The world's top egg-based shooter.", icon: Egg, color: "purple" },
   { href: "/motox3m", label: "Moto X3M", desc: "The best bike racing game.", icon: Bike, color: "primary" },
   { href: "/retro-bowl", label: "Retro Bowl", desc: "Classic retro football action.", icon: Goal, color: "primary" },
@@ -43,7 +42,6 @@ const GAMES = [
   { href: "/stickman-merge", label: "Stickman Merge", desc: "Merge and fight with your army.", icon: Users, color: "purple" },
   { href: "/drift-boss", label: "Drift Boss", desc: "Master the art of drifting.", icon: Gauge, color: "purple" },
   { href: "/tomb-of-the-mask", label: "Tomb of the Mask", desc: "Fast-paced arcade maze runner.", icon: Layers, color: "pink" },
-  { href: "/bowmasters", label: "Bowmasters", desc: "Draw your bow and take out your rivals.", icon: Target, color: "pink" },
   { href: "/gun-spin", label: "Gun Spin", desc: "Spin your gun and blast through enemies.", icon: Gauge, color: "purple" },
   { href: "/idle-miner-tycoon", label: "Idle Miner Tycoon", desc: "Mine your way to riches while you idle.", icon: Layers, color: "purple" },
   { href: "/hole-io", label: "Hole.io", desc: "Swallow everything in sight with your hole.", icon: Circle, color: "pink" },
@@ -202,7 +200,7 @@ export default function Home() {
 
   const { data: onlineUsers = [] } = useQuery<{ id: string; username: string }[]>({
     queryKey: ["/api/online-users"],
-    refetchInterval: 3000,
+    refetchInterval: 10000,
   });
 
   // Re-announce username to server on mount so existing connections get their name tracked

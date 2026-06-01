@@ -26,7 +26,6 @@ const BrawlStars = lazy(() => import("@/pages/BrawlStars"));
 const BlockBlast = lazy(() => import("@/pages/BlockBlast"));
 const BitLife = lazy(() => import("@/pages/BitLife"));
 const EscapeRoad = lazy(() => import("@/pages/EscapeRoad"));
-const SuperHot = lazy(() => import("@/pages/SuperHot"));
 const DriftBoss = lazy(() => import("@/pages/DriftBoss"));
 const TombOfTheMask = lazy(() => import("@/pages/TombOfTheMask"));
 const BikersRepublic = lazy(() => import("@/pages/BikersRepublic"));
@@ -40,7 +39,6 @@ const FireboyAndWatergirl = lazy(() => import("@/pages/FireboyAndWatergirl"));
 const NzPortable = lazy(() => import("@/pages/NzPortable"));
 const JetpackJoyride = lazy(() => import("@/pages/JetpackJoyride"));
 const SolarSmash = lazy(() => import("@/pages/SolarSmash"));
-const Bowmasters = lazy(() => import("@/pages/Bowmasters"));
 const GunSpin = lazy(() => import("@/pages/GunSpin"));
 const HoleIo = lazy(() => import("@/pages/HoleIo"));
 const CookieClicker = lazy(() => import("@/pages/CookieClicker"));
@@ -84,7 +82,6 @@ function Router() {
         <Route path="/nz-portable" component={NzPortable} />
         <Route path="/jetpack-joyride" component={JetpackJoyride} />
         <Route path="/solar-smash" component={SolarSmash} />
-        <Route path="/bowmasters" component={Bowmasters} />
         <Route path="/gun-spin" component={GunSpin} />
         <Route path="/hole-io" component={HoleIo} />
         <Route path="/cookie-clicker" component={CookieClicker} />
@@ -96,7 +93,6 @@ function Router() {
         <Route path="/block-blast" component={BlockBlast} />
         <Route path="/bitlife" component={BitLife} />
         <Route path="/escape-road" component={EscapeRoad} />
-        <Route path="/super-hot" component={SuperHot} />
         <Route path="/drift-boss" component={DriftBoss} />
         <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
         <Route path="/snow-rider" component={SnowRider} />
