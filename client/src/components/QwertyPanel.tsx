@@ -244,19 +244,17 @@ export function QwertyPanel({ onClose }: QwertyPanelProps) {
                     {/* HACK button */}
                     <button
                       onClick={() => triggerHack(user)}
-                      disabled={isHacking || !isOnline}
+                      disabled={isHacking}
                       data-testid={`button-qwerty-hack-${user.id}`}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-black font-mono tracking-widest border transition-all disabled:opacity-40"
                       style={{
-                        background: isHacking ? "rgba(255,0,60,0.2)" : isOnline ? "rgba(255,0,60,0.08)" : "rgba(255,255,255,0.03)",
-                        borderColor: isOnline ? "rgba(255,0,60,0.5)" : "rgba(255,255,255,0.1)",
-                        color: isOnline ? "#ff003c" : "rgba(255,255,255,0.2)",
+                        background: isHacking ? "rgba(255,0,60,0.2)" : "rgba(255,0,60,0.08)",
+                        borderColor: "rgba(255,0,60,0.5)",
+                        color: "#ff003c",
                         textShadow: isHacking ? "0 0 8px #ff003c" : "none",
                         boxShadow: isHacking ? "0 0 12px rgba(255,0,60,0.3)" : "none",
                         animation: isHacking ? "qp-flicker 0.15s infinite" : "none",
-                        cursor: isOnline ? "pointer" : "not-allowed",
                       }}
-                      title={!isOnline ? "User is offline" : undefined}
                     >
                       <Zap className="w-3 h-3" />
                       {isHacking ? "HACKING..." : "HACK"}
