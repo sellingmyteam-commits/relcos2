@@ -17,14 +17,9 @@ const Eaglercraft = lazy(() => import("@/pages/Eaglercraft"));
 const Shellshockers = lazy(() => import("@/pages/Shellshockers"));
 const GeometryDash = lazy(() => import("@/pages/GeometryDash"));
 const MotoX3M = lazy(() => import("@/pages/MotoX3M"));
-const StickmanMerge = lazy(() => import("@/pages/StickmanMerge"));
 const Slope = lazy(() => import("@/pages/Slope"));
-const RocketSoccer = lazy(() => import("@/pages/RocketSoccer"));
 const RetroBowl = lazy(() => import("@/pages/RetroBowl"));
-const DriftHunters = lazy(() => import("@/pages/DriftHunters"));
 const BrawlStars = lazy(() => import("@/pages/BrawlStars"));
-const BlockBlast = lazy(() => import("@/pages/BlockBlast"));
-const BitLife = lazy(() => import("@/pages/BitLife"));
 const EscapeRoad = lazy(() => import("@/pages/EscapeRoad"));
 const DriftBoss = lazy(() => import("@/pages/DriftBoss"));
 const TombOfTheMask = lazy(() => import("@/pages/TombOfTheMask"));
@@ -37,12 +32,9 @@ const BasketballStars = lazy(() => import("@/pages/BasketballStars"));
 const SubwaySurfersHouston = lazy(() => import("@/pages/SubwaySurfersHouston"));
 const FireboyAndWatergirl = lazy(() => import("@/pages/FireboyAndWatergirl"));
 const NzPortable = lazy(() => import("@/pages/NzPortable"));
-const JetpackJoyride = lazy(() => import("@/pages/JetpackJoyride"));
 const SolarSmash = lazy(() => import("@/pages/SolarSmash"));
 const GunSpin = lazy(() => import("@/pages/GunSpin"));
-const HoleIo = lazy(() => import("@/pages/HoleIo"));
 const CookieClicker = lazy(() => import("@/pages/CookieClicker"));
-const IdleMinerTycoon = lazy(() => import("@/pages/IdleMinerTycoon"));
 const Recoil = lazy(() => import("@/pages/Recoil"));
 const SnowRider = lazy(() => import("@/pages/SnowRider"));
 const Chat = lazy(() => import("@/pages/Chat"));
@@ -69,7 +61,6 @@ function Router() {
         <Route path="/shellshockers" component={Shellshockers} />
         <Route path="/geometry-dash" component={GeometryDash} />
         <Route path="/motox3m" component={MotoX3M} />
-        <Route path="/stickman-merge" component={StickmanMerge} />
         <Route path="/slope" component={Slope} />
         <Route path="/bikers-republic" component={BikersRepublic} />
         <Route path="/counter-strike" component={CounterStrike} />
@@ -80,18 +71,11 @@ function Router() {
         <Route path="/subway-surfers-houston" component={SubwaySurfersHouston} />
         <Route path="/fireboy-and-watergirl" component={FireboyAndWatergirl} />
         <Route path="/nz-portable" component={NzPortable} />
-        <Route path="/jetpack-joyride" component={JetpackJoyride} />
         <Route path="/solar-smash" component={SolarSmash} />
         <Route path="/gun-spin" component={GunSpin} />
-        <Route path="/hole-io" component={HoleIo} />
         <Route path="/cookie-clicker" component={CookieClicker} />
-        <Route path="/idle-miner-tycoon" component={IdleMinerTycoon} />
-        <Route path="/rocket-soccer" component={RocketSoccer} />
         <Route path="/retro-bowl" component={RetroBowl} />
-        <Route path="/drift-hunters" component={DriftHunters} />
         <Route path="/brawl-stars" component={BrawlStars} />
-        <Route path="/block-blast" component={BlockBlast} />
-        <Route path="/bitlife" component={BitLife} />
         <Route path="/escape-road" component={EscapeRoad} />
         <Route path="/drift-boss" component={DriftBoss} />
         <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
