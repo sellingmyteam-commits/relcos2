@@ -9,7 +9,6 @@ export const siteUsers = pgTable("site_users", {
   status: integer("status").notNull().default(1),
   isAdmin: boolean("is_admin").default(false),
   isMuted: boolean("is_muted").default(false),
-  hasQwerty: integer("has_qwerty").default(0),
 });
 
 export const messages = pgTable("messages", {

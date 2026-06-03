@@ -122,13 +122,6 @@ app.use((req, res, next) => {
       broadcastStats();
     });
 
-    socket.on("trigger_qwerty_hack", (targetUserId: string) => {
-      const targetSocketId = userSocketMap[targetUserId];
-      if (targetSocketId) {
-        io.to(targetSocketId).emit("qwerty_hack");
-      }
-    });
-
     socket.on("disconnect", () => {
       userStats.total--;
       if (userStats.pages[currentPath]) {

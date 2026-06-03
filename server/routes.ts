@@ -156,12 +156,6 @@ export async function registerRoutes(
         return res.json({ success: true, granted: "admin", message: "Admin access granted." });
       }
 
-      if (upperCode === "QWERTY10") {
-        if (user.hasQwerty) return res.status(400).json({ message: "Qwerty access already active" });
-        await storage.setQwertyAccess(userId, 1);
-        return res.json({ success: true, granted: "qwerty", message: "Qwerty access granted." });
-      }
-
       return res.status(400).json({ message: "Invalid code" });
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -285,22 +279,6 @@ export async function registerRoutes(
       const id = parseInt(req.params.id, 10);
       const { isAdmin } = z.object({ isAdmin: z.boolean() }).parse(req.body);
       const updated = await storage.setSiteUserAdmin(id, isAdmin);
-      if (!updated) return res.status(404).json({ message: "User not found" });
-      res.json(updated);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        res.status(400).json({ message: err.errors[0].message });
-      } else {
-        res.status(500).json({ message: "Internal server error" });
-      }
-    }
-  });
-
-  app.patch("/api/admin/users/:id/qwerty", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id, 10);
-      const { hasQwerty } = z.object({ hasQwerty: z.number().int().min(0).max(1) }).parse(req.body);
-      const updated = await storage.setQwertyAccess(id, hasQwerty);
       if (!updated) return res.status(404).json({ message: "User not found" });
       res.json(updated);
     } catch (err) {
