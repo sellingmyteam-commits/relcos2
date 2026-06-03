@@ -1,0 +1,159 @@
+Optimize this entire project for the lowest possible Replit Cloud Run credit usage while keeping all existing functionality working.
+
+Requirements:
+
+1. Reduce CPU usage
+   - Remove unnecessary loops, intervals, timers, and repeated calculations.
+   - Eliminate redundant API calls.
+   - Cache expensive operations where possible.
+   - Optimize database queries and avoid duplicate requests.
+   - Reduce unnecessary rerenders and background tasks.
+
+2. Reduce memory usage
+   - Remove unused imports, packages, and dependencies.
+   - Clean up memory leaks.
+   - Avoid storing unnecessary data in memory.
+   - Use lazy loading where appropriate.
+   - Minimize object creation in frequently executed code.
+
+3. Optimize Socket.IO and real-time features
+   - Audit all Socket.IO usage.
+   - Remove unnecessary events.
+   - Reduce broadcast frequency.
+   - Minimize connected-client overhead.
+   - Replace real-time updates with polling where real-time functionality is not essential.
+   - Use websocket-only transport if compatible.
+   - Reduce heartbeat and synchronization traffic where possible.
+
+4. Optimize frontend performance
+   - Reduce bundle size.
+   - Remove unused React components and libraries.
+   - Tree-shake imports.
+   - Lazy-load large components.
+   - Minimize rerenders.
+   - Optimize state management.
+   - Reduce unnecessary network requests.
+
+5. Optimize static assets
+   - Compress images and assets.
+   - Enable long-term caching headers.
+   - Ensure static files are served efficiently.
+   - Identify large files that should not be served directly by the Node server.
+   - Reduce bandwidth usage wherever possible.
+
+6. Production optimization
+   - Ensure the project runs in production mode only.
+   - Remove development-only code from production builds.
+   - Disable verbose logging.
+   - Reduce console output.
+   - Remove debugging code.
+   - Optimize startup performance.
+
+7. Dependency audit
+   - Identify packages that are installed but unused.
+   - Remove unnecessary dependencies.
+   - Suggest lighter alternatives for heavy libraries.
+   - Reduce install size and runtime overhead.
+
+8. Replit-specific optimization
+   - Minimize Cloud Run credit consumption.
+   - Reduce idle resource usage.
+   - Prevent unnecessary server wakeups.
+   - Optimize startup time.
+   - Minimize RAM usage.
+   - Minimize network usage.
+   - Reduce background processing.
+
+9. Request deduplication and caching
+
+Implement aggressive caching and request deduplication to reduce Cloud Run credit usage.
+
+Requirements:
+
+- If multiple users request the same data simultaneously, only allow one request to reach the API/database.
+- All other users should wait for the first request and receive the same response.
+- Prevent duplicate API calls for identical requests.
+- Cache frequently requested data.
+- Cache AI responses when safe to do so.
+- Cache search results.
+- Cache database queries.
+- Cache public API responses.
+- Cache server status and statistics.
+- Add configurable cache expiration times.
+
+Implementation goals:
+
+Before:
+100 users -> 100 API requests
+
+After:
+100 users -> 1 API request
+99 users receive the cached/shared result
+
+Create:
+
+- In-memory cache layer.
+- Request deduplication layer.
+- Automatic cache invalidation.
+- Cache hit/miss tracking.
+- Protection against cache stampedes.
+- Graceful fallback when cache fails.
+
+For each endpoint:
+
+- Determine if it is cacheable.
+- Explain why.
+- Add caching where safe.
+- Skip caching for user-specific, private, or real-time data.
+
+10. Database optimization
+
+- Reduce query count.
+- Batch database operations where possible.
+- Add indexes where beneficial.
+- Cache frequently accessed records.
+- Avoid duplicate reads.
+- Prevent N+1 query issues.
+
+11. Network optimization
+
+- Reduce request frequency.
+- Enable compression.
+- Optimize payload sizes.
+- Remove unnecessary data transfers.
+- Reduce websocket traffic.
+- Minimize external API usage.
+
+12. Credit-saving priority mode
+
+The primary goal is to reduce Replit Cloud Run credit consumption as much as possible while preserving functionality.
+
+Prioritize:
+
+1. Fewer API requests.
+2. Fewer database queries.
+3. Less Socket.IO traffic.
+4. Lower memory usage.
+5. Lower CPU usage.
+6. Lower bandwidth usage.
+7. Faster startup times.
+
+For every optimization:
+
+- Explain why it saves Cloud Run credits.
+- Show the exact file being modified.
+- Provide the complete updated code.
+- Do not remove user-facing features unless absolutely necessary.
+- Preserve all existing functionality.
+
+Final report:
+
+Provide:
+1. Estimated CPU reduction (%).
+2. Estimated RAM reduction (%).
+3. Estimated network reduction (%).
+4. Estimated API request reduction (%).
+5. Estimated database query reduction (%).
+6. Estimated Socket.IO traffic reduction (%).
+7. Estimated Replit Cloud Run credit savings (%).
+8. List of the highest-impact optimizations ranked from most savings to least savings.

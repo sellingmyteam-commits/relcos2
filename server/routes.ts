@@ -59,6 +59,10 @@ function invalidateMessagesCache() {
 let lockedGamesCache: { data: unknown[]; ts: number } | null = null;
 const LOCKED_GAMES_TTL = 120000; // 2 min — client polls every 3 min
 
+// ── User status cache ──
+const userStatusCache = new Map<number, { data: unknown; ts: number }>();
+const USER_STATUS_TTL = 30000; // 30 s
+
 function invalidateLockedGamesCache() {
   lockedGamesCache = null;
 }
@@ -232,9 +236,16 @@ export async function registerRoutes(
   app.get("/api/user/status/id/:id", async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid id" });
+    const now = Date.now();
+    const cached = userStatusCache.get(id);
+    if (cached && now - cached.ts < USER_STATUS_TTL) {
+      return res.json(cached.data);
+    }
     const user = await storage.getSiteUserById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(safeUser(user as unknown as Record<string, unknown>));
+    const safe = safeUser(user as unknown as Record<string, unknown>);
+    userStatusCache.set(id, { data: safe, ts: now });
+    res.json(safe);
   });
 
   app.get("/api/admin/users", async (req, res) => {

@@ -12,7 +12,7 @@ export function getSharedSocket(): Socket {
       window.__sharedSocket.disconnect();
     }
     const socket = io(window.location.origin, {
-      transports: ["websocket", "polling"],
+      transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,

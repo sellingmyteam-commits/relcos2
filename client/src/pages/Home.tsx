@@ -9,8 +9,9 @@ import { Lock, Wifi } from "lucide-react";
 import { useDoor } from "@/components/DoorTransition";
 import { usePageCounts } from "@/hooks/usePageCounts";
 import { useOnlineCount } from "@/hooks/useOnlineCount";
+import { useOnlineUsers } from "@/hooks/useOnlineUsers";
 import { reIdentifyUser } from "@/lib/socket";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 const GAMES = [
   { href: "/recoil", label: "Recoil", desc: "Physics-based shooting. Every shot pushes back.", icon: Zap, color: "pink" },
@@ -238,10 +239,7 @@ export default function Home() {
     redeemMutation.mutate({ userId, code: codeInput.trim() });
   };
 
-  const { data: onlineUsers = [] } = useQuery<{ id: string; username: string }[]>({
-    queryKey: ["/api/online-users"],
-    refetchInterval: 10000,
-  });
+  const onlineUsers = useOnlineUsers();
 
   // Re-announce username to server on mount so existing connections get their name tracked
   useEffect(() => {
