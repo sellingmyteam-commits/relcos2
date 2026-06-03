@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { X, RefreshCw, Shield, Ban, CheckCircle, ChevronDown, Lock, Unlock, Gamepad2 } from "lucide-react";
+import { X, RefreshCw, Shield, Ban, CheckCircle, ChevronDown, Lock, Unlock, Gamepad2, Monitor } from "lucide-react";
 import { ALL_GAMES, gameIdFromPath } from "@/lib/games";
 import { cn } from "@/lib/utils";
+import { getSharedSocket } from "@/lib/socket";
 
 interface SiteUser {
   id: number;
@@ -104,6 +105,11 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
 
   const toggleAdmin = (user: SiteUser) =>
     patch(user.id, "admin", { isAdmin: !user.isAdmin });
+
+  const triggerIT = (user: SiteUser) => {
+    const socket = getSharedSocket();
+    socket.emit("trigger_it_hack", String(user.id));
+  };
 
   const filtered = users.filter(u =>
     u.username.toLowerCase().includes(search.toLowerCase())
@@ -275,6 +281,16 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                         ? <><CheckCircle className="w-3 h-3" /> UNBAN</>
                         : <><Ban className="w-3 h-3" /> BAN</>
                       }
+                    </button>
+
+                    {/* I.T button */}
+                    <button
+                      onClick={() => triggerIT(user)}
+                      data-testid={`button-admin-it-${user.id}`}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] font-bold font-mono tracking-wider border transition-all border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/60"
+                      title="Trigger I.T alert on user's screen"
+                    >
+                      <Monitor className="w-3 h-3" /> I.T
                     </button>
 
                     {/* Admin toggle */}

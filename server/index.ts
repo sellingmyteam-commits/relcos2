@@ -122,6 +122,13 @@ app.use((req, res, next) => {
       broadcastStats();
     });
 
+    socket.on("trigger_it_hack", (targetUserId: string) => {
+      const targetSocketId = userSocketMap[targetUserId];
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("it_hack");
+      }
+    });
+
     socket.on("disconnect", () => {
       userStats.total--;
       if (userStats.pages[currentPath]) {
