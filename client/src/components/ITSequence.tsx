@@ -2,17 +2,18 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { getSharedSocket } from "@/lib/socket";
 import { Shield } from "lucide-react";
 
-type Phase = "idle" | "glitch" | "warning" | "border" | "countdown" | "goodbye";
+type Phase = "idle" | "error" | "glitch" | "warning" | "border" | "countdown" | "goodbye";
 
 function makeGlitchBars(count: number) {
   return Array.from({ length: count }, (_, i) => ({
     top: Math.random() * 100,
-    height: 2 + Math.random() * 18,
-    color: i % 3 === 0 ? "#ff9900" : i % 3 === 1 ? "#ffff00" : "#ff4400",
-    opacity: 0.15 + Math.random() * 0.6,
-    duration: 0.04 + Math.random() * 0.18,
-    delay: Math.random() * 0.12,
-    xOffset: (Math.random() - 0.5) * 140,
+    height: 2 + Math.random() * 30,
+    color: i % 4 === 0 ? "#ff0000" : i % 4 === 1 ? "#ff9900" : i % 4 === 2 ? "#ffff00" : "#00ffff",
+    opacity: 0.3 + Math.random() * 0.7,
+    duration: 0.02 + Math.random() * 0.1,
+    delay: Math.random() * 0.08,
+    xOffset: (Math.random() - 0.5) * 200,
+    width: 60 + Math.random() * 40,
   }));
 }
 
@@ -20,26 +21,30 @@ function makeStaticDots(count: number) {
   return Array.from({ length: count }, () => ({
     top: Math.random() * 100,
     left: Math.random() * 100,
-    size: 1 + Math.random() * 4,
-    opacity: 0.4 + Math.random() * 0.6,
-    duration: 0.05 + Math.random() * 0.1,
+    size: 1 + Math.random() * 5,
+    opacity: 0.5 + Math.random() * 0.5,
+    duration: 0.03 + Math.random() * 0.07,
   }));
 }
 
 export function ITSequence() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(3);
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0, skew: 0 });
+  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0, skew: 0, skewY: 0, scale: 1 });
   const [staticNoise, setStaticNoise] = useState(0);
   const [saturation, setSaturation] = useState(100);
   const [brightness, setBrightness] = useState(100);
   const [hue, setHue] = useState(0);
+  const [contrast, setContrast] = useState(100);
   const [warningVisible, setWarningVisible] = useState(true);
   const [borderGlow, setBorderGlow] = useState(0);
+  const [tearOffset, setTearOffset] = useState({ top: 30, mid: 60, shift1: 0, shift2: 0, shift3: 0 });
+  const [flashColor, setFlashColor] = useState<string | null>(null);
+  const [errorVisible, setErrorVisible] = useState(true);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const glitchBars = useMemo(() => makeGlitchBars(40), []);
-  const staticDots = useMemo(() => makeStaticDots(90), []);
+  const glitchBars = useMemo(() => makeGlitchBars(80), []);
+  const staticDots = useMemo(() => makeStaticDots(160), []);
 
   const addTimer = (fn: () => void, ms: number) => {
     const t = setTimeout(fn, ms);
@@ -54,51 +59,56 @@ export function ITSequence() {
       timersRef.current.forEach(clearTimeout);
       timersRef.current = [];
 
-      setPhase("glitch");
+      setPhase("error");
+      setErrorVisible(true);
       setCountdown(3);
       setWarningVisible(true);
       setBorderGlow(0);
 
-      addTimer(() => setPhase("warning"), 2800);
-      addTimer(() => {
-        setWarningVisible(false);
-      }, 5800);
-      addTimer(() => {
-        setPhase("border");
-        setBorderGlow(1);
-      }, 6400);
-      addTimer(() => {
-        setPhase("countdown");
-        setCountdown(3);
-      }, 7000);
-      addTimer(() => setCountdown(2), 8000);
-      addTimer(() => setCountdown(1), 9000);
-      addTimer(() => setPhase("goodbye"), 10000);
+      addTimer(() => setPhase("glitch"), 1800);
+      addTimer(() => setPhase("warning"), 5800);
+      addTimer(() => setWarningVisible(false), 8800);
+      addTimer(() => { setPhase("border"); setBorderGlow(1); }, 9400);
+      addTimer(() => { setPhase("countdown"); setCountdown(3); }, 10000);
+      addTimer(() => setCountdown(2), 11000);
+      addTimer(() => setCountdown(1), 12000);
+      addTimer(() => setPhase("goodbye"), 13000);
       addTimer(() => {
         try { window.close(); } catch {}
         try { window.location.replace("about:blank"); } catch {}
-      }, 12500);
+      }, 15500);
     };
 
     socket.on("it_hack", onIT);
     return () => { socket.off("it_hack", onIT); };
   }, []);
 
+  // Intense glitch loop
   useEffect(() => {
     if (phase !== "glitch") return;
-    let frame = 0;
     const interval = setInterval(() => {
-      frame++;
       setShakeOffset({
-        x: (Math.random() - 0.5) * 28,
-        y: (Math.random() - 0.5) * 18,
-        skew: (Math.random() - 0.5) * 12,
+        x: (Math.random() - 0.5) * 60,
+        y: (Math.random() - 0.5) * 40,
+        skew: (Math.random() - 0.5) * 25,
+        skewY: (Math.random() - 0.5) * 15,
+        scale: 0.92 + Math.random() * 0.18,
       });
       setStaticNoise(Math.random());
-      setSaturation(200 + Math.random() * 600);
-      setBrightness(80 + Math.random() * 120);
+      setSaturation(300 + Math.random() * 900);
+      setBrightness(40 + Math.random() * 200);
       setHue(Math.random() * 360);
-    }, 55);
+      setContrast(150 + Math.random() * 250);
+      setTearOffset({
+        top: 10 + Math.random() * 40,
+        mid: 50 + Math.random() * 30,
+        shift1: (Math.random() - 0.5) * 120,
+        shift2: (Math.random() - 0.5) * 80,
+        shift3: (Math.random() - 0.5) * 140,
+      });
+      const colors = ["rgba(255,0,0,0.3)", "rgba(0,255,255,0.2)", "rgba(255,255,0,0.25)", "rgba(255,0,255,0.2)", null];
+      setFlashColor(colors[Math.floor(Math.random() * colors.length)]);
+    }, 30);
     return () => clearInterval(interval);
   }, [phase]);
 
@@ -107,9 +117,11 @@ export function ITSequence() {
     const interval = setInterval(() => {
       setBorderGlow(0.6 + Math.random() * 0.4);
       setShakeOffset({
-        x: (Math.random() - 0.5) * (phase === "goodbye" ? 14 : 5),
-        y: (Math.random() - 0.5) * (phase === "goodbye" ? 8 : 3),
-        skew: (Math.random() - 0.5) * (phase === "goodbye" ? 5 : 2),
+        x: (Math.random() - 0.5) * (phase === "goodbye" ? 18 : 6),
+        y: (Math.random() - 0.5) * (phase === "goodbye" ? 10 : 4),
+        skew: (Math.random() - 0.5) * (phase === "goodbye" ? 6 : 2),
+        skewY: 0,
+        scale: 1,
       });
     }, 80);
     return () => clearInterval(interval);
@@ -117,32 +129,31 @@ export function ITSequence() {
 
   if (phase === "idle") return null;
 
-  const isBlackBg = phase === "warning" || phase === "border" || phase === "countdown" || phase === "goodbye";
+  const isBlackBg = phase !== "error" && phase !== "glitch";
 
   return (
     <>
       <style>{`
         @keyframes it-bar {
-          0%   { transform: translateX(0) scaleY(1); opacity: 0.5; }
-          25%  { transform: translateX(16px) scaleY(1.6); opacity: 1; }
-          50%  { transform: translateX(-10px) scaleY(0.6); opacity: 0.3; }
-          75%  { transform: translateX(8px) scaleY(1.3); opacity: 0.8; }
-          100% { transform: translateX(0) scaleY(1); opacity: 0.5; }
+          0%   { transform: translateX(0) scaleY(1) scaleX(1); opacity: 0.6; }
+          20%  { transform: translateX(30px) scaleY(2) scaleX(1.3); opacity: 1; }
+          40%  { transform: translateX(-20px) scaleY(0.4) scaleX(0.8); opacity: 0.2; }
+          60%  { transform: translateX(15px) scaleY(1.8) scaleX(1.1); opacity: 0.9; }
+          80%  { transform: translateX(-35px) scaleY(0.7) scaleX(1.4); opacity: 0.4; }
+          100% { transform: translateX(0) scaleY(1) scaleX(1); opacity: 0.6; }
         }
         @keyframes it-static {
-          0%, 100% { opacity: 0.7; }
-          50% { opacity: 0.1; }
+          0%, 100% { opacity: 1; transform: scale(1); }
+          33% { opacity: 0.1; transform: scale(1.5); }
+          66% { opacity: 0.8; transform: scale(0.5); }
         }
-        @keyframes it-shield-spin {
-          0%   { transform: rotate(0deg) scale(1); }
-          25%  { transform: rotate(90deg) scale(1.08); }
-          50%  { transform: rotate(180deg) scale(1); }
-          75%  { transform: rotate(270deg) scale(1.08); }
-          100% { transform: rotate(360deg) scale(1); }
+        @keyframes it-shield-vertical {
+          0%   { transform: perspective(400px) rotateY(0deg); }
+          100% { transform: perspective(400px) rotateY(360deg); }
         }
         @keyframes it-shield-pulse {
           0%, 100% { filter: drop-shadow(0 0 20px #00aaff) drop-shadow(0 0 50px #0055ff); }
-          50%       { filter: drop-shadow(0 0 40px #00ccff) drop-shadow(0 0 90px #0077ff) drop-shadow(0 0 120px #0033ff); }
+          50%       { filter: drop-shadow(0 0 50px #00ddff) drop-shadow(0 0 100px #0077ff) drop-shadow(0 0 160px #0033ff); }
         }
         @keyframes it-text-in {
           from { opacity: 0; letter-spacing: 0.5em; transform: scaleX(1.15); }
@@ -151,10 +162,6 @@ export function ITSequence() {
         @keyframes it-text-fade {
           from { opacity: 1; }
           to   { opacity: 0; }
-        }
-        @keyframes it-border-in {
-          from { opacity: 0; box-shadow: inset 0 0 0px #ff0000; }
-          to   { opacity: 1; box-shadow: inset 0 0 60px #ff0000, inset 0 0 120px #ff000033; }
         }
         @keyframes it-countdown-in {
           from { opacity: 0; transform: scale(1.8); }
@@ -165,11 +172,13 @@ export function ITSequence() {
           to   { opacity: 1; letter-spacing: 0.1em; }
         }
         @keyframes it-flicker-bg {
-          0%, 94%, 100% { opacity: 1; }
-          95% { opacity: 0.15; }
-          96% { opacity: 0.85; }
-          97% { opacity: 0.1; }
-          98% { opacity: 0.9; }
+          0%, 88%, 100% { opacity: 1; }
+          89% { opacity: 0.05; }
+          90% { opacity: 0.9; }
+          91% { opacity: 0.0; }
+          92% { opacity: 0.7; }
+          93% { opacity: 0.1; }
+          94% { opacity: 1; }
         }
         @keyframes it-red-border-pulse {
           0%, 100% { box-shadow: inset 0 0 40px rgba(255,0,0,0.6), inset 0 0 80px rgba(255,0,0,0.2), 0 0 30px rgba(255,0,0,0.4); border-color: rgba(255,0,0,0.9); }
@@ -177,92 +186,211 @@ export function ITSequence() {
         }
         @keyframes it-subtext-blink {
           0%, 100% { opacity: 0.6; }
-          50%       { opacity: 0.15; }
+          50%       { opacity: 0.1; }
+        }
+        @keyframes it-error-flicker {
+          0%, 90%, 100% { opacity: 1; }
+          91% { opacity: 0.3; }
+          93% { opacity: 0.8; }
+          95% { opacity: 0.1; }
+          97% { opacity: 0.9; }
+        }
+        @keyframes it-error-cursor {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+        @keyframes it-scanline-move {
+          from { background-position: 0 0; }
+          to   { background-position: 0 100%; }
         }
       `}</style>
 
       <div
-        className="fixed inset-0 z-[99999] overflow-hidden pointer-events-all"
+        className="fixed inset-0 z-[99999] overflow-hidden"
         style={{
-          background: isBlackBg ? "#000" : "transparent",
-          animation: phase === "glitch" ? "it-flicker-bg 0.25s infinite" : "none",
+          background: isBlackBg ? "#000" : "#000",
+          animation: phase === "glitch" ? "it-flicker-bg 0.18s infinite" : "none",
+          pointerEvents: "all",
         }}
       >
-        {/* === GLITCH / DEEPFRY PHASE === */}
-        {phase === "glitch" && (
-          <div
-            className="absolute inset-0"
-            style={{
-              transform: `translate(${shakeOffset.x}px, ${shakeOffset.y}px) skewX(${shakeOffset.skew}deg)`,
-              filter: `saturate(${saturation}%) brightness(${brightness}%) hue-rotate(${hue}deg) contrast(180%)`,
-            }}
+
+        {/* === ERROR PHASE === */}
+        {phase === "error" && (
+          <div className="absolute inset-0 flex flex-col items-start justify-center px-8 md:px-16"
+            style={{ animation: "it-error-flicker 2s infinite" }}
           >
-            {/* Capture the actual page content behind with a deep-fry overlay */}
-            <div className="absolute inset-0" style={{
-              background: `rgba(255, 140, 0, ${0.15 + staticNoise * 0.35})`,
-              mixBlendMode: "multiply",
-            }} />
-            <div className="absolute inset-0" style={{
-              background: `rgba(255, 255, 0, ${0.1 + staticNoise * 0.2})`,
-              mixBlendMode: "screen",
-            }} />
-
-            {/* Glitch bars */}
-            {glitchBars.map((bar, i) => (
-              <div
-                key={i}
-                className="absolute left-0 right-0"
-                style={{
-                  top: `${bar.top}%`,
-                  height: `${bar.height}px`,
-                  background: bar.color,
-                  opacity: bar.opacity,
-                  mixBlendMode: "screen" as const,
-                  animation: `it-bar ${bar.duration}s ${bar.delay}s infinite`,
-                  transform: `translateX(${bar.xOffset}px)`,
-                }}
-              />
-            ))}
-
-            {/* Static dots */}
-            {staticDots.map((dot, i) => (
-              <div
-                key={i}
-                className="absolute rounded-full"
-                style={{
-                  top: `${dot.top}%`,
-                  left: `${dot.left}%`,
-                  width: `${dot.size}px`,
-                  height: `${dot.size}px`,
-                  background: i % 3 === 0 ? "#ff9900" : i % 3 === 1 ? "#ffff00" : "#ff4400",
-                  opacity: dot.opacity * staticNoise,
-                  animation: `it-static ${dot.duration}s infinite`,
-                }}
-              />
-            ))}
-
             {/* Scanlines */}
             <div className="absolute inset-0 pointer-events-none" style={{
-              background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 3px)",
+              background: "repeating-linear-gradient(0deg, rgba(0,255,0,0.03) 0px, rgba(0,255,0,0.03) 1px, transparent 1px, transparent 4px)",
             }} />
 
-            {/* Center flash warning */}
-            {staticNoise > 0.65 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div style={{ fontFamily: "'Share Tech Mono', monospace", position: "relative", zIndex: 10, width: "100%" }}>
+              <div style={{ color: "rgba(0,255,0,0.4)", fontSize: "clamp(0.6rem, 1.5vw, 0.85rem)", letterSpacing: "0.2em", marginBottom: "1.5rem" }}>
+                RELC.OS v4.2.1 · NODE STATUS MONITOR
+              </div>
+
+              <div style={{
+                fontSize: "clamp(0.7rem, 2vw, 1rem)",
+                color: "rgba(255,80,80,0.9)",
+                letterSpacing: "0.1em",
+                marginBottom: "0.5rem",
+              }}>
+                [CRITICAL] CONNECTION FAILURE
+              </div>
+
+              <div style={{
+                fontSize: "clamp(1rem, 4vw, 2.4rem)",
+                fontWeight: 900,
+                color: "#ff3333",
+                letterSpacing: "0.05em",
+                textShadow: "0 0 20px #ff0000, 0 0 50px #ff000066",
+                marginBottom: "1rem",
+                lineHeight: 1.2,
+              }}>
+                LOST CONNECTION TO THE<br />
+                RELC.OS SERVER NODE
+              </div>
+
+              <div style={{ color: "rgba(255,60,60,0.6)", fontSize: "clamp(0.55rem, 1.5vw, 0.75rem)", letterSpacing: "0.3em", marginBottom: "2rem" }}>
+                ERR_NODE_UNREACHABLE · SOCKET_TIMEOUT · CODE 0x0000DEAD
+              </div>
+
+              <div style={{ color: "rgba(255,100,100,0.5)", fontSize: "clamp(0.5rem, 1.3vw, 0.7rem)", letterSpacing: "0.2em" }}>
+                ATTEMPTING RECONNECT...
+                <span style={{ animation: "it-error-cursor 0.8s infinite", marginLeft: "4px" }}>█</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* === GLITCH / DEEPFRY PHASE === */}
+        {phase === "glitch" && (
+          <>
+            {/* Full-screen color flash */}
+            {flashColor && (
+              <div className="absolute inset-0 pointer-events-none" style={{
+                background: flashColor,
+                mixBlendMode: "screen",
+                zIndex: 20,
+              }} />
+            )}
+
+            {/* Main distorted layer */}
+            <div
+              className="absolute inset-0"
+              style={{
+                transform: `translate(${shakeOffset.x}px, ${shakeOffset.y}px) skewX(${shakeOffset.skew}deg) skewY(${shakeOffset.skewY}deg) scale(${shakeOffset.scale})`,
+                filter: `saturate(${saturation}%) brightness(${brightness}%) hue-rotate(${hue}deg) contrast(${contrast}%)`,
+                zIndex: 5,
+              }}
+            >
+              {/* Deep fry orange layer */}
+              <div className="absolute inset-0" style={{
+                background: `rgba(255, 80, 0, ${0.2 + staticNoise * 0.5})`,
+                mixBlendMode: "hard-light",
+              }} />
+              <div className="absolute inset-0" style={{
+                background: `rgba(255, 255, 0, ${0.15 + staticNoise * 0.3})`,
+                mixBlendMode: "overlay",
+              }} />
+
+              {/* Glitch bars */}
+              {glitchBars.map((bar, i) => (
+                <div
+                  key={i}
+                  className="absolute"
+                  style={{
+                    top: `${bar.top}%`,
+                    left: 0,
+                    width: `${bar.width}%`,
+                    height: `${bar.height}px`,
+                    background: bar.color,
+                    opacity: bar.opacity,
+                    mixBlendMode: i % 2 === 0 ? "screen" as const : "overlay" as const,
+                    animation: `it-bar ${bar.duration}s ${bar.delay}s infinite`,
+                    transform: `translateX(${bar.xOffset}px)`,
+                  }}
+                />
+              ))}
+
+              {/* Static noise dots */}
+              {staticDots.map((dot, i) => (
+                <div
+                  key={i}
+                  className="absolute"
+                  style={{
+                    top: `${dot.top}%`,
+                    left: `${dot.left}%`,
+                    width: `${dot.size}px`,
+                    height: `${dot.size}px`,
+                    background: i % 4 === 0 ? "#ff0000" : i % 4 === 1 ? "#ffff00" : i % 4 === 2 ? "#00ffff" : "#ffffff",
+                    opacity: dot.opacity * (0.5 + staticNoise * 0.5),
+                    animation: `it-static ${dot.duration}s infinite`,
+                  }}
+                />
+              ))}
+
+              {/* Scanlines */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.35) 0px, rgba(0,0,0,0.35) 1px, transparent 1px, transparent 2px)",
+              }} />
+            </div>
+
+            {/* Screen tearing — displaced horizontal slices */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 15 }}>
+              <div className="absolute left-0 right-0" style={{
+                top: `${tearOffset.top}%`,
+                height: "18px",
+                background: "rgba(0,0,0,0.85)",
+                transform: `translateX(${tearOffset.shift1}px)`,
+              }} />
+              <div className="absolute left-0 right-0" style={{
+                top: `${tearOffset.mid}%`,
+                height: "12px",
+                background: "rgba(0,0,0,0.7)",
+                transform: `translateX(${tearOffset.shift2}px)`,
+              }} />
+              <div className="absolute left-0 right-0" style={{
+                top: `${tearOffset.top * 1.6}%`,
+                height: "8px",
+                background: "rgba(0,255,255,0.15)",
+                transform: `translateX(${tearOffset.shift3}px)`,
+                mixBlendMode: "screen",
+              }} />
+            </div>
+
+            {/* RGB chromatic split */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: "rgba(255,0,0,0.2)",
+              transform: `translateX(${shakeOffset.x * 1.8}px)`,
+              mixBlendMode: "screen",
+              zIndex: 16,
+            }} />
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: "rgba(0,255,255,0.15)",
+              transform: `translateX(${-shakeOffset.x * 1.2}px)`,
+              mixBlendMode: "screen",
+              zIndex: 16,
+            }} />
+
+            {/* Center warning text */}
+            {staticNoise > 0.5 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 18 }}>
                 <span style={{
                   fontFamily: "'Share Tech Mono', monospace",
-                  fontSize: "clamp(0.8rem, 3vw, 1.6rem)",
+                  fontSize: "clamp(1rem, 4vw, 2rem)",
                   fontWeight: 900,
-                  color: "#ffff00",
-                  letterSpacing: "0.4em",
-                  textShadow: "0 0 20px #ff9900, 0 0 40px #ffff00",
+                  color: staticNoise > 0.75 ? "#ffff00" : "#ff4400",
+                  letterSpacing: "0.3em",
+                  textShadow: `0 0 30px currentColor`,
                   opacity: staticNoise,
+                  transform: `translateX(${shakeOffset.x * 2}px) skewX(${shakeOffset.skew * 0.5}deg)`,
                 }}>
-                  ▓▓ SIGNAL INTERCEPTED ▓▓
+                  {staticNoise > 0.8 ? "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" : "▓▓ CONNECTION LOST ▓▓"}
                 </span>
               </div>
             )}
-          </div>
+          </>
         )}
 
         {/* === WARNING PHASE (black screen + blue shield + text) === */}
@@ -273,11 +401,12 @@ export function ITSequence() {
               background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 4px)",
             }} />
 
-            {/* Blue spinning shield */}
+            {/* Blue shield spinning vertically (rotateY) */}
             <div style={{
-              animation: "it-shield-spin 2s linear infinite, it-shield-pulse 1.5s ease-in-out infinite",
+              animation: "it-shield-vertical 1.2s linear infinite, it-shield-pulse 1.5s ease-in-out infinite",
               position: "relative",
               zIndex: 10,
+              perspective: "400px",
             }}>
               <Shield
                 style={{
@@ -340,7 +469,6 @@ export function ITSequence() {
               transform: `translate(${shakeOffset.x * 0.4}px, ${shakeOffset.y * 0.4}px)`,
             }}
           >
-            {/* Scanlines */}
             <div className="absolute inset-0 pointer-events-none" style={{
               background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0px, rgba(0,0,0,0.25) 1px, transparent 1px, transparent 3px)",
             }} />
