@@ -10,7 +10,8 @@ export function useChatToasts(currentUsername: string) {
 
   const { data: messages } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
-    refetchInterval: 15000,
+    refetchInterval: 60000,
+    staleTime: 55000,
   });
 
   useEffect(() => {

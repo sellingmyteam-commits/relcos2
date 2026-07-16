@@ -4,7 +4,8 @@ import type { Message } from "@shared/schema";
 export function useMessages() {
   return useQuery<Message[]>({
     queryKey: ["/api/messages"],
-    refetchInterval: 15000,
+    refetchInterval: 60000,
+    staleTime: 55000,
   });
 }
 
