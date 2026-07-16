@@ -310,6 +310,7 @@ function BanWall() {
 function App() {
   const [securityFinished, setSecurityFinished] = useState(false);
   const [username, setUsername] = useState(() => localStorage.getItem("chatUsername") || "");
+  const [isGuest, setIsGuest] = useState(() => localStorage.getItem("arua_guest") === "true");
   const [siteUserId, setSiteUserId] = useState<number | null>(() => {
     const stored = localStorage.getItem("siteUserId");
     return stored ? parseInt(stored, 10) : null;
@@ -325,6 +326,11 @@ function App() {
       localStorage.setItem("siteUserId", String(id));
       reIdentifyUser(id);
     }
+  };
+
+  const handleGuest = () => {
+    localStorage.setItem("arua_guest", "true");
+    setIsGuest(true);
   };
 
   useEffect(() => {
@@ -380,8 +386,8 @@ function App() {
         <PanicButton />
         <SecurityBlock onComplete={() => setSecurityFinished(true)} />
 
-        {securityFinished && !username && (
-          <ChatUsernameOverlay onComplete={handleUsernameComplete} />
+        {securityFinished && !username && !isGuest && (
+          <ChatUsernameOverlay onComplete={handleUsernameComplete} onGuest={handleGuest} />
         )}
 
         {allReady && <WelcomeNotification />}

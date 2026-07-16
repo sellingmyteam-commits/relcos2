@@ -156,9 +156,47 @@ function ChatMessage({ msg, isMe, prevMsg, myColor }: {
   );
 }
 
+const GLITCH_STYLE = `
+@keyframes arua-glitch {
+  0%,100% { text-shadow: 2px 0 #ff0000, -2px 0 #00ffff; transform: none; clip-path: none; }
+  18%      { text-shadow: -3px 0 #ff0000, 3px 0 #00ffff; transform: translateX(3px) skewX(4deg); }
+  36%      { text-shadow: 4px 0 #ff0000, -4px 0 #00ffff; transform: translateX(-3px) skewX(-6deg); clip-path: inset(10% 0 80% 0); }
+  54%      { text-shadow: 2px 0 #ff0000, -2px 0 #00ffff; transform: translateX(1px); clip-path: inset(60% 0 10% 0); }
+  72%      { text-shadow: -4px 0 #ff0000, 4px 0 #00ffff; transform: translateX(-2px) skewX(3deg); clip-path: none; }
+}
+.arua-glitch-text {
+  animation: arua-glitch 1.4s infinite;
+  color: #ff2233;
+  font-family: monospace;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 13px;
+}
+`;
+
+function GuestChatBlock() {
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: GLITCH_STYLE }} />
+      <div
+        className="flex-shrink-0 px-4 py-4 flex items-center justify-center"
+        style={{
+          background: "rgba(2,6,18,0.92)",
+          backdropFilter: "blur(24px)",
+          borderTop: "1px solid rgba(255,34,51,0.25)",
+        }}
+      >
+        <span className="arua-glitch-text">⚠ Must make a username to access live comms ⚠</span>
+      </div>
+    </>
+  );
+}
+
 export default function Chat() {
   const username = localStorage.getItem("chatUsername") || "";
-  const [showOverlay, setShowOverlay] = useState(!username);
+  const isGuest = localStorage.getItem("arua_guest") === "true";
+  const [showOverlay, setShowOverlay] = useState(!username && !isGuest);
   const [currentUsername, setCurrentUsername] = useState(username);
   const [input, setInput] = useState("");
   const [myColor, setMyColor] = useState<string>(() => localStorage.getItem("chatNameColor") || "");
@@ -274,7 +312,7 @@ export default function Chat() {
           <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: "rgba(0,255,249,0.06)", border: "1px solid rgba(0,255,249,0.15)" }}>
             <Globe className="w-3 h-3 text-cyan-400/60" />
             <span className="text-[10px] font-mono text-cyan-400/60">chatting as</span>
-            <span className="text-[10px] font-mono font-bold text-cyan-300">{currentUsername}</span>
+            <span className="text-[10px] font-mono font-bold text-cyan-300">{currentUsername || "Guest"}</span>
           </div>
         </div>
 
@@ -301,6 +339,7 @@ export default function Chat() {
         </div>
 
         {/* Input area */}
+        {isGuest ? <GuestChatBlock /> : (
         <div
           className="flex-shrink-0 px-4 py-3"
           style={{
@@ -396,6 +435,7 @@ export default function Chat() {
             </div>
           </form>
         </div>
+        )}
       </div>
     </Layout>
   );

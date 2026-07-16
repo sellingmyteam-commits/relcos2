@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 
 type Status = "idle" | "loading" | "error" | "success" | "syncing";
 
-export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: string, siteUserId: number) => void }) {
+export function ChatUsernameOverlay({
+  onComplete,
+  onGuest,
+}: {
+  onComplete: (username: string, siteUserId: number) => void;
+  onGuest?: () => void;
+}) {
   const [username, setUsername] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -76,6 +82,11 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleSubmit();
+  };
+
+  const handleGuest = () => {
+    localStorage.setItem("arua_guest", "true");
+    onGuest?.();
   };
 
   const borderColor =
@@ -203,7 +214,7 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
 
               <Button
                 onClick={handleSubmit}
-                disabled={status === "loading" || status === "success" || status === "syncing"}
+                disabled={status === "loading" || status === "success"}
                 data-testid="button-submit-auth"
                 className={`w-full h-11 text-xs font-bold tracking-widest uppercase transition-all duration-300 relative overflow-hidden group ${
                   status === "success" ? "bg-green-600 hover:bg-green-600"
@@ -218,6 +229,21 @@ export function ChatUsernameOverlay({ onComplete }: { onComplete: (username: str
                 </span>
                 <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               </Button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 pt-1">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[9px] text-white/20 font-mono uppercase tracking-wider">or</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+
+              {/* Guest button */}
+              <button
+                onClick={handleGuest}
+                className="w-full h-9 text-[10px] font-mono tracking-widest uppercase text-white/30 hover:text-white/60 transition-colors border border-white/10 hover:border-white/20 rounded-lg"
+              >
+                Continue as Guest
+              </button>
 
               <p className="text-[9px] text-center text-muted-foreground/40 font-mono uppercase tracking-wider pt-1">
                 No password needed
