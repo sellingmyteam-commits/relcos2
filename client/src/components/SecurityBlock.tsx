@@ -85,7 +85,7 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
       }}
     >
       {/* Image with invisible X button overlaid */}
-      <div style={{ position: "relative", display: "inline-block", maxWidth: "700px", width: "90%", minHeight: "80px" }}>
+      <div style={{ position: "relative", display: "inline-block", maxWidth: "460px", width: "55%", minHeight: "60px" }}>
         <img
           src="/bitdefender-block.png"
           alt=""
@@ -98,7 +98,7 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
             pointerEvents: "none",
           }}
         />
-        {/* Invisible button covering the red X circle (~6–19% from left, ~14–51% from top) */}
+        {/* Invisible button covering the red X circle */}
         <button
           onClick={handleXClick}
           aria-hidden="true"
@@ -106,9 +106,9 @@ export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
           style={{
             position: "absolute",
             left: "4%",
-            top: "12%",
-            width: "16%",
-            height: "42%",
+            top: "14%",
+            width: "17%",
+            height: "40%",
             background: "transparent",
             border: "none",
             cursor: "default",
