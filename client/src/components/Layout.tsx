@@ -1,6 +1,6 @@
 import { Navigation } from "./Navigation";
 import { motion } from "framer-motion";
-import cityBg from "@assets/neon-circuit-city-stockcake_1778335317942.webp";
+import cityBg from "@assets/relcos-vr_1784208600021.png";
 
 export function Layout({ children, noContainer = false }: { children: React.ReactNode, noContainer?: boolean }) {
   return (
