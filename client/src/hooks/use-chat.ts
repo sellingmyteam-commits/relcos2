@@ -5,6 +5,7 @@ export function useMessages() {
   return useQuery<Message[]>({
     queryKey: ["/api/messages"],
     refetchInterval: 60000,
+    refetchIntervalInBackground: false,
     staleTime: 55000,
   });
 }

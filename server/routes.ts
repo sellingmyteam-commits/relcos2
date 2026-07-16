@@ -49,7 +49,7 @@ function filterContent(text: string): string {
 
 // ── Messages cache ──
 let messagesCache: { data: unknown[]; ts: number } | null = null;
-const MESSAGES_TTL = 8000; // 8 s — slightly under the 10 s client poll interval
+const MESSAGES_TTL = 55000; // 55 s — just under the 60 s client poll interval
 
 function invalidateMessagesCache() {
   messagesCache = null;
@@ -57,11 +57,11 @@ function invalidateMessagesCache() {
 
 // ── Locked games cache ──
 let lockedGamesCache: { data: unknown[]; ts: number } | null = null;
-const LOCKED_GAMES_TTL = 120000; // 2 min — client polls every 3 min
+const LOCKED_GAMES_TTL = 480000; // 8 min — client polls every 10 min
 
 // ── User status cache ──
 const userStatusCache = new Map<number, { data: unknown; ts: number }>();
-const USER_STATUS_TTL = 30000; // 30 s
+const USER_STATUS_TTL = 120000; // 2 min
 
 function invalidateLockedGamesCache() {
   lockedGamesCache = null;
@@ -77,10 +77,12 @@ export async function registerRoutes(
     try {
       const now = Date.now();
       if (messagesCache && now - messagesCache.ts < MESSAGES_TTL) {
+        res.set("Cache-Control", "public, max-age=55");
         return res.json(messagesCache.data);
       }
       const msgs = await storage.getMessages();
       messagesCache = { data: msgs, ts: now };
+      res.set("Cache-Control", "public, max-age=55");
       res.json(msgs);
     } catch (err) {
       console.error("messages get error:", err);
@@ -238,6 +240,7 @@ export async function registerRoutes(
     if (isNaN(id)) return res.status(400).json({ message: "Invalid id" });
     const now = Date.now();
     const cached = userStatusCache.get(id);
+    res.set("Cache-Control", "public, max-age=120");
     if (cached && now - cached.ts < USER_STATUS_TTL) {
       return res.json(cached.data);
     }
@@ -304,6 +307,7 @@ export async function registerRoutes(
   // ── Game locks ──
   app.get("/api/locked-games", async (_req, res) => {
     const now = Date.now();
+    res.set("Cache-Control", "public, max-age=480");
     if (lockedGamesCache && now - lockedGamesCache.ts < LOCKED_GAMES_TTL) {
       return res.json(lockedGamesCache.data);
     }

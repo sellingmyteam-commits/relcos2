@@ -70,8 +70,8 @@ app.use((req, res, next) => {
   const { Server } = await import("socket.io");
   const io = new Server(httpServer, {
     cors: { origin: "*", methods: ["GET", "POST"] },
-    pingInterval: 60000,
-    pingTimeout: 45000,
+    pingInterval: 120000,
+    pingTimeout: 60000,
     transports: ["websocket"],
   });
 

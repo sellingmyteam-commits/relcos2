@@ -18,7 +18,7 @@ function ensurePolling() {
   if (started) return;
   started = true;
   refresh();
-  setInterval(refresh, 180000);
+  setInterval(refresh, 600000);
 }
 
 export function useGameLocks() {
