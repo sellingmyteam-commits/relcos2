@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { SecurityBlock } from "@/components/SecurityBlock";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameLockGuard } from "@/components/GameLockGuard";
@@ -317,6 +318,7 @@ function BanWall() {
 
 
 function App() {
+  const [securityFinished, setSecurityFinished] = useState(false);
   const [username, setUsername] = useState(() => localStorage.getItem("chatUsername") || "");
   const [isGuest, setIsGuest] = useState(() => localStorage.getItem("arua_guest") === "true");
   const [siteUserId, setSiteUserId] = useState<number | null>(() => {
@@ -325,7 +327,7 @@ function App() {
   });
   const [banned, setBanned] = useState(false);
 
-  const allReady = !!username;
+  const allReady = securityFinished && !!username;
 
   const handleUsernameComplete = (name: string, id: number) => {
     setUsername(name);
@@ -392,8 +394,9 @@ function App() {
       <ITSequence />
       <DoorProvider>
         <PanicButton />
+        <SecurityBlock onComplete={() => setSecurityFinished(true)} />
 
-        {!username && !isGuest && (
+        {securityFinished && !username && !isGuest && (
           <ChatUsernameOverlay onComplete={handleUsernameComplete} onGuest={handleGuest} />
         )}
 
