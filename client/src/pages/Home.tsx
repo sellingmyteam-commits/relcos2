@@ -37,7 +37,7 @@ const GAMES = [
   { href: "/drift-boss", label: "Drift Boss", desc: "Master the art of drifting.", icon: Gauge, color: "purple" },
   { href: "/tomb-of-the-mask", label: "Tomb of the Mask", desc: "Fast-paced arcade maze runner.", icon: Layers, color: "pink" },
   { href: "/gun-spin", label: "Gun Spin", desc: "Spin your gun and blast through enemies.", icon: Gauge, color: "purple" },
-  { href: "/five-nights-at-big-e", label: "Five Nights at Big E", desc: "Survive the night in a haunted school.", icon: Cctv, color: "pink" },
+  { href: "/five-nights-at-epsteins", label: "Five Nights at Epstein's", desc: "Survive the night in a haunted school.", icon: Cctv, color: "pink" },
   { href: "/five-nights-at-winstons", label: "Five Nights at Winston's", desc: "Stay alive while creepy erasers hunt you down.", icon: Ghost, color: "purple" },
   { href: "/idle-miner-tycoon", label: "Idle Miner Tycoon", desc: "Build a mining empire, one upgrade at a time.", icon: Box, color: "primary" },
   { href: "/skibidi-shooter", label: "Skibidi Shooter", desc: "Take aim and clear the incoming threat.", icon: Crosshair, color: "pink" },

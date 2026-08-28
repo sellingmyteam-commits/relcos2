@@ -36,7 +36,7 @@ const GunSpin = lazy(() => import("@/pages/GunSpin"));
 const CookieClicker = lazy(() => import("@/pages/CookieClicker"));
 const Recoil = lazy(() => import("@/pages/Recoil"));
 const SnowRider = lazy(() => import("@/pages/SnowRider"));
-const FiveNightsAtBigE = lazy(() => import("@/pages/FiveNightsAtBigE"));
+const FiveNightsAtEpsteins = lazy(() => import("@/pages/FiveNightsAtEpsteins"));
 const FiveNightsAtWinstons = lazy(() => import("@/pages/FiveNightsAtWinstons"));
 const IdleMinerTycoon = lazy(() => import("@/pages/IdleMinerTycoon"));
 const SkibidiShooter = lazy(() => import("@/pages/SkibidiShooter"));
@@ -85,7 +85,7 @@ function Router() {
         <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
         <Route path="/snow-rider" component={SnowRider} />
         <Route path="/recoil" component={Recoil} />
-        <Route path="/five-nights-at-big-e" component={FiveNightsAtBigE} />
+        <Route path="/five-nights-at-epsteins" component={FiveNightsAtEpsteins} />
         <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
         <Route path="/idle-miner-tycoon" component={IdleMinerTycoon} />
         <Route path="/skibidi-shooter" component={SkibidiShooter} />
