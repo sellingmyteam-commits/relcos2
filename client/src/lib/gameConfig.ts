@@ -20,6 +20,10 @@ export const GAME_LIST: GameConfig[] = [
   { id: "bitlife", label: "BitLife", lsTerms: ["bitlife", "bit-life"] },
   { id: "escape-road", label: "Escape Road", lsTerms: ["escaperoad", "escape-road", "escape_road"], idbTerms: ["escaperoad", "escape"] },
   { id: "five-nights-at-winstons", label: "Five Nights At Winston's", lsTerms: ["winstons", "fivenight", "fnaw"] },
+  { id: "five-nights-at-big-e", label: "Five Nights at Big E", lsTerms: ["fnae", "fivenight", "big e"] },
+  { id: "idle-miner-tycoon", label: "Idle Miner Tycoon", lsTerms: ["idleminer", "idle-miner", "minertycoon"] },
+  { id: "skibidi-shooter", label: "Skibidi Shooter", lsTerms: ["skibidi", "skibsho"] },
+  { id: "russian-buckshot", label: "Russian Buckshot", lsTerms: ["russianbuckshot", "buckshot"] },
   { id: "drift-boss", label: "Drift Boss", lsTerms: ["driftboss", "drift-boss", "drift_boss"] },
   { id: "tomb-of-the-mask", label: "Tomb of the Mask", lsTerms: ["tombofthemask", "tomb-of-the-mask", "tomb_of_the_mask", "tombmask", "tomb"], idbTerms: ["tombofthemask", "tomb"] },
 ];

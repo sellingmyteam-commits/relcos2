@@ -33,6 +33,11 @@ export const ALL_GAMES: GameEntry[] = [
   { href: "/tomb-of-the-mask", label: "Tomb of the Mask", icon: Layers },
   { href: "/cookie-clicker", label: "Cookie Clicker", icon: Star },
   { href: "/gun-spin", label: "Gun Spin", icon: Gauge },
+  { href: "/five-nights-at-big-e", label: "Five Nights at Big E", icon: Cctv },
+  { href: "/five-nights-at-winstons", label: "Five Nights at Winston's", icon: Ghost },
+  { href: "/idle-miner-tycoon", label: "Idle Miner Tycoon", icon: Box },
+  { href: "/skibidi-shooter", label: "Skibidi Shooter", icon: Crosshair },
+  { href: "/russian-buckshot", label: "Russian Buckshot", icon: Bomb },
   { href: "/chat", label: "Live Comms", icon: MessageSquare },
 ];
 

@@ -1,6 +1,5 @@
 import { useRef, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { SidebarChat } from "@/components/SidebarChat";
 
 interface GamePageProps {
   src: string;
@@ -40,7 +39,6 @@ export function GamePage({ src, title, banner }: GamePageProps) {
               onMouseEnter={(e) => e.currentTarget.focus()}
             />
           </div>
-          <SidebarChat />
         </div>
       </div>
     </Layout>

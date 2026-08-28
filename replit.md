@@ -24,7 +24,7 @@ Preferred communication style: Simple, everyday language.
 - **Animations**: Framer Motion for page transitions and interactive effects
 - **Build Tool**: Vite with custom path aliases (@/, @shared/, @assets/)
 
-The frontend follows a page-based architecture with shared layout components. Game pages embed external games via iframes with fullscreen support and include a sidebar chat component for real-time communication.
+The frontend follows a page-based architecture with shared layout components. Game pages embed external games via iframes with fullscreen support; real-time chat is available from the dedicated Live Comms page rather than inside game windows.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express 5
@@ -32,6 +32,7 @@ The frontend follows a page-based architecture with shared layout components. Ga
 - **API Pattern**: REST endpoints defined in shared/routes.ts with Zod validation
 - **Development**: Hot module replacement via Vite middleware
 - **Production**: Static file serving from dist/public
+- **Run locally/on Replit**: `npm run dev` (serves the app and game files on port 5000)
 
 The server uses a shared schema approach where API routes, input validation, and response types are defined once and used by both client and server. This ensures type safety across the full stack.
 

@@ -3,7 +3,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { SecurityBlock } from "@/components/SecurityBlock";
 import { ChatUsernameOverlay } from "@/components/ChatUsernameOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameLockGuard } from "@/components/GameLockGuard";
@@ -37,6 +36,11 @@ const GunSpin = lazy(() => import("@/pages/GunSpin"));
 const CookieClicker = lazy(() => import("@/pages/CookieClicker"));
 const Recoil = lazy(() => import("@/pages/Recoil"));
 const SnowRider = lazy(() => import("@/pages/SnowRider"));
+const FiveNightsAtBigE = lazy(() => import("@/pages/FiveNightsAtBigE"));
+const FiveNightsAtWinstons = lazy(() => import("@/pages/FiveNightsAtWinstons"));
+const IdleMinerTycoon = lazy(() => import("@/pages/IdleMinerTycoon"));
+const SkibidiShooter = lazy(() => import("@/pages/SkibidiShooter"));
+const RussianBuckshot = lazy(() => import("@/pages/RussianBuckshot"));
 const Chat = lazy(() => import("@/pages/Chat"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -81,6 +85,11 @@ function Router() {
         <Route path="/tomb-of-the-mask" component={TombOfTheMask} />
         <Route path="/snow-rider" component={SnowRider} />
         <Route path="/recoil" component={Recoil} />
+        <Route path="/five-nights-at-big-e" component={FiveNightsAtBigE} />
+        <Route path="/five-nights-at-winstons" component={FiveNightsAtWinstons} />
+        <Route path="/idle-miner-tycoon" component={IdleMinerTycoon} />
+        <Route path="/skibidi-shooter" component={SkibidiShooter} />
+        <Route path="/russian-buckshot" component={RussianBuckshot} />
         <Route path="/chat" component={Chat} />
         <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
@@ -308,7 +317,6 @@ function BanWall() {
 
 
 function App() {
-  const [securityFinished, setSecurityFinished] = useState(false);
   const [username, setUsername] = useState(() => localStorage.getItem("chatUsername") || "");
   const [isGuest, setIsGuest] = useState(() => localStorage.getItem("arua_guest") === "true");
   const [siteUserId, setSiteUserId] = useState<number | null>(() => {
@@ -317,7 +325,7 @@ function App() {
   });
   const [banned, setBanned] = useState(false);
 
-  const allReady = securityFinished && !!username;
+  const allReady = !!username;
 
   const handleUsernameComplete = (name: string, id: number) => {
     setUsername(name);
@@ -384,9 +392,8 @@ function App() {
       <ITSequence />
       <DoorProvider>
         <PanicButton />
-        <SecurityBlock onComplete={() => setSecurityFinished(true)} />
 
-        {securityFinished && !username && !isGuest && (
+        {!username && !isGuest && (
           <ChatUsernameOverlay onComplete={handleUsernameComplete} onGuest={handleGuest} />
         )}
 

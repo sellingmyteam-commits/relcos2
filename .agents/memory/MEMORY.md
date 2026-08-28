@@ -1,0 +1,1 @@
+- [Imported project startup](imported-project-startup.md) — Imported npm projects may have a lockfile but no installed dependencies, so verify managed packages before restarting workflows.

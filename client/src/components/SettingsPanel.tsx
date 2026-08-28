@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, CheckCircle, AlertCircle, Info, Loader2, BellOff, Bell, Wifi, WifiOff, UserRoundPen } from "lucide-react";
+import { X, Download, Upload, Trash2, Volume2, VolumeX, Music, Music2, CheckCircle, AlertCircle, Info, Loader2, BellOff, Bell, Wifi, WifiOff, UserRoundPen, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getSettings,
@@ -64,7 +64,7 @@ export function SettingsPanel({ onClose }: Props) {
     checkEaglercraftData();
   }, []);
 
-  const showToast = (type: Toast["type"], message: string) => {
+  const showToast = (type: Exclude<Toast, null>["type"], message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 5000);
   };

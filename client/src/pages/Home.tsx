@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { useLocation } from "wouter";
-import { MessageSquare, Skull, Zap, Users, Bike, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Layers, Snowflake, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Globe2 } from "lucide-react";
+import { MessageSquare, Skull, Zap, Users, Bike, Circle, Target, Egg, Square, Cuboid, Cctv, Trophy, Goal, Car, Swords, Grid3x3, Heart, Route, Flame, Gauge, Layers, Snowflake, Star, Search, X, Gamepad2, Sprout, Dribbble, Train, Ghost, Rocket, Globe2, Box, Crosshair, Bomb } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,11 @@ const GAMES = [
   { href: "/drift-boss", label: "Drift Boss", desc: "Master the art of drifting.", icon: Gauge, color: "purple" },
   { href: "/tomb-of-the-mask", label: "Tomb of the Mask", desc: "Fast-paced arcade maze runner.", icon: Layers, color: "pink" },
   { href: "/gun-spin", label: "Gun Spin", desc: "Spin your gun and blast through enemies.", icon: Gauge, color: "purple" },
+  { href: "/five-nights-at-big-e", label: "Five Nights at Big E", desc: "Survive the night in a haunted school.", icon: Cctv, color: "pink" },
+  { href: "/five-nights-at-winstons", label: "Five Nights at Winston's", desc: "Stay alive while creepy erasers hunt you down.", icon: Ghost, color: "purple" },
+  { href: "/idle-miner-tycoon", label: "Idle Miner Tycoon", desc: "Build a mining empire, one upgrade at a time.", icon: Box, color: "primary" },
+  { href: "/skibidi-shooter", label: "Skibidi Shooter", desc: "Take aim and clear the incoming threat.", icon: Crosshair, color: "pink" },
+  { href: "/russian-buckshot", label: "Russian Buckshot", desc: "A tense high-stakes game of chance.", icon: Bomb, color: "purple" },
   { href: "/chat", label: "Live Comms", desc: "Talk trash in real-time.", icon: MessageSquare, color: "primary" },
 ];
 

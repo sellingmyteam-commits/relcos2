@@ -541,21 +541,23 @@ export async function downloadAllGamesSave(
   return { gameCount };
 }
 
-function isAllGamesSave(obj: Record<string, unknown>): obj is AllGamesSave {
+function isAllGamesSave(obj: object): obj is AllGamesSave {
+  const candidate = obj as Record<string, unknown>;
   return (
-    obj.appName === "RELC.OS" &&
-    typeof obj.version === "string" &&
-    obj.version.startsWith("3") &&
-    obj.games !== null &&
-    typeof obj.games === "object"
+    candidate.appName === "RELC.OS" &&
+    typeof candidate.version === "string" &&
+    candidate.version.startsWith("3") &&
+    candidate.games !== null &&
+    typeof candidate.games === "object"
   );
 }
 
-function isLegacySave(obj: Record<string, unknown>): obj is SaveFile {
+function isLegacySave(obj: object): obj is SaveFile {
+  const candidate = obj as Record<string, unknown>;
   return (
-    obj.appName === "RELC.OS" &&
-    typeof obj.gameData === "object" &&
-    obj.gameData !== null
+    candidate.appName === "RELC.OS" &&
+    typeof candidate.gameData === "object" &&
+    candidate.gameData !== null
   );
 }
 
