@@ -1,10 +1,24 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useDoor } from "@/components/DoorTransition";
 
-export function SecurityBlock() {
+export function SecurityBlock({ onComplete }: { onComplete?: () => void }) {
+  const door = useDoor();
+  const [dismissed, setDismissed] = useState(false);
+
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = dismissed ? "unset" : "hidden";
     return () => { document.body.style.overflow = "unset"; };
-  }, []);
+  }, [dismissed]);
+
+  const grantAccess = () => {
+    door.open("WELCOME", () => {
+      setDismissed(true);
+      document.body.style.overflow = "unset";
+      onComplete?.();
+    });
+  };
+
+  if (dismissed) return null;
 
   return (
     <div
@@ -30,6 +44,22 @@ export function SecurityBlock() {
             display: "block",
             userSelect: "none",
             pointerEvents: "none",
+          }}
+        />
+        <button
+          onClick={grantAccess}
+          aria-label="Continue to site"
+          style={{
+            position: "absolute",
+            left: "4%",
+            top: "14%",
+            width: "17%",
+            height: "40%",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+            outline: "none",
           }}
         />
       </div>

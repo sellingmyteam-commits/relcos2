@@ -394,7 +394,7 @@ function App() {
       <ITSequence />
       <DoorProvider>
         <PanicButton />
-        <SecurityBlock />
+        <SecurityBlock onComplete={() => setSecurityFinished(true)} />
 
         {securityFinished && !username && !isGuest && (
           <ChatUsernameOverlay onComplete={handleUsernameComplete} onGuest={handleGuest} />
