@@ -1,12 +1,42 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
+import fs from "fs";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+
+const staticGameEntryFiles = [
+  "five-nights-at-epsteins.html",
+  "idle-miner-tycoon.html",
+  "skibidi-shooter.html",
+  "russian-buckshot.html",
+];
+
+function emitStaticGameEntries(): Plugin {
+  return {
+    name: "emit-static-game-entries",
+    apply: "build" as const,
+    generateBundle() {
+      for (const fileName of staticGameEntryFiles) {
+        const sourcePath = path.resolve(import.meta.dirname, "public", "game", fileName);
+        if (!fs.existsSync(sourcePath)) {
+          throw new Error(`Missing static game entry: ${sourcePath}`);
+        }
+
+        this.emitFile({
+          type: "asset",
+          fileName: `game/${fileName}`,
+          source: fs.readFileSync(sourcePath),
+        });
+      }
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
     react(),
     runtimeErrorOverlay(),
+    emitStaticGameEntries(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
