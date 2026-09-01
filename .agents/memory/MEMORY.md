@@ -1,1 +1,2 @@
 - [Imported project startup](imported-project-startup.md) — Imported npm projects may have a lockfile but no installed dependencies, so verify managed packages before restarting workflows.
+- [External npm deployments](external-npm-deployments.md) — Replit lockfiles can contain internal package-firewall URLs that must be normalized for Vercel or other external builders.
