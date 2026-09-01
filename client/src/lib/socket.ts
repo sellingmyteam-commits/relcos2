@@ -6,7 +6,26 @@ declare global {
   }
 }
 
+const unavailableSocket = {
+  connected: false,
+  disconnected: true,
+  on() {
+    return unavailableSocket;
+  },
+  off() {
+    return unavailableSocket;
+  },
+  emit() {
+    return unavailableSocket;
+  },
+  disconnect() {},
+} as unknown as Socket;
+
 export function getSharedSocket(): Socket {
+  if (import.meta.env.VITE_STATIC === "true") {
+    return unavailableSocket;
+  }
+
   if (!window.__sharedSocket || window.__sharedSocket.disconnected) {
     if (window.__sharedSocket) {
       window.__sharedSocket.disconnect();

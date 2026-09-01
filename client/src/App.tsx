@@ -45,6 +45,7 @@ const RussianBuckshot = lazy(() => import("@/pages/RussianBuckshot"));
 const Chat = lazy(() => import("@/pages/Chat"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const NotFound = lazy(() => import("@/pages/not-found"));
+const isStaticSite = import.meta.env.VITE_STATIC === "true";
 
 function PageLoader() {
   return (
@@ -319,15 +320,15 @@ function BanWall() {
 
 function App() {
   const [securityFinished, setSecurityFinished] = useState(false);
-  const [username, setUsername] = useState(() => localStorage.getItem("chatUsername") || "");
-  const [isGuest, setIsGuest] = useState(() => localStorage.getItem("arua_guest") === "true");
+  const [username, setUsername] = useState(() => isStaticSite ? "Guest" : localStorage.getItem("chatUsername") || "");
+  const [isGuest, setIsGuest] = useState(() => isStaticSite || localStorage.getItem("arua_guest") === "true");
   const [siteUserId, setSiteUserId] = useState<number | null>(() => {
     const stored = localStorage.getItem("siteUserId");
     return stored ? parseInt(stored, 10) : null;
   });
   const [banned, setBanned] = useState(false);
 
-  const allReady = securityFinished && !!username;
+  const allReady = securityFinished && (isStaticSite || !!username);
 
   const handleUsernameComplete = (name: string, id: number) => {
     setUsername(name);
@@ -344,7 +345,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (!username) return;
+    if (isStaticSite || !username) return;
 
     const checkStatus = async (uid: number) => {
       try {

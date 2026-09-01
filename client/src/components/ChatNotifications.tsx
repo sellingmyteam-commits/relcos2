@@ -17,6 +17,7 @@ export function ChatNotifications({ currentUsername }: { currentUsername: string
 
   const { data: messages } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
+    enabled: import.meta.env.VITE_STATIC !== "true",
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     staleTime: 55000,

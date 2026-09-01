@@ -15,6 +15,7 @@ async function refresh() {
 
 let started = false;
 function ensurePolling() {
+  if (import.meta.env.VITE_STATIC === "true") return;
   if (started) return;
   started = true;
   refresh();
